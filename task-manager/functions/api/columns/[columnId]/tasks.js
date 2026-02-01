@@ -1,4 +1,4 @@
-import { queryAll, buildCorsHeaders, parseJson, insertInto } from "../../helpers";
+import { queryAll, queryOne, buildCorsHeaders, parseJson, insertInto } from "../../helpers";
 
 export async function onRequestGet(context) {
 
