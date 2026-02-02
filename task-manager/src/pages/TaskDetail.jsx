@@ -26,6 +26,14 @@ export default function TaskDetail() {
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // List of comments for this task
+  const [comments, setComments] = useState([]);
+  // Loading comments state for this task
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  // Error state for comments for this task
+  const [commentsError, setCommentsError] = useState(null);
+  // Content of a new comment that is being written
+  const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
     async function loadTask() {
@@ -52,6 +60,35 @@ export default function TaskDetail() {
       loadTask();
     }
   }, [id]);
+
+  // Comments useEffect
+  useEffect(() => {
+    async function loadComments() {
+      if (!id) return;
+      setCommentsLoading(true);
+      setCommentsError(null);
+      try {
+        const res = await fetch(`/api/comments?task_id=${id}`);
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !Array.isArray(data)) {
+          console.error("API error loading comments", data);
+          setCommentsError("Unable to load comments from server.");
+          setComments([]);
+        } else {
+          setComments(data);
+        }
+      } catch (err) {
+        console.error("Fetch error loading comments", err);
+        setCommentsError("Network error loading comments.");
+        setComments([]);
+      } finally {
+        setCommentsLoading(false);
+      }
+    }
+
+    loadComments();
+  }, [id]);
+
 
   const {
     title,
@@ -156,6 +193,58 @@ export default function TaskDetail() {
             </div>
           )}
         </dl>
+      </section>
+
+      <section className="task-detail-section">
+          <h2>Comments</h2>
+          {commentsError && <p>{commentsError}</p>}
+          {commentsLoading && <p>Loading comments…</p>}
+          {comments.length === 0 && !commentsLoading && <p>No comments yet.</p>}
+
+          <ul className="comments-list">
+            {comments.map((c) => (
+              <li key={c.id}>
+                <p>{c.content}</p>
+                <small>
+                  {c.created_by} {formatDate(c.created_at)}
+                </small>
+              </li>
+            ))}
+          </ul>
+
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            rows={3}
+            className="comments-textbox"
+          />
+
+      <button
+        onClick={async () => {
+          if (!newComment.trim()) return; // don't post empty comments
+          try {
+            const res = await fetch("/api/comments", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                task_id: id,       
+                created_by: 1,     // TODO: replace this with current user when we add user data
+                content: newComment
+              })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed to post comment");
+
+            setComments((prev) => [...prev, data]); // add the new comment to state
+            setNewComment(""); // clear textarea
+          } catch (err) {
+            console.error("Error posting comment:", err);
+            setCommentsError(err.message);
+              }
+          }}
+        >
+          Add Comment
+        </button>
       </section>
     </div>
   );
