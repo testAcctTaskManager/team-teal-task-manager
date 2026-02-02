@@ -1,0 +1,36 @@
+/* Column demo styling */
+.kanban-column {
+    display: flex;
+    flex-direction: column;
+    border-radius: 2.5px;
+    width: 200px;
+    height: 400px;
+    overflow-y: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.kanban-column .title {
+    background-color: lightgrey;
+    color: black;
+    text-align: left;
+    padding-left: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.kanban-column .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    overflow-y: scroll;
+    border: 1px solid lightgrey;
+
+}
+
+.kanban-column::-webkit-scrollbar {
+    display: none;
+}
