@@ -19,6 +19,16 @@
 		}
 	],
 	"env": {
+		"test": {
+			"d1_databases": [
+				{
+					"binding": "cf_db",
+					"database_name": "test-db-tests",
+					"database_id": "00000000-0000-0000-0000-000000000000",
+					"migrations_dir": "migrations"
+				}
+			]
+		},
 		"production": {
 			"d1_databases": [
 				{

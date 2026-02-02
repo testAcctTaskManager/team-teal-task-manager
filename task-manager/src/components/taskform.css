@@ -3,9 +3,11 @@
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;   /* start at top so content is reachable */
   justify-content: center;
   z-index: 1000;
+  overflow-y: auto;          /* <-- allow scrolling */
+  padding: 2rem 0;           /* space above/below content */
 }
 
 .task-modal-overlay__backdrop {
@@ -20,6 +22,7 @@
   width: 100%;
   max-width: 760px;
   padding: 0 1rem;
+  margin: 0 auto 2rem;       /* avoid being flush with bottom */
 }
 
 /* Task form styling */
