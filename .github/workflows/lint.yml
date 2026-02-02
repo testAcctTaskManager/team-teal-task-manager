@@ -2,11 +2,7 @@ name: Lint
 
 on:
   push:
-    paths:
-      - 'task-manager/**'
   pull_request:
-    paths:
-      - 'task-manager/**'
 
 jobs:
   lint:
