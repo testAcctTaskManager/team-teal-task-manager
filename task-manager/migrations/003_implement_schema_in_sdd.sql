@@ -138,6 +138,18 @@ CREATE TABLE Comments (
     FOREIGN KEY (created_by) REFERENCES Users(id) ON DELETE RESTRICT
 );
 
+-- Triggers
+-- When a row is updated, automatically update its updated_at field to current timestamp
+CREATE TRIGGER update_comments_updated_at
+AFTER UPDATE ON Comments
+FOR EACH ROW
+WHEN NEW.updated_at = OLD.updated_at
+BEGIN 
+    UPDATE Comments
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = OLD.id;
+END;
+
 -- maybe helpful indices
 CREATE INDEX idx_projects_created_by ON Projects(created_by);
 CREATE INDEX idx_sprints_project_id ON Sprints(project_id);

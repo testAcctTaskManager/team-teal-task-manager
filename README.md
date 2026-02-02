@@ -29,3 +29,47 @@ The `.github/workflows/lint.yml` workflow runs ESLint, which is a JavaScript and
 ### D1 Migrations
 
 The `.github/workflows/d1-migrations.yml` workflow runs the SQL files in the `task-manager/migrations/` folder sequentially. If it is a test branch (non main branch), a job runs the migrations on the test database, using GitHub secrets for the CloudFlare test database API token and CloudFlare account ID. If it is a main branch, a job runs the migrations on the prod database, using GitHub secrets for the CloudFlare prod database API token and the CloudFlare account ID.
+For adding a new table, you'll need to add the schema to the migrations folder.
+Then you'll want to add the API endpoints. Lastly, you'll want to interact with
+those API endpoints in the component.
+
+## Testing changes locally
+
+To run a local copy of the DB and test your changes on a local host:
+
+1. Navigate to `task-manager` directory. (Directory with `package.json`)
+
+2. Migrate the database locally (creates a local D1 SQLite DB)
+
+    ``` npm run predev ```
+
+3. Build the frontend
+
+    ``` npm run build ```
+
+3. Start the local development server. This runs Cloudflare Pages + API server locally.
+
+    ``` npm run dev ```
+
+    Note: ``` npm run dev:vite ``` only runs the front end, no API.
+
+4. Should see output telling you which port the local server is on:
+
+    ```[wrangler:info] Ready on http://localhost:8788```
+
+5. API URLs can be viewed using this local host. For example, this URL should
+   let you view all tasks in the DB, if the port being used is 8788:
+
+    ```http://localhost:8788/api/tasks```  
+
+
+## Reseeding the DB
+
+To set DB back to only what is in the seed:
+
+1. Navigate to `.wrangler/state/v3/d1/miniflare-D1DatabaseObject`
+
+2. Delete the .sqlite file
+
+3. Re-run local migration
+    ``` npm run predev ```
