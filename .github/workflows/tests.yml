@@ -1,0 +1,37 @@
+name: Tests (Vitest + Cypress)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: task-manager
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: task-manager/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply local D1 migrations
+        run: npm run cf:migrate:local
+
+      - name: Vitest
+        run: npm run test:vitest
+
+      - name: Cypress Component Tests
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          working-directory: task-manager
+          command: npm run test:ct
