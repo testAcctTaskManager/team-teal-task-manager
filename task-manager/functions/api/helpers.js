@@ -98,7 +98,7 @@ export async function parseJson(req) {
     const ct = req.headers.get("content-type") || "";
     if (!ct.toLowerCase().includes("application/json")) return {};
     return await req.json().catch(() => ({}));
-  } catch (e) {
+  } catch {
     return {};
   }
 }

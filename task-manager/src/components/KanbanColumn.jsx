@@ -24,7 +24,7 @@ import './KanbanColumn.css'
  * TODO: Create KanbanColumn tests
  *
  */
-export default function KanbanColumn( {title, status, tasks=[]} ) {
+export default function KanbanColumn( {title, tasks=[]} ) {
     return (
         <section className={`kanban-column`}>
             {/* Display title at the top */}
