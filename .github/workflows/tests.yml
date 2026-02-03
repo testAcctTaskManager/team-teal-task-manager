@@ -1,7 +1,6 @@
 name: Tests (Vitest + Cypress)
 
 on:
-  push:
   pull_request:
 
 jobs:
