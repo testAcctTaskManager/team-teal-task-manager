@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS Sprints (
 );
 
 -- create COLUMNS table
+DROP TABLE IF EXISTS Columns;
 CREATE TABLE IF NOT EXISTS Columns (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id INTEGER NOT NULL,
@@ -48,9 +49,11 @@ CREATE TABLE IF NOT EXISTS Columns (
 );
 
 -- create TASKS table
+DROP TABLE IF EXISTS Tasks;
 CREATE TABLE IF NOT EXISTS Tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id INTEGER NOT NULL,
+    column_id INTEGER,
     sprint_id INTEGER,
     reporter_id INTEGER NOT NULL,
     assignee_id INTEGER,
@@ -62,7 +65,9 @@ CREATE TABLE IF NOT EXISTS Tasks (
     due_date DATE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    position INTEGER,
     FOREIGN KEY (project_id) REFERENCES Projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (column_id) REFERENCES Columns(id) ON DELETE SET NULL,
     FOREIGN KEY (sprint_id) REFERENCES Sprints(id) ON DELETE SET NULL,
     FOREIGN KEY (reporter_id) REFERENCES Users(id) ON DELETE RESTRICT,
     FOREIGN KEY (assignee_id) REFERENCES Users(id) ON DELETE SET NULL,
@@ -116,16 +121,7 @@ BEGIN
 SELECT RAISE(ABORT, 'start_date must be <= end_date');
 END;
 
--- create COLUMN TASKS junction
-CREATE TABLE IF NOT EXISTS Column_Tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id INTEGER NOT NULL,
-    column_id INTEGER NOT NULL,
-    position INTEGER NOT NULL,
-    UNIQUE (task_id, column_id),
-    FOREIGN KEY (task_id) REFERENCES Tasks(id) ON DELETE CASCADE,
-    FOREIGN KEY (column_id) REFERENCES Columns(id) ON DELETE CASCADE
-);
+DROP TABLE IF EXISTS Column_Tasks;
 
 -- create COMMENTS table
 CREATE TABLE IF NOT EXISTS Comments (
