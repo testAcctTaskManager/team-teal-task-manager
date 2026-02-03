@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TaskForm from "../components/TaskForm.jsx";
+import Kanban from "../components/Kanban.jsx";
 
 export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -20,7 +21,7 @@ export default function Home() {
   return (
     <div>
       <h1>Task Manager Demo</h1>
-
+      <Kanban />
       <button type="button" onClick={openModal}>
         + New Task
       </button>

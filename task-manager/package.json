@@ -25,6 +25,7 @@
 		"cypress:open:ct": "cypress open --component --config-file cypress.config.mjs"
 	},
 	"dependencies": {
+		"@hello-pangea/dnd": "^18.0.1",
 		"better-sqlite3": "^12.6.2",
 		"fs": "^0.0.1-security",
 		"react": "^19.1.1",

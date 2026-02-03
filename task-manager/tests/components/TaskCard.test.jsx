@@ -13,7 +13,7 @@ vi.mock("react-router-dom", () => {
 });
 
 function renderTaskCard(task) {
-  return renderWithRoot(<TaskCard task={task} />);
+  return renderWithRoot(<TaskCard task={task} />, { withDragDrop: true });
 }
 
 describe("TaskCard", () => {
