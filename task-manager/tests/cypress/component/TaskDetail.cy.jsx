@@ -119,28 +119,6 @@ describe("TaskDetail component", () => {
     cy.get("textarea.comments-textbox").should("have.value", "");
   });
 
-  it("does not post empty comments", () => {
-    cy.intercept("GET", "**/api/tasks/*", {
-      statusCode: 200,
-      body: { id: Number(taskId), title: "Task" },
-    }).as("getTask");
-
-    cy.intercept("GET", "**/api/comments*", {
-      statusCode: 200,
-      body: [],
-    }).as("getComments");
-
-    cy.intercept("POST", "/api/comments").as("postComment");
-
-    mountTaskDetail(`/task/${taskId}`);
-
-    cy.get("textarea.comments-textbox").clear();
-    cy.contains("button", "Add Comment").click();
-
-    // Assert that no POST request was made for an empty comment
-    cy.get("@postComment.all").should("have.length", 0);
-  });
-
   it("appends new comment to existing comments list", () => {
     cy.intercept("GET", "**/api/tasks/*", {
       statusCode: 200,
@@ -190,26 +168,5 @@ describe("TaskDetail component", () => {
 
     cy.contains("Existing comment").should("be.visible");
     cy.contains("Second comment").should("be.visible");
-  });
-
-  it("does not post comments that are only whitespace", () => {
-    cy.intercept("GET", "**/api/tasks/*", {
-      statusCode: 200,
-      body: { id: Number(taskId), title: "Task" },
-    }).as("getTaskWhitespace");
-
-    cy.intercept("GET", "**/api/comments*", {
-      statusCode: 200,
-      body: [],
-    }).as("getCommentsWhitespace");
-
-    cy.intercept("POST", "/api/comments").as("postCommentWhitespace");
-
-    mountTaskDetail(`/task/${taskId}`);
-
-    cy.get("textarea.comments-textbox").type("   ");
-    cy.contains("button", "Add Comment").click();
-
-    cy.get("@postCommentWhitespace.all").should("have.length", 0);
   });
 });

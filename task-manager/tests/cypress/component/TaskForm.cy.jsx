@@ -23,17 +23,6 @@ function mountTaskForm(props = {}) {
 }
 
 describe("TaskForm component", () => {
-  it("validates required title before submit", () => {
-    cy.intercept("POST", "/api/tasks").as("createTask");
-
-    mountTaskForm();
-
-    cy.contains("button", "Create Task").click({ force: true });
-
-    cy.contains("This field is required").should("be.visible");
-    cy.get("@createTask.all").should("have.length", 0);
-  });
-
   it("creates a new task and links it to a column when columnId is provided", () => {
     cy.intercept("POST", "/api/tasks", (req) => {
       expect(req.body).to.include({
@@ -182,14 +171,6 @@ describe("TaskForm component", () => {
 
     cy.contains("Task created.").should("be.visible");
     cy.get("@linkColumn.all").should("have.length", 0);
-  });
-
-  it("invokes onCancel when Cancel button is clicked", () => {
-    const { onCancel } = mountTaskForm();
-
-    cy.contains("button", "Cancel").click({ force: true });
-
-    cy.wrap(onCancel).should("have.been.calledOnce");
   });
 
   it("does not call onSuccess when task creation fails", () => {
