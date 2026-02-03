@@ -14,7 +14,9 @@ Please note we are limited to 500 builds a month, so try to not push hundreds of
 
 The settings automatically use the test-db test database for non-main deployments, and the prod-db production database for the main branch deployments.
 
-Database SQL files are run under the `migrations` folder, using a GitHub Actions workflow. The SQL files are run in order of their starting numbers (i.e. 001, 002, etc.). Under functions/api, there are also helper functions in helpers.js to make it easier to create CRUD endpoints for tables. There are also example files, `functions/api/customers.js` for the example API customers endpoint and `functions/api/customers/[id].js` for the example API customers/:id endpoint. The sample Customers.jsx component demonstrates component use of those APIs.
+Database SQL files are run under the `migrations` folder, using a GitHub Actions workflow. The SQL files are run in order of their starting numbers (i.e. 001, 002, etc.), with previously run files not running even if changes are made. Changes must be made with new file number names.
+
+Under functions/api, there are also helper functions in helpers.js to make it easier to create CRUD endpoints for tables. There are also example files, `functions/api/customers.js` for the example API customers endpoint and `functions/api/customers/[id].js` for the example API customers/:id endpoint. The sample Customers.jsx component demonstrates component use of those APIs.
 
 For adding a new table, add the schema to the migrations folder, following the sequential order discussed above. Next, add the API endpoints. Lastly, interact with those API endpoints in the component.
 
@@ -28,7 +30,10 @@ The `.github/workflows/lint.yml` workflow runs ESLint, which is a JavaScript and
 
 ### D1 Migrations
 
-The `.github/workflows/d1-migrations.yml` workflow runs the SQL files in the `task-manager/migrations/` folder sequentially. If it is a test branch (non main branch), a job runs the migrations on the test database, using GitHub secrets for the CloudFlare test database API token and CloudFlare account ID. If it is a main branch, a job runs the migrations on the prod database, using GitHub secrets for the CloudFlare prod database API token and the CloudFlare account ID.
+The `.github/workflows/d1-migrations.yml` workflow runs the SQL files in the `task-manager/migrations/` folder sequentially. It only applies files that have not previously been applied (it does not check for changes), so to make a change, add it as a new SQL file with the filename starting with number greater than the current greatest number.
+
+If it is a test branch (non main branch), a job runs the migrations on the test database, using GitHub secrets for the CloudFlare test database API token and CloudFlare account ID. If it is a main branch, a job runs the migrations on the prod database, using GitHub secrets for the CloudFlare prod database API token and the CloudFlare account ID.
+
 For adding a new table, you'll need to add the schema to the migrations folder.
 Then you'll want to add the API endpoints. Lastly, you'll want to interact with
 those API endpoints in the component.
