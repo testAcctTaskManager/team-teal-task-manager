@@ -27,9 +27,9 @@ INSERT OR IGNORE INTO Tasks (
   title, description, start_date, due_date, position
 )
 VALUES
-  (1, 1, 0, 1, 1, 2, 1, 2, 'Set up project', 'Initialize repo, CI and migrations', '2026-01-02', '2026-01-04', 0),
+  (1, 1, 1, 1, 1, 2, 1, 2, 'Set up project', 'Initialize repo, CI and migrations', '2026-01-02', '2026-01-04', 0),
   (2, 1, 1, 1, 2, 2, 2, 2, 'Create tasks endpoint', 'Implement CRUD handlers for Tasks', '2026-01-03', '2026-01-07', 1),
-  (3, 1, NULL, 1, NULL, 1, NULL, NULL, 'Write docs', 'Add README notes for local dev', NULL, NULL, 2);
+  (3, 1, 2, 1, NULL, 1, NULL, NULL, 'Write docs', 'Add README notes for local dev', NULL, NULL, 2);
 
   -- Seed example comments
   INSERT OR IGNORE INTO Comments (
