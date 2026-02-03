@@ -21,6 +21,15 @@ INSERT OR IGNORE INTO Sprints (id, project_id, name, start_date, end_date, creat
 VALUES
   (1, 1, 'Sprint 1', '2026-01-01', '2026-01-15', 3);
 
+-- Seed basic board columns
+INSERT OR IGNORE INTO Columns (id, project_id, name, key, position)
+VALUES
+  (1, 1, 'To Do', 'todo', 1),
+  (2, 1, 'Blocked', 'blocked', 2),
+  (3, 1, 'In Progress', 'in_progress', 3),
+  (4, 1, 'In Review', 'in_review', 4),
+  (5, 1, 'Complete', 'complete', 5);
+
 -- Seed example tasks
 INSERT OR IGNORE INTO Tasks (
   id, project_id, column_id, sprint_id, reporter_id, assignee_id, created_by, modified_by,
