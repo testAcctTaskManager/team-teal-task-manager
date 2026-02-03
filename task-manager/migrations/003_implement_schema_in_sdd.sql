@@ -118,16 +118,17 @@ END;
 
 -- create COLUMN TASKS junction
 CREATE TABLE IF NOT EXISTS Column_Tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER NOT NULL,
     column_id INTEGER NOT NULL,
     position INTEGER NOT NULL,
-    PRIMARY KEY (task_id, column_id),
+    UNIQUE (task_id, column_id),
     FOREIGN KEY (task_id) REFERENCES Tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (column_id) REFERENCES Columns(id) ON DELETE CASCADE
 );
 
 -- create COMMENTS table
-CREATE TABLE Comments (
+CREATE TABLE IF NOT EXISTS Comments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER NOT NULL,
     created_by INTEGER NOT NULL,
