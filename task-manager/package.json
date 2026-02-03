@@ -5,37 +5,46 @@
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler pages dev --local",
-		"dev:vite": "vite",
+		"test": "npm run test:vitest && npm run test:ct",
+		"test:integration": "node ./scripts/test-with-server.mjs",
+		"test:integration:vitest": "vitest run tests/integration",
+		"test:vitest": "vitest run tests/components",
+		"test:ct": "cypress run --component --config-file cypress.config.mjs",
 		"build": "vite build",
 		"lint": "eslint .",
+
+		"dev:vite": "vite",
 		"preview": "npm run build && wrangler pages dev",
 		"deploy": "npm run build && wrangler pages deploy",
+
 		"cf-typegen": "wrangler types",
 		"cf:migrate:test": "npx wrangler d1 migrations apply cf_db --remote",
 		"cf:migrate:prod": "npx wrangler d1 migrations apply cf_db --remote --env production",
 		"cf:migrate:local": "wrangler d1 migrations apply cf_db --local",
-		"migrate:local": "node ./scripts/migrate_local.js",
 		"predev": "npm run cf:migrate:local",
-		"pretest": "npm run cf:migrate:local",
-		"test": "node ./scripts/test-with-server.mjs"
+		"cypress:open:ct": "cypress open --component --config-file cypress.config.mjs"
 	},
 	"dependencies": {
+		"@hello-pangea/dnd": "^18.0.1",
 		"better-sqlite3": "^12.6.2",
 		"fs": "^0.0.1-security",
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1",
 		"react-router-dom": "^7.12.0"
+
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.33.0",
 		"@types/react": "^19.1.10",
 		"@types/react-dom": "^19.1.7",
 		"@vitejs/plugin-react": "^5.0.0",
+		"cypress": "^15.9.0",
 		"eslint": "^9.33.0",
 		"eslint-plugin-react-hooks": "^5.2.0",
 		"eslint-plugin-react-refresh": "^0.4.20",
 		"globals": "^16.3.0",
-		"vite": "^7.1.2",
+		"jsdom": "^28.0.0",
+		"vite": "^7.3.1",
 		"vitest": "^4.0.18",
 		"wrangler": "^4.59.3"
 	}
