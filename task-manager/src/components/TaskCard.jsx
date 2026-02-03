@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import "./taskcard.css";
 import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
+import { Draggable } from "@hello-pangea/dnd";
+
 
 /**
  * TaskCard
@@ -11,7 +13,7 @@ import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
  * - The parent column / list is responsible for loading tasks from the backend
  *   and passing the correct data into this component.
  */
-export default function TaskCard({ task }) {
+export default function TaskCard({ task, index }) {
   const navigate = useNavigate();
 
   if (!task || task.id == null) {
@@ -32,7 +34,12 @@ export default function TaskCard({ task }) {
   const isOverdue = isDateOverdue(due_date);
 
   return (
+    <Draggable draggableId={String(id)} index={index}> 
+      {(provided) => (
     <div
+        ref={provided.innerRef}
+        {...provided.draggableProps}
+        {...provided.dragHandleProps}
       className="task-card"
       onClick={() => navigate(`/task/${id}`)}
       role="button"
@@ -91,5 +98,7 @@ export default function TaskCard({ task }) {
         </div>
       </dl>
     </div>
+    )}
+    </Draggable>
   );
 }

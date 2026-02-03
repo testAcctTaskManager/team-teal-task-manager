@@ -1,5 +1,6 @@
 import TaskCard from './TaskCard'
 import './KanbanColumn.css'
+import { Droppable } from "@hello-pangea/dnd";
 
 // Component is reusable for all status columns.
 /**
@@ -18,34 +19,35 @@ import './KanbanColumn.css'
  * - status: status value e.g. To Do, Blocked, In Progress, In Review, Complete
  * - tasks: list of tasks
  *
- * TODO: Add drag and drop capabilities
+ * 
  * 
  * TODO: Change CSS upon status update
  * TODO: Create KanbanColumn tests
  *
  */
-export default function KanbanColumn( {title, tasks=[]} ) {
-    return (
-        <section className={`kanban-column`}>
-            {/* Display title at the top */}
-            <div className='title'>
-                {title}
-            </div>
 
-            {/* Render all tasks */}
-            {/* Render an empty state when no tasks exist */}
-            <div className='body'>
-                {tasks.length > 0 ? (
-                    <>
-                        {tasks.map((task) => (
-                            <TaskCard key={task.id} task={task} />
-                        ))}
-                    </>
-                    
-                ) : (
-                    <p>No Tasks</p>
-                )}
-            </div>
+export default function KanbanColumn({ title, tasks = [], colIndex }) {
+  return (
+    <Droppable droppableId={String(colIndex)}>              
+      {(provided) => (
+        <section className="kanban-column" ref={provided.innerRef} {...provided.droppableProps}>
+          <div className='title'>
+            {title}
+          </div>
+          <div className='body'>
+            {tasks.length > 0 ? (
+              <>
+                {tasks.map((task, index) => (               
+                  <TaskCard key={task.id} task={task} index={index} />  
+                ))}
+              </>
+            ) : (
+              <p>No Tasks</p>
+            )}
+          </div>
+          {provided.placeholder}                        
         </section>
-    )
+      )}
+    </Droppable>
+  )
 }
