@@ -2,10 +2,6 @@ import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
-import Customers from "./components/Customers.jsx";
-import Tasks from "./components/Tasks.jsx";
-
-
 
 export default function App() {
   return (
@@ -13,7 +9,7 @@ export default function App() {
       {/*
         A static route:
       */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Home projectId={1} />} />
 
       {/*
         A dynamic route with a parameter.
