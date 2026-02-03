@@ -140,14 +140,9 @@ async function main() {
   );
 
   try {
-    await run("npx", ["vitest", "run"], { env: process.env });
-    await run("npx", [
-      "cypress",
-      "run",
-      "--component",
-      "--config-file",
-      "cypress.config.mjs",
-    ], { env: process.env });
+    // Only run the dedicated integration tests that rely on
+    // Wrangler + D1, not the whole suite.
+    await run("npm", ["run", "test:integration:vitest"], { env: process.env });
 
     process.exitCode = 0;
   } catch (err) {

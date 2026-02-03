@@ -5,8 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler pages dev --local",
-		"test": "node ./scripts/test-with-server.mjs",
-		"test:vitest": "vitest run",
+		"test": "npm run test:vitest && npm run test:ct",
+		"test:integration": "node ./scripts/test-with-server.mjs",
+		"test:integration:vitest": "vitest run tests/integration",
+		"test:vitest": "vitest run tests/components",
 		"test:ct": "cypress run --component --config-file cypress.config.mjs",
 		"build": "vite build",
 		"lint": "eslint .",
@@ -16,9 +18,9 @@
 		"deploy": "npm run build && wrangler pages deploy",
 
 		"cf-typegen": "wrangler types",
-		"cf:migrate:test": "npx wrangler d1 migrations apply cf_db --remote",
-		"cf:migrate:prod": "npx wrangler d1 migrations apply cf_db --remote --env production",
-		"cf:migrate:local": "wrangler d1 migrations apply cf_db --local",
+		"cf:migrate:test": "npx wrangler d1 migrations apply cf_db --remote --log-level warn",
+		"cf:migrate:prod": "npx wrangler d1 migrations apply cf_db --remote --env production --log-level warn",
+		"cf:migrate:local": "wrangler d1 migrations apply cf_db --local --log-level warn",
 		"predev": "npm run cf:migrate:local",
 		"cypress:open:ct": "cypress open --component --config-file cypress.config.mjs"
 	},

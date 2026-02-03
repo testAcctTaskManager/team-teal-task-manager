@@ -6,6 +6,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     reporters: 'default',
+    // Allow both component/unit tests and integration tests to be discovered.
+    // Scripts choose which folders to run (tests/components vs tests/integration).
     include: ['tests/**/*.test.{js,ts,jsx,tsx}'],
   },
 });
