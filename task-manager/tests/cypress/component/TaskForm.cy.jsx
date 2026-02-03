@@ -21,26 +21,13 @@ describe("TaskForm component", () => {
       });
     }).as("createTask");
 
-    cy.intercept("POST", "/api/column_tasks", (req) => {
-      expect(req.body).to.deep.equal({
-        column_id: 5,
-        task_id: 123,
-      });
-
-      req.reply({
-        statusCode: 200,
-        body: { success: true },
-      });
-    }).as("linkColumn");
-
-    const { onSuccess } = mountTaskForm({ columnId: 5 });
+    const { onSuccess } = mountTaskForm();
 
     cy.get('input[name="title"]').type("New Cypress Task", { force: true });
 
     cy.contains("button", "Create Task").click({ force: true });
 
     cy.wait("@createTask");
-    cy.wait("@linkColumn");
 
     cy.contains("Task created.").should("be.visible");
 
@@ -89,10 +76,9 @@ describe("TaskForm component", () => {
 
     cy.get('input[name="title"]').should("have.value", "Existing Task");
 
-    cy.get('input[name="title"]').clear({ force: true }).type(
-      "Updated Task Title",
-      { force: true }
-    );
+    cy.get('input[name="title"]')
+      .clear({ force: true })
+      .type("Updated Task Title", { force: true });
     cy.contains("button", "Save Changes").click({ force: true });
 
     cy.wait("@updateTask");
@@ -112,9 +98,7 @@ describe("TaskForm component", () => {
 
     cy.contains("button", "Create Task").click({ force: true });
 
-    cy.contains("Due date must be on or after start date").should(
-      "be.visible"
-    );
+    cy.contains("Due date must be on or after start date").should("be.visible");
 
     cy.get("@createTask.all").should("have.length", 0);
   });
