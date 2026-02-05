@@ -3,8 +3,8 @@ import { GoogleSignInButton } from './GoogleSignInButton';
 
 export default function LoginPage() {
   const authURLParams = new URLSearchParams({
-            client_id: import.meta.env.GOOGLE_CLIENT_ID,
-            redirect_uri: import.meta.env.GOOGLE_REDIRECT_URI,
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
             response_type: 'code',
             scope: 'openid email profile'
         })
