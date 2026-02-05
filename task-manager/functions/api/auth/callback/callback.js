@@ -32,15 +32,23 @@ export default async function onRequest({ request, env }) {
         return Response.redirect('/', 302);
     }
 
-    // todo: update user in db using token
+    // fetch user info
+    const userInfoRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+    const userInfoData = await userInfoRes.json();
+    if (!userInfoRes.ok) {
+        console.error('could not fetch user info', userInfoData);
+        return Response.redirect('/', 302);
+    }
 
     // add user
-    const addUser = await fetch('api/users', {
+    const addUser = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            display_name: tokenData.id_token.name,
-            email: tokenData.id_token.email
+            display_name: userInfoData.name,
+            email: userInfoData.id_token.email
         })
     })
 
@@ -52,15 +60,17 @@ export default async function onRequest({ request, env }) {
     }
 
     // add user to providers table using id_token.sub
+    const expiresAt = tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null;
     const addUserProviderRes = await fetch('/api/auth/user-providers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            'id': tokenData.id_token.sub,
-            'user_id': userData.id,
-            'provider': 'google',
-            'refresh_token': tokenData.refresh_token,
-            'token_expires_at': new Date(new Date() + (tokenData.expires_in * 1000))
+            id: userInfoData.sub ?? null, // match DB/handler if needed
+            user_id: userData.id,
+            provider: 'google',
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            token_expires_at: expiresAt
         })
     })
     const addUserProviderData = addUserProviderRes.json();
@@ -69,4 +79,6 @@ export default async function onRequest({ request, env }) {
         console.error('could not insert user', userData);
         return Response.redirect('/', 302);
     }
+    
+    return Response.redirect('/', 302);
 }
