@@ -9,5 +9,5 @@ const columnHandlers = makeCrudHandlers({
 });
 
 export const onRequestGet = columnHandlers.collection;
-export const onRequestPost   = columnHandlers.collection;
+export const onRequestPost = columnHandlers.collection;
 export const onRequestOptions = columnHandlers.collection;
