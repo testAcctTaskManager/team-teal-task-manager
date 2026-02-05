@@ -4,7 +4,7 @@ const columnHandlers = makeCrudHandlers({
     table: "Columns",
     primaryKey: "id",
     allowedColumns: ["project_id", "name", "key", "position"],
-    dbEnVar: "cf_db",
+    dbEnvVar: "cf_db",
     orderBy: "position ASC",
 });
 
