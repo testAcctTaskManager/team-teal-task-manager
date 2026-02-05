@@ -17,7 +17,7 @@ export default function LoginPage() {
     >
       <h2>Sign in</h2>
 
-      <GoogleSignInButton authURL={authURL} />
+      <GoogleSignInButton authURL={authURL.toString()} />
     </div>
   )
 }

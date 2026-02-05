@@ -1,8 +1,8 @@
-import './GoogleSignInButton';
+import './GoogleSignInButton.css';
 
 export function GoogleSignInButton({ authURL }) {
     const handleClick = () => {
-        window.location.href = authURL
+        window.location.href = authURL.toString();
     }
 
     return (
