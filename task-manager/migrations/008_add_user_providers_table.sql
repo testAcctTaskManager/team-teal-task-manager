@@ -6,6 +6,5 @@ CREATE TABLE IF NOT EXISTS User_Providers (
     token_expires_at DATETIME,
     created_at DATETIME DEFAULT (CURRENT_TIMESTAMP),
     updated_at DATETIME DEFAULT (CURRENT_TIMESTAMP),
-    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    UNIQUE (provider, provider_id)
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 )
