@@ -1,4 +1,4 @@
-export default async function onRequest({ request, env }) {
+export async function onRequest({ request, env }) {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
     const error = url.searchParams.get('error');
