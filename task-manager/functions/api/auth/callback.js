@@ -7,7 +7,7 @@ export async function onRequest({ request, env }) {
   if (error) {
     console.error("oauth error:", error);
     if (debug) return new Response(JSON.stringify({ error }), { status: 400, headers: { "Content-Type": "application/json" } });
-    return Response.redirect("/", 302);
+    return Response.redirect(origin, 302);
   }
 
   if (!code) {
@@ -36,7 +36,7 @@ export async function onRequest({ request, env }) {
     if (!tokenResponse.ok) {
       console.error("token exchange failed", tokenData);
       if (debug) return new Response(JSON.stringify({ tokenError: tokenData }), { status: 502, headers: { "Content-Type": "application/json" } });
-      return Response.redirect("/", 302);
+      return Response.redirect(origin, 302);
     }
 
     // fetch user info
@@ -47,7 +47,7 @@ export async function onRequest({ request, env }) {
     if (!userInfoRes.ok) {
       console.error("could not fetch user info", userInfoData);
       if (debug) return new Response(JSON.stringify({ userInfoError: userInfoData }), { status: 502, headers: { "Content-Type": "application/json" } });
-      return Response.redirect("/", 302);
+      return Response.redirect(origin, 302);
     }
 
     // attempt to create or resolve user
@@ -129,7 +129,7 @@ export async function onRequest({ request, env }) {
   } catch (err) {
     console.error("callback onRequest error", err);
     if (debug) return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
-    return Response.redirect("/", 302);
+    return Response.redirect(origin, 302);
   }
-  return Response.redirect("/", 302);
+  return Response.redirect(origin, 302);
 }
