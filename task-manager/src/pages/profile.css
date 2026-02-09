@@ -1,5 +1,5 @@
 /* Profile.css */
-/* To keep everything looking the same, I borrowed alot of the css from taskdetail.css -Jay */
+/* My css is very minimal but to keep everything looking the same, I borrowed some of the css from taskdetail.css -Jay */
 
 .profile-page {
   max-width: 800px;
@@ -12,7 +12,7 @@
 .profile-page header {
     margin-bottom: 0.5rem;
     font-size: 1.5rem;
-    text-align: left;
+    text-align: center;
 }
 
 .profile-page h2 {

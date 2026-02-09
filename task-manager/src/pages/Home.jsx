@@ -74,10 +74,9 @@ export default function Home({ projectId }) {
 
   return (
     <div>
-
       <header>
         <Link to="/profile" style={{float: "right"}}>
-          test
+          My Profile
         </Link>
       </header>
 
