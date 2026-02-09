@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import TaskForm from "../components/TaskForm.jsx";
 import Kanban from "../components/Kanban.jsx";
+import { Link } from "react-router-dom";
 
 export default function Home({ projectId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -73,6 +74,13 @@ export default function Home({ projectId }) {
 
   return (
     <div>
+
+      <header>
+        <Link to="/profile" style={{float: "right"}}>
+          test
+        </Link>
+      </header>
+
       <h1>Project {projectId} Board</h1>
       <div>
         <button type="button" onClick={openModal}>
