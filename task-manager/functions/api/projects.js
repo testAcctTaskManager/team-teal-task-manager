@@ -1,6 +1,6 @@
-import { makeCrudHandlers } from "./helpers";
+import { makeCrudHandlers } from "./helpers.js";
 
-// Use the generic CRUD handlers for the Projects collection endpoint
+// Generic CRUD handlers 
 const projectHandlers = makeCrudHandlers({
     table: "projects",
     primaryKey: "id",
@@ -9,6 +9,7 @@ const projectHandlers = makeCrudHandlers({
     orderBy: "id ASC",
 });
 
+// Routes
 export const onRequestGet = projectHandlers.collection;
 export const onRequestPost = projectHandlers.collection;
 export const onRequestOptions = projectHandlers.collection;
