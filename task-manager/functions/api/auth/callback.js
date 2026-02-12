@@ -4,6 +4,9 @@ export async function onRequest({ request, env }) {
   const error = url.searchParams.get("error");
   const debug = url.searchParams.get("debug") === "1";
 
+  // determine origin for internal API calls and redirect URI
+  const origin = env.FRONTEND_ORIGIN || `https://${request.headers.get("host")}`;
+
   if (error) {
     console.error("oauth error:", error);
     if (debug) return new Response(JSON.stringify({ error }), { status: 400, headers: { "Content-Type": "application/json" } });
@@ -13,9 +16,7 @@ export async function onRequest({ request, env }) {
   if (!code) {
     return new Response("missing code", { status: 400 });
   }
-
-  // determine origin for internal API calls and redirect URI
-  const origin = env.FRONTEND_ORIGIN || `https://${request.headers.get("host")}`;
+  
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
 
   try {
