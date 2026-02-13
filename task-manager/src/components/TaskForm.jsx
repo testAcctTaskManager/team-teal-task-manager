@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useUsers } from "../contexts/UsersContext.jsx";
 import "./taskform.css";
 
 /**
@@ -49,13 +50,14 @@ const EMPTY_FORM = {
 
 export default function TaskForm({
   taskId = null,
-  projectId = null,
-  createdBy = null,
-  modifiedBy = null,
-  columnId = 1,
+  projectId = null, //TODO: auto-populate this depending on where button is clicked
+  createdBy = null, //TODO: get current user
+  modifiedBy = null, //TODO: get current user
+  columnId = 1, //TODO: tasks don't need a column, once we have a backlog. also auto-pop depending on where button is clicked
   onSuccess,
   onCancel,
 }) {
+  const { users, loading: usersLoading, error: usersError } = useUsers();
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -263,25 +265,42 @@ export default function TaskForm({
               />
             </label>
 
-            {/* TODO In a perfect world, these would be searchable Select dropdowns with all eligible users */}
             <label>
-              Reporter ID
-              <input
-                type="number"
+              Reporter
+              {usersLoading && <div>Loading users…</div>}
+              {usersError && <div style={{ color: "red" }}>{usersError}</div>}
+              <select
+                id="reporter_id"
                 name="reporter_id"
-                value={form.reporter_id}
+                value={form.assignee_id}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Select a user</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.display_name || u.email || `User ${u.id}`}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label>
-              Assignee ID
-              <input
-                type="number"
+              Assignee
+              {usersLoading && <div>Loading users…</div>}
+              {usersError && <div style={{ color: "red" }}>{usersError}</div>}
+              <select
+                id="assignee_id"
                 name="assignee_id"
                 value={form.assignee_id}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Select a user</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.display_name || u.email || `User ${u.id}`}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label>
