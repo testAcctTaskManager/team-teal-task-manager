@@ -2,26 +2,35 @@ import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
+import LoginButton from "./components/login/LoginButton.jsx";
+import LoginPage from "./components/login/LoginPage.jsx"
 
 export default function App() {
   return (
-    <Routes>
-      {/*
-        A static route:
-      */}
-      <Route path="/" element={<Home projectId={1} />} />
+    <>
+      <Routes>
+        {/*
+          A static route:
+        */}
+        <Route path="/" element={<Home projectId={1} />} />
 
-      {/*
-        A dynamic route with a parameter.
-        In the rendered component, you can read { id } via useParams().
-      */}
-      <Route path="/task/:id" element={<TaskDetail />} />
+        {/*
+          A dynamic route with a parameter.
+          In the rendered component, you can read { id } via useParams().
+        */}
+        <Route path="/task/:id" element={<TaskDetail />} />
 
-      {/*
-        Convenience route to preview TaskDetail quickly.
-        Adjust the id if your seed data uses a different task id.
-      */}
-      <Route path="/task-demo" element={<Navigate to="/task/1" replace />} />
-    </Routes>
+        {/*
+          Convenience route to preview TaskDetail quickly.
+          Adjust the id if your seed data uses a different task id.
+        */}
+        <Route path="/task-demo" element={<Navigate to="/task/1" replace />} />
+        {/*
+          Login page
+        */}
+        <Route path="/login" element={<LoginPage />}/>
+      </Routes>
+      <LoginButton />
+    </>
   );
 }

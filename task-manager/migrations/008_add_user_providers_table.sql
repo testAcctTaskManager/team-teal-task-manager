@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS User_Providers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    provider TEXT NOT NULL,
+    refresh_token TEXT,
+    token_expires_at DATETIME,
+    created_at DATETIME DEFAULT (CURRENT_TIMESTAMP),
+    updated_at DATETIME DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
