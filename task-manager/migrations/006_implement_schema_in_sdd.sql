@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS Projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     created_by INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'not_started'
+        CHECK (status IN ('not_started', 'in_progress', 'complete')),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES Users(id) ON DELETE RESTRICT
