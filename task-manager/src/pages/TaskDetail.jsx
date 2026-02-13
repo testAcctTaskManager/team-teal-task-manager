@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
 import TaskForm from "../components/TaskForm.jsx";
+import { useUsers } from "../contexts/UsersContext.jsx";
 import "./taskdetail.css";
 
 /**
@@ -39,6 +40,15 @@ export default function TaskDetail() {
   const [showEditModal, setShowEditModal] = useState(false);
   // Columns used for the Status dropdown in the edit form
   const [columnsForStatus, setColumnsForStatus] = useState([]);
+
+  const { users } = useUsers();
+
+  function getUserLabel(userId) {
+    if (userId == null) return null;
+    const user = users.find((u) => u.id === Number(userId));
+    if (!user) return `User ${userId}`;
+    return user.display_name || user.email || `User ${user.id}`;
+  }
 
   useEffect(() => {
     async function loadTask() {
@@ -178,13 +188,13 @@ export default function TaskDetail() {
           {assignee_id != null && (
             <div>
               <dt>Assignee</dt>
-              <dd>{assignee_id}</dd>
+              <dd>{getUserLabel(assignee_id)}</dd>
             </div>
           )}
           {reporter_id != null && (
             <div>
               <dt>Reporter</dt>
-              <dd>{reporter_id}</dd>
+              <dd>{getUserLabel(reporter_id)}</dd>
             </div>
           )}
         </dl>
@@ -223,13 +233,13 @@ export default function TaskDetail() {
           {created_by != null && (
             <div>
               <dt>Created by</dt>
-              <dd>{created_by}</dd>
+              <dd>{getUserLabel(created_by)}</dd>
             </div>
           )}
           {modified_by != null && (
             <div>
               <dt>Last modified by</dt>
-              <dd>{modified_by}</dd>
+              <dd>{getUserLabel(modified_by)}</dd>
             </div>
           )}
         </dl>
