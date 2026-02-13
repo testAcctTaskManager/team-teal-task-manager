@@ -272,7 +272,7 @@ export default function TaskForm({
               <select
                 id="reporter_id"
                 name="reporter_id"
-                value={form.assignee_id}
+                value={form.reporter_id}
                 onChange={handleChange}
               >
                 <option value="">Select a user</option>
