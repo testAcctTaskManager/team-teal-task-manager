@@ -37,4 +37,37 @@ describe("Users API with D1 (integration)", () => {
     expect(errorBody).toBeTruthy();
     expect(errorBody.error).toBe("Email already in use");
   });
+
+  it("returns seeded users with role", async () => {
+    const res = await fetch(`${BASE_URL}/api/users`);
+    const data = await res.json();
+    const user1 = data.find((u) => u.id === 1);
+    expect(user1.role).toBeTruthy();
+  });
+
+  it("updates a user's role via PATCH", async () => {
+    const patchRes = await fetch(`${BASE_URL}/api/users/2`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "clinician" }),
+    });
+    expect(patchRes.ok).toBe(true);
+
+    const updated = await patchRes.json();
+    expect(updated.role).toBe("clinician");
+  });
+
+  it("rejects invalid role on POST", async () => {
+  const res = await fetch(`${BASE_URL}/api/users`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      display_name: "Bad Role",
+      email: "badrole@example.com",
+      timezone: "UTC",
+      role: "superadmin",
+    }),
+  });
+    expect(res.status).toBe(400);
+  });
 });
