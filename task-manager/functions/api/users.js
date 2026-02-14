@@ -6,12 +6,14 @@ import {
 	buildCorsHeaders,
 } from "./helpers.js";
 
+import { isValidUserRole } from "./constants/roles.js";
+
 const config = {
 	table: "Users",
 	primaryKey: "id",
 	// For now we only accept these fields from clients; timestamps
 	// are managed by the database defaults.
-	allowedColumns: ["display_name", "email", "timezone"],
+	allowedColumns: ["display_name", "email", "timezone", "role"],
 	dbEnvVar: "cf_db",
 	orderBy: "id",
 };
@@ -45,6 +47,14 @@ export async function onRequestPost(context) {
 
 		const body = await parseJson(request);
 
+		// Check if role is valid
+		if (body.role !== undefined && !isValidUserRole(body.role) ) {
+			return new Response(JSON.stringify({ error: "Unknown role." }), {
+				status: 400,
+				headers: CORS
+			});
+		}
+		
 		// Only accept explicitly allowed columns from the request body
 		const payloadCols = config.allowedColumns.filter(
 			(c) => body[c] !== undefined,

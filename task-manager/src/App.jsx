@@ -4,7 +4,8 @@ import Home from "./pages/Home.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
 import Profile from "./pages/Profile.jsx";
 import LoginButton from "./components/login/LoginButton.jsx";
-import LoginPage from "./components/login/LoginPage.jsx"
+import LoginPage from "./components/login/LoginPage.jsx";
+import UserManagement from "./pages/UserManagement.jsx";
 
 export default function App() {
   return (
@@ -35,7 +36,11 @@ export default function App() {
         {/*
           Login page
         */}
-        <Route path="/login" element={<LoginPage />}/>
+        <Route path="/login" element={<LoginPage />} />
+        {/*
+          UserManagement page
+        */}
+        <Route path="/user-management" element={<UserManagement />} />
       </Routes>
       <LoginButton />
     </>
