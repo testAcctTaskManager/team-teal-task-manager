@@ -1,0 +1,17 @@
+.project-card {
+  color: black;
+  padding: 10px; 
+  text-align: left;
+}
+
+.selected-project-card {
+  color: black;
+  background-color: lightgray;
+  padding: 10px; 
+  text-align: left;
+}
+
+.project-card:hover {
+    color: black;
+    background-color: lightgray;
+}

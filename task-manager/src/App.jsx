@@ -2,6 +2,7 @@ import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
+import ProjectSidebar from "./pages/ProjectSidebar.jsx"
 import LoginButton from "./components/login/LoginButton.jsx";
 import LoginPage from "./components/login/LoginPage.jsx"
 
@@ -21,10 +22,16 @@ export default function App() {
         <Route path="/task/:id" element={<TaskDetail />} />
 
         {/*
+          Convenience route to preview ProjectSidebar quickly.
+        */}
+        <Route path="/project-sidebar" element={<ProjectSidebar />} />
+
+        {/*
           Convenience route to preview TaskDetail quickly.
           Adjust the id if your seed data uses a different task id.
         */}
         <Route path="/task-demo" element={<Navigate to="/task/1" replace />} />
+
         {/*
           Login page
         */}

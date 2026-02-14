@@ -14,7 +14,9 @@ VALUES
 -- Seed a demo project
 INSERT OR IGNORE INTO Projects (id, name, created_by)
 VALUES
-  (1, 'Demo Project', 3);
+  (1, 'Demo Project 1', 1),
+  (2, 'Demo Project 2', 2),
+  (3, 'Demo Project 3', 3);
 
 -- Seed a demo sprint for the project
 INSERT OR IGNORE INTO Sprints (id, project_id, name, start_date, end_date, created_by)
