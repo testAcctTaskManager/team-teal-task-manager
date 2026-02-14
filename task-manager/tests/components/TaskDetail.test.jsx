@@ -75,7 +75,9 @@ describe("TaskDetail (Vitest)", () => {
   it("does not post empty comments", async () => {
     const { container } = renderTaskDetail(`/task/${taskId}`);
 
-    const addButton = Array.from(container.querySelectorAll("button")).find(
+    const addButton = Array.from(Array.from(container.querySelectorAllAll("button")).find(
+      (btn) => btn.textContent && btn.textContent.includes("Add Comment"),
+    )).find(
       (btn) => btn.textContent && btn.textContent.includes("Add Comment"),
     );
     expect(addButton).not.toBeNull();
@@ -92,7 +94,7 @@ describe("TaskDetail (Vitest)", () => {
   it("does not post comments that are only whitespace", async () => {
     const { container } = renderTaskDetail(`/task/${taskId}`);
 
-    const textarea = container.querySelector("textarea.comments-textbox");
+    const textarea = container.querySelector('[testid="comments-textbox"]');
     const addButton = Array.from(container.querySelectorAll("button")).find(
       (btn) => btn.textContent && btn.textContent.includes("Add Comment"),
     );

@@ -1,5 +1,4 @@
 import KanbanColumn from "./KanbanColumn";
-import "./kanban.css";
 import { DragDropContext } from "@hello-pangea/dnd";
 /**
  * Kanban
@@ -89,11 +88,11 @@ function Kanban({ columns = [], setColumns = () => {} }) {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <section className="kanban">
-        <div className="title">
-          <h2>Kanban Board</h2>
+      <section className="flex flex-col rounded-lg w-full max-w-screen-2xl mx-auto min-h-[500px] bg-slate-800/30 shadow-xl">
+        <div className="bg-gradient-to-r from-slate-700 to-slate-600 text-white text-center px-5 py-3 rounded-t-lg shadow-md">
+          <h2 className="text-xl font-semibold m-0">Kanban Board</h2>
         </div>
-        <div className="body">
+        <div className="grid grid-flow-col auto-cols-[minmax(14rem,1fr)] gap-4 border border-white/10 border-t-0 rounded-b-lg px-4 py-6 overflow-x-auto bg-gradient-to-b from-slate-900/20 to-slate-900/40">
           {columns.length > 0 ? (
             <>
               {columns.map((column, colIndex) => (
@@ -106,7 +105,7 @@ function Kanban({ columns = [], setColumns = () => {} }) {
               ))}
             </>
           ) : (
-            <p>No Columns</p>
+            <p className="text-white/40 text-center w-full">No Columns</p>
           )}
         </div>
       </section>

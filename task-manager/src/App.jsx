@@ -1,4 +1,3 @@
-import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
@@ -9,7 +8,7 @@ import UserManagement from "./pages/UserManagement.jsx";
 
 export default function App() {
   return (
-    <>
+    <div className="w-full min-h-screen flex flex-col items-center p-8 text-center bg-slate-900 scrollbar-none">
       <Routes>
         {/*
           A static route:
@@ -43,6 +42,6 @@ export default function App() {
         <Route path="/user-management" element={<UserManagement />} />
       </Routes>
       <LoginButton />
-    </>
+    </div>
   );
 }

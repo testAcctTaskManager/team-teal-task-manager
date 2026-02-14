@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useUsers } from "../contexts/UsersContext.jsx";
 import "./taskform.css";
 
 /**
@@ -254,95 +253,97 @@ export default function TaskForm({
   const titleText = isEdit ? "Edit Task" : "Create Task";
 
   return (
-    <div className="task-modal-overlay" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <div
-        className="task-modal-overlay__backdrop"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onCancel}
         aria-hidden="true"
       />
-      <div className="task-modal-overlay__content">
-        <form onSubmit={handleSubmit} className="task-form">
-          <h1>{titleText}</h1>
+      <div className="relative w-full max-w-2xl">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-slate-800/95 rounded-lg shadow-2xl border border-white/10 overflow-hidden"
+        >
+          <div className="bg-gradient-to-r from-slate-700 to-slate-600 px-6 py-4">
+            <h1 className="text-2xl font-semibold text-white m-0">
+              {titleText}
+            </h1>
+          </div>
 
-          {loadingExisting && (
-            <p className="task-form__status">Loading task…</p>
-          )}
-          {loadError && <p className="task-form__status">{loadError}</p>}
+          <div className="p-6 space-y-4">
+            {loadingExisting && (
+              <p className="text-white/60 text-sm">Loading task…</p>
+            )}
+            {loadError && <p className="text-red-400 text-sm">{loadError}</p>}
 
-          {submitMessage && (
-            <p className="task-form__status">{submitMessage}</p>
-          )}
+            {submitMessage && (
+              <p className="text-green-400 text-sm">{submitMessage}</p>
+            )}
 
-          <div className="task-form__grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="flex flex-col col-span-full">
+                <span className="text-white/80 text-sm mb-1.5">Title*</span>
+                <input
+                  type="text"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                />
+                {errors.title && (
+                  <span className="text-red-400 text-xs mt-1">
+                    {errors.title}
+                  </span>
+                )}
+              </label>
+
+              <label className="flex flex-col col-span-full">
+                <span className="text-white/80 text-sm mb-1.5">
+                  Description
+                </span>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows={4}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 resize-none"
+                />
+              </label>
+
+              <label className="flex flex-col">
+                <span className="text-white/80 text-sm mb-1.5">Sprint ID</span>
+                <input
+                  type="number"
+                  name="sprint_id"
+                  value={form.sprint_id}
+                  onChange={handleChange}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                />
+              </label>
+
+            {/* TODO In a perfect world, these would be searchable Select dropdowns with all eligible users */}
             <label>
-              Title*
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-              />
-              {errors.title && (
-                <span className="task-form__error">{errors.title}</span>
-              )}
-            </label>
-
-            <label>
-              Description
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                rows={4}
-              />
-            </label>
-
-            <label>
-              Sprint ID
+              Reporter ID
               <input
                 type="number"
-                name="sprint_id"
-                value={form.sprint_id}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label>
-              Reporter
-              {usersLoading && <div>Loading users…</div>}
-              {usersError && <div style={{ color: "red" }}>{usersError}</div>}
-              <select
-                id="reporter_id"
                 name="reporter_id"
                 value={form.reporter_id}
                 onChange={handleChange}
-              >
-                <option value="">Select a user</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.display_name || u.email || `User ${u.id}`}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
 
             <label>
-              Assignee
-              {usersLoading && <div>Loading users…</div>}
-              {usersError && <div style={{ color: "red" }}>{usersError}</div>}
-              <select
-                id="assignee_id"
+              Assignee ID
+              <input
+                type="number"
                 name="assignee_id"
                 value={form.assignee_id}
                 onChange={handleChange}
-              >
-                <option value="">Select a user</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.display_name || u.email || `User ${u.id}`}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
 
             <label>
@@ -361,32 +362,41 @@ export default function TaskForm({
               </select>
             </label>
 
-            <label>
-              Start Date
-              <input
-                type="date"
-                name="start_date"
-                value={form.start_date}
-                onChange={handleChange}
-              />
-            </label>
+              <label className="flex flex-col">
+                <span className="text-white/80 text-sm mb-1.5">Start Date</span>
+                <input
+                  type="date"
+                  name="start_date"
+                  value={form.start_date}
+                  onChange={handleChange}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                />
+              </label>
 
-            <label>
-              Due Date
-              <input
-                type="date"
-                name="due_date"
-                value={form.due_date}
-                onChange={handleChange}
-              />
-              {errors.due_date && (
-                <span className="task-form__error">{errors.due_date}</span>
-              )}
-            </label>
+              <label className="flex flex-col">
+                <span className="text-white/80 text-sm mb-1.5">Due Date</span>
+                <input
+                  type="date"
+                  name="due_date"
+                  value={form.due_date}
+                  onChange={handleChange}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                />
+                {errors.due_date && (
+                  <span className="text-red-400 text-xs mt-1">
+                    {errors.due_date}
+                  </span>
+                )}
+              </label>
+            </div>
           </div>
 
-          <div className="task-form__actions">
-            <button type="submit" disabled={submitting}>
+          <div className="flex gap-3 px-6 py-4 bg-white/5 border-t border-white/10">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 disabled:from-slate-800 disabled:to-slate-700 disabled:cursor-not-allowed text-white font-medium px-6 py-2 rounded-lg shadow-md transition-all duration-200"
+            >
               {submitting
                 ? "Saving..."
                 : isEdit
@@ -394,7 +404,12 @@ export default function TaskForm({
                   : "Create Task"}
             </button>
             {onCancel && (
-              <button type="button" onClick={onCancel} disabled={submitting}>
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={submitting}
+                className="bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:cursor-not-allowed text-white font-medium px-6 py-2 rounded-lg border border-white/20 transition-all duration-200"
+              >
                 Cancel
               </button>
             )}

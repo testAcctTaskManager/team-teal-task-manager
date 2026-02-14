@@ -3,6 +3,10 @@
 import { mountTaskForm } from "../support/component.jsx";
 
 describe("TaskForm component", () => {
+  beforeEach(() => {
+    cy.viewport(1280, 720);
+  });
+
   it("creates a new task and links it to a column when columnId is provided", () => {
     cy.intercept("GET", "/api/users", {
       statusCode: 200,

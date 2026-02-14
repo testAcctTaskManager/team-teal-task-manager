@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import "./taskcard.css";
 import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
 import { Draggable } from "@hello-pangea/dnd";
 import { useUsers } from "../contexts/UsersContext.jsx";
@@ -13,16 +12,14 @@ import TimeZone from "./TimeZone.jsx";
  */
 function UserWithTime({ userId, user, users }) {
   const [showUserWithTime, setShowUserWithTime] = useState(false);
-
   const getUserLabel = (id) => {
     if (id == null) return null;
     const u = users.find((u) => u.id === Number(id));
     if (!u) return `User ${id}`;
     return u.display_name || u.email || `User ${u.id}`;
   };
-
   return (
-    <dd>
+    <dd className="m-0">
       <span
         onMouseEnter={() => setShowUserWithTime(true)}
         onMouseLeave={() => setShowUserWithTime(false)}
@@ -50,6 +47,7 @@ function UserWithTime({ userId, user, users }) {
 export default function TaskCard({ task, index }) {
   const navigate = useNavigate();
   const { users } = useUsers();
+  const { users } = useUsers();
 
   if (!task || task.id == null) {
     return null;
@@ -75,7 +73,8 @@ export default function TaskCard({ task, index }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="task-card"
+          className="px-4 py-3.5 my-2 rounded-[10px] bg-white/[0.04] shadow-[0_4px_10px_rgba(0,0,0,0.3)] cursor-pointer text-left"
+          testid="task-card"
           onClick={() => navigate(`/task/${id}`)}
           role="button"
           tabIndex={0}
@@ -86,14 +85,26 @@ export default function TaskCard({ task, index }) {
             }
           }}
         >
-          <div className="task-card__header">
-            <h3 className="task-card__title">{title}</h3>
+          <div className="flex justify-between items-center mb-[0.4rem]">
+            <h3 className="m-0 text-base" testid="task-card__title">
+              {title}
+            </h3>
           </div>
 
-          <dl className="task-card__meta">
+          <dl className="flex flex-wrap gap-x-[1.2rem] gap-y-[0.6rem] m-0 p-0 text-xs">
+            <div className="flex gap-1 text-[0.6rem]">
+              <dt className="opacity-70">ID</dt>
+              <dd className="m-0">{id}</dd>
+            </div>
+            {sprint_id != null && (
+              <div className="flex gap-1 text-[0.6rem]">
+                <dt className="opacity-70">Sprint</dt>
+                <dd className="m-0">{sprint_id}</dd>
+              </div>
+            )}
             {assignee_id != null && (
-              <div>
-                <dt>Assignee</dt>
+              <div className="flex gap-1 text-[0.6rem]">
+                <dt className="opacity-70">Assignee</dt>
                 <UserWithTime
                   userId={assignee_id}
                   user={assigneeUser}
@@ -102,8 +113,8 @@ export default function TaskCard({ task, index }) {
               </div>
             )}
             {reporter_id != null && (
-              <div>
-                <dt>Reporter</dt>
+              <div className="flex gap-1 text-[0.6rem]">
+                <dt className="opacity-70">Reporter</dt>
                 <UserWithTime
                   userId={reporter_id}
                   user={reporterUser}
@@ -111,23 +122,18 @@ export default function TaskCard({ task, index }) {
                 />
               </div>
             )}
-            <div className="task-card__dates-row">
-              <div>
-                <dt>Start</dt>
-                <dd>{formatDate(start_date)}</dd>
-              </div>
-              <div>
-                <dt>Due</dt>
-                <dd
-                  className={
-                    isOverdue
-                      ? "task-card__due task-card__overdue"
-                      : "task-card__due"
-                  }
-                >
-                  {formatDate(due_date)}
-                </dd>
-              </div>
+            <div className="flex gap-1 text-[0.6rem]">
+              <dt className="opacity-70">Start</dt>
+              <dd className="m-0">{formatDate(start_date)}</dd>
+            </div>
+            <div className="flex gap-1 text-[0.6rem]">
+              <dt className="opacity-70">Due</dt>
+              <dd
+                className={`m-0 ${isOverdue ? "text-[#ff6b6b]" : ""}`}
+                testid="task-card-due"
+              >
+                {formatDate(due_date)}
+              </dd>
             </div>
           </dl>
         </div>

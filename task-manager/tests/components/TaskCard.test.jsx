@@ -29,6 +29,23 @@ vi.mock("../../src/contexts/UsersContext.jsx", () => {
   };
 });
 
+// Mock UsersContext so TaskCard can render human-readable user labels
+vi.mock("../../src/contexts/UsersContext.jsx", () => {
+  return {
+    useUsers: () => ({
+      users: [
+        { id: 1, display_name: "Reporter One", email: "reporter@example.com" },
+        { id: 2, display_name: "Assignee Two", email: "assignee@example.com" },
+      ],
+      loading: false,
+      error: null,
+      currentUser: null,
+      setCurrentUser: () => {},
+      refetch: () => {},
+    }),
+  };
+});
+
 function renderTaskCard(task, index = 0) {
   return renderWithRoot(<TaskCard task={task} index={index} />, {
     withDragDrop: true,
@@ -69,16 +86,21 @@ describe("TaskCard", () => {
 
     const { container } = renderTaskCard(task);
 
-    const card = container.querySelector(".task-card");
+    const card = container.querySelector('[testid="task-card"]');
     expect(card).not.toBeNull();
 
-    expect(card.querySelector(".task-card__title").textContent).toContain(
+    expect(card.querySelector('[testid="task-card__title"]').textContent).toContain(
       "Example Task",
     );
 
     expect(card.textContent).toContain("Assignee");
     expect(card.textContent).toContain("Assignee Two");
+    expect(card.textContent).toContain("Assignee Two");
     expect(card.textContent).toContain("Reporter");
+    expect(card.textContent).toContain("Reporter One");
+  });
+
+  it("does not render a description even when provided", () => {
     expect(card.textContent).toContain("Reporter One");
   });
 
@@ -87,12 +109,14 @@ describe("TaskCard", () => {
       id: 2,
       title: "No description on card",
       description: "This should not appear on the card",
+      title: "No description on card",
+      description: "This should not appear on the card",
       start_date: null,
       due_date: null,
     };
 
     const { container } = renderTaskCard(task);
-    const descriptionEl = container.querySelector(".task-card__description");
+    const descriptionEl = container.querySelector('[testid="task-card__description"]');
     expect(descriptionEl).toBeNull();
     expect(container.textContent).not.toContain("This should not appear on the card");
   });
@@ -108,9 +132,9 @@ describe("TaskCard", () => {
     };
 
     const { container } = renderTaskCard(task);
-    const dueEl = container.querySelector(".task-card__due");
+    const dueEl = container.querySelector('[testid="task-card-due"]');
     expect(dueEl).not.toBeNull();
-    expect(dueEl.className).toContain("task-card__overdue");
+    expect(dueEl.className).toContain("m-0 text-[#ff6b6b]");
   });
 
   it("does not mark future due dates as overdue", () => {
@@ -139,7 +163,7 @@ describe("TaskCard", () => {
     };
 
     const { container } = renderTaskCard(task);
-    const card = container.querySelector(".task-card");
+    const card = container.querySelector('[testid="task-card"]');
     expect(card).not.toBeNull();
 
     await click(card);

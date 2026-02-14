@@ -4,7 +4,6 @@ import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
 import TaskForm from "../components/TaskForm.jsx";
 import TimeZone from "../components/TimeZone.jsx";
 import { useUsers } from "../contexts/UsersContext.jsx";
-import "./taskdetail.css";
 
 /**
  * UserWithTime
@@ -219,160 +218,186 @@ export default function TaskDetail() {
   }
 
   return (
-    <div className="task-detail-page">
-      {loading && <p>Loading task details…</p>}
-      {error && <p>{error}</p>}
+    <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
+      {loading && <p className="text-white/60">Loading task details…</p>}
+      {error && <p className="text-red-400">{error}</p>}
 
-      <h1>{title || `Task ${id}`}</h1>
+      <div className="bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg p-6 shadow-lg">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          {title || `Task ${id}`}
+        </h1>
 
-      <button type="button" onClick={() => setShowEditModal(true)}>
+        <button type="button" onClick={() => setShowEditModal(true)}>
         Edit Task
       </button>
 
-      {description && <p>{description}</p>}
 
-      <section className="task-detail-section">
-        <h2>Summary</h2>
-        <dl>
-          {/* TODO: These will be filled in with the actual project name and sprint name, when those tables are available*/}
-          {project_id != null && (
-            <div>
-              <dt>Project</dt>
-              <dd>{projectName || project_id}</dd>
+        {description && <p className="text-white/90 text-lg">{description}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="bg-white/5 rounded-lg p-6 shadow-lg border border-white/10">
+          <h2 className="text-xl font-semibold text-white mb-4 pb-2 border-b border-white/20">
+            Summary
+          </h2>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-4">
+            {/* TODO: These will be filled in with the actual project name and sprint name, when those tables are available*/}
+            {project_id != null && (
+              <div className="flex flex-col">
+                <dt className="text-white/60 text-sm mb-1">Project</dt>
+                <dd className="text-white font-medium">{projectName || project_id}</dd>
             </div>
           )}
 
           {statusLabel && (
-            <div>
-              <dt>Status</dt>
-              <dd>{statusLabel}</dd>
-            </div>
-          )}
-          {sprint_id != null && (
-            <div>
-              <dt>Sprint</dt>
-              <dd>{sprint_id}</dd>
-            </div>
-          )}
+            <div className="flex flex-col">
+              <dt className="text-white/60 text-sm mb-1">Status</dt>
+              <dd className="text-white font-medium">{statusLabel}</dd>
+              </div>
+            )}
+            {sprint_id != null && (
+              <div className="flex flex-col">
+                <dt className="text-white/60 text-sm mb-1">Sprint</dt>
+                <dd className="text-white font-medium">{sprint_id}</dd>
+              </div>
+            )}
 
-          {/* TODO: Fill these in with the usernames, when those tables are available*/}
-          {assignee_id != null && (
-            <div>
-              <dt>Assignee</dt>
-              <UserWithTime userId={assignee_id} users={users} />
-            </div>
-          )}
-          {reporter_id != null && (
-            <div>
-              <dt>Reporter</dt>
-              <UserWithTime userId={reporter_id} users={users} />
-            </div>
-          )}
-        </dl>
-      </section>
+            {/* TODO: Fill these in with the usernames, when those tables are available*/}
+            {assignee_id != null && (
+              <div className="flex flex-col">
+                <dt className="text-white/60 text-sm mb-1">Assignee</dt>
+                <UserWithTime userId={assignee_id} users={users} />
+              </div>
+            )}
+            {reporter_id != null && (
+              <div className="flex flex-col">
+                <dt className="text-white/60 text-sm mb-1">Reporter</dt>
+                <UserWithTime userId={reporter_id} users={users} />
+              </div>
+            )}
+          </dl>
+        </section>
 
-      <section className="task-detail-section">
-        <h2>Dates</h2>
-        <dl>
-          <div>
-            <dt>Start</dt>
-            <dd>{formatDate(start_date)}</dd>
-          </div>
-          <div>
-            <dt>Due</dt>
-            <dd
-              className={
-                isOverdue
-                  ? "task-detail__due task-detail__overdue"
-                  : "task-detail__due"
-              }
-            >
-              {formatDate(due_date)}
-            </dd>
-          </div>
-          {created_at && (
-            <div>
-              <dt>Created</dt>
-              <dd>{formatDate(created_at)}</dd>
+        <section className="bg-white/5 rounded-lg p-6 shadow-lg border border-white/10">
+          <h2 className="text-xl font-semibold text-white mb-4 pb-2 border-b border-white/20">
+            Dates
+          </h2>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div className="flex flex-col">
+              <dt className="text-white/60 text-sm mb-1">Start</dt>
+              <dd className="text-white font-medium">
+                {formatDate(start_date)}
+              </dd>
             </div>
-          )}
-          {updated_at && (
-            <div>
-              <dt>Updated</dt>
-              <dd>{formatDate(updated_at)}</dd>
+            <div className="flex flex-col">
+              <dt className="text-white/60 text-sm mb-1">Due</dt>
+              <dd
+                className={`font-medium ${isOverdue ? "text-[#ff6b6b]" : "text-white"}`}
+              >
+                {formatDate(due_date)}
+              </dd>
             </div>
-          )}
-        </dl>
-      </section>
+            {created_at && (
+              <div className="flex flex-col">
+                <dt className="text-white/60 text-sm mb-1">Created</dt>
+                <dd className="text-white font-medium">
+                  {formatDate(created_at)}
+                </dd>
+              </div>
+            )}
+            {updated_at && (
+              <div className="flex flex-col">
+                <dt className="text-white/60 text-sm mb-1">Updated</dt>
+                <dd className="text-white font-medium">
+                  {formatDate(updated_at)}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      </div>
 
-      <section className="task-detail-section">
-        <dl>
+      <section className="bg-white/5 rounded-lg p-6 shadow-lg border border-white/10">
+        <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
           {created_by != null && (
-            <div>
-              <dt>Created by</dt>
+            <div className="flex flex-col">
+              <dt className="text-white/60 text-sm mb-1">Created by</dt>
               <UserWithTime userId={created_by} users={users} />
             </div>
           )}
           {modified_by != null && (
-            <div>
-              <dt>Modified By</dt>
+            <div className="flex flex-col">
+              <dt className="text-white/60 text-sm mb-1">Modified By</dt>
               <UserWithTime userId={modified_by} users={users} />
             </div>
           )}
         </dl>
       </section>
 
-      <section className="task-detail-section">
-        <h2>Comments</h2>
-        {commentsError && <p>{commentsError}</p>}
-        {commentsLoading && <p>Loading comments…</p>}
-        {comments.length === 0 && !commentsLoading && <p>No comments yet.</p>}
+      <section className="bg-white/5 rounded-lg p-6 shadow-lg border border-white/10">
+        <h2 className="text-xl font-semibold text-white mb-4 pb-2 border-b border-white/20">
+          Comments
+        </h2>
+        {commentsError && <p className="text-red-400 mb-4">{commentsError}</p>}
+        {commentsLoading && (
+          <p className="text-white/60 mb-4">Loading comments…</p>
+        )}
+        {comments.length === 0 && !commentsLoading && (
+          <p className="text-white/40 mb-4">No comments yet.</p>
+        )}
 
-        <ul className="comments-list">
+        <ul className="space-y-4 mb-6">
           {comments.map((c) => (
-            <li key={c.id}>
-              <p>{c.content}</p>
-              <small>
-                {c.created_by} {formatDate(c.created_at)}
+            <li
+              key={c.id}
+              className="bg-white/5 rounded-lg p-4 border border-white/10"
+            >
+              <p className="text-white mb-2">{c.content}</p>
+              <small className="text-white/50 text-sm">
+                {c.created_by} • {formatDate(c.created_at)}
               </small>
             </li>
           ))}
         </ul>
 
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          rows={3}
-          className="comments-textbox"
-        />
+        <div className="flex gap-3">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            rows={3}
+            testid="comments-textbox"
+            className="flex-1 bg-white/5 border border-white/20 rounded-lg p-3 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 resize-none"
+            placeholder="Write a comment..."
+          />
 
-        <button
-          onClick={async () => {
-            if (!newComment.trim()) return; // don't post empty comments
-            try {
-              const res = await fetch("/api/comments", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  task_id: id,
-                  created_by: currentUser?.id ?? null,
-                  content: newComment,
-                }),
-              });
-              const data = await res.json();
-              if (!res.ok)
-                throw new Error(data?.error || "Failed to post comment");
+      <button
+        onClick={async () => {
+          if (!newComment.trim()) return; // don't post empty comments
+          try {
+            const res = await fetch("/api/comments", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                task_id: id,
+                created_by: currentUser?.id ?? null,
+                content: newComment
+              })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed to post comment");
 
-              setComments((prev) => [...prev, data]); // add the new comment to state
-              setNewComment(""); // clear textarea
-            } catch (err) {
-              console.error("Error posting comment:", err);
-              setCommentsError(err.message);
+                  setComments((prev) => [...prev, data]); // add the new comment to state
+                  setNewComment(""); // clear textarea
+                } catch (err) {
+                  console.error("Error posting comment:", err);
+                  setCommentsError(err.message);
             }
-          }}
-        >
-          Add Comment
-        </button>
+            }}
+            className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 rounded-lg shadow-md transition-all duration-200 self-start"
+          >
+            Add Comment
+          </button>
+        </div>
       </section>
 
       {showEditModal && (

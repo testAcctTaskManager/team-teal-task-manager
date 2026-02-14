@@ -110,13 +110,13 @@ describe("TaskDetail component", () => {
 
     cy.contains("No comments yet.").should("be.visible");
 
-    cy.get("textarea.comments-textbox").type("New comment from Cypress");
+    cy.get('[testid="comments-textbox"]').type("New comment from Cypress");
     cy.contains("button", "Add Comment").click();
 
     cy.wait("@postComment");
 
     cy.contains("New comment from Cypress").should("be.visible");
-    cy.get("textarea.comments-textbox").should("have.value", "");
+    cy.get('[testid="comments-textbox"]').should("have.value", "");
   });
 
   it("appends new comment to existing comments list", () => {
@@ -161,7 +161,7 @@ describe("TaskDetail component", () => {
 
     cy.contains("Existing comment").should("be.visible");
 
-    cy.get("textarea.comments-textbox").type("Second comment");
+    cy.get('[testid="comments-textbox"]').type("Second comment");
     cy.contains("button", "Add Comment").click();
 
     cy.wait("@postComment");
