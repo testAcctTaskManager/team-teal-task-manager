@@ -5,11 +5,11 @@
 PRAGMA foreign_keys = ON;
 
 -- Seed example users
-INSERT OR IGNORE INTO Users (id, display_name, email, timezone)
+INSERT OR IGNORE INTO Users (id, display_name, email, timezone, role)
 VALUES
-  (1, 'Alice Developer', 'alice@example.com', 'UTC'),
-  (2, 'Bob Tester', 'bob@example.com', 'UTC'),
-  (3, 'Carol Manager', 'carol@example.com', 'UTC');
+  (1, 'Alice Developer', 'alice@example.com', 'UTC', 'developer'),
+  (2, 'Bob Tester', 'bob@example.com', 'UTC', 'developer'),
+  (3, 'Carol Manager', 'carol@example.com', 'UTC', 'admin');
 
 -- Seed a demo project
 INSERT OR IGNORE INTO Projects (id, name, created_by)
