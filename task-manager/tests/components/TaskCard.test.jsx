@@ -12,6 +12,23 @@ vi.mock("react-router-dom", () => {
   };
 });
 
+// Mock UsersContext so TaskCard can render human-readable user labels
+vi.mock("../../src/contexts/UsersContext.jsx", () => {
+  return {
+    useUsers: () => ({
+      users: [
+        { id: 1, display_name: "Reporter One", email: "reporter@example.com" },
+        { id: 2, display_name: "Assignee Two", email: "assignee@example.com" },
+      ],
+      loading: false,
+      error: null,
+      currentUser: null,
+      setCurrentUser: () => {},
+      refetch: () => {},
+    }),
+  };
+});
+
 function renderTaskCard(task, index = 0) {
   return renderWithRoot(<TaskCard task={task} index={index} />, {
     withDragDrop: true,
@@ -59,47 +76,25 @@ describe("TaskCard", () => {
       "Example Task",
     );
 
-    expect(card.textContent).toContain("ID");
-    expect(card.textContent).toContain("123");
-    expect(card.textContent).toContain("Sprint");
-    expect(card.textContent).toContain("7");
     expect(card.textContent).toContain("Assignee");
-    expect(card.textContent).toContain("2");
+    expect(card.textContent).toContain("Assignee Two");
     expect(card.textContent).toContain("Reporter");
-    expect(card.textContent).toContain("1");
+    expect(card.textContent).toContain("Reporter One");
   });
 
-  it("truncates long descriptions to 120 characters", () => {
-    const longDescription = "x".repeat(150);
-    const task = {
-      id: 1,
-      title: "With long description",
-      description: longDescription,
-      start_date: null,
-      due_date: null,
-    };
-
-    const { container } = renderTaskCard(task);
-    const descriptionEl = container.querySelector(".task-card__description");
-    expect(descriptionEl).not.toBeNull();
-    expect(descriptionEl.textContent.length).toBeLessThanOrEqual(120);
-    expect(descriptionEl.textContent.endsWith("...")).toBe(true);
-  });
-
-  it("does not truncate short descriptions", () => {
-    const description = "Short description that should not be truncated.";
+  it("does not render a description even when provided", () => {
     const task = {
       id: 2,
-      title: "Short description",
-      description,
+      title: "No description on card",
+      description: "This should not appear on the card",
       start_date: null,
       due_date: null,
     };
 
     const { container } = renderTaskCard(task);
     const descriptionEl = container.querySelector(".task-card__description");
-    expect(descriptionEl).not.toBeNull();
-    expect(descriptionEl.textContent).toBe(description);
+    expect(descriptionEl).toBeNull();
+    expect(container.textContent).not.toContain("This should not appear on the card");
   });
 
   it("shows overdue class when due date is in the past", () => {

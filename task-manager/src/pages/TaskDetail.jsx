@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
+import TaskForm from "../components/TaskForm.jsx";
+import { useUsers } from "../contexts/UsersContext.jsx";
 import "./taskdetail.css";
 
 /**
@@ -34,6 +36,21 @@ export default function TaskDetail() {
   const [commentsError, setCommentsError] = useState(null);
   // Content of a new comment that is being written
   const [newComment, setNewComment] = useState("");
+  // Controls whether the edit modal is open
+  const [showEditModal, setShowEditModal] = useState(false);
+  // Columns used for the Status dropdown in the edit form
+  const [columnsForStatus, setColumnsForStatus] = useState([]);
+  // Project name for display
+  const [projectName, setProjectName] = useState(null);
+
+  const { users, currentUser } = useUsers();
+
+  function getUserLabel(userId) {
+    if (userId == null) return null;
+    const user = users.find((u) => u.id === Number(userId));
+    if (!user) return `User ${userId}`;
+    return user.display_name || user.email || `User ${user.id}`;
+  }
 
   useEffect(() => {
     async function loadTask() {
@@ -89,6 +106,37 @@ export default function TaskDetail() {
     loadComments();
   }, [id]);
 
+  // Load columns for the task's project so the Status dropdown
+  // in the TaskForm can show the available columns when editing.
+  useEffect(() => {
+    async function loadColumnsForProject(projectId) {
+      try {
+        const res = await fetch(`/api/columns?project_id=${projectId}`);
+        const data = await res.json().catch(() => null);
+        if (!Array.isArray(data) || data.error) {
+          console.error("API error loading columns for task detail", data);
+          setColumnsForStatus([]);
+        } else {
+          const columns = data.map((col) => ({
+            ...col,
+            title: col.name,
+            tasks: [],
+          }));
+          setColumnsForStatus(columns);
+        }
+      } catch (err) {
+        console.error("Fetch error loading columns for task detail", err);
+        setColumnsForStatus([]);
+      }
+    }
+
+    if (task && task.project_id != null) {
+      loadColumnsForProject(task.project_id);
+    } else {
+      setColumnsForStatus([]);
+    }
+  }, [task]);
+
 
   const {
     title,
@@ -99,6 +147,7 @@ export default function TaskDetail() {
     assignee_id,
     created_by,
     modified_by,
+    column_id,
     start_date,
     due_date,
     created_at,
@@ -107,6 +156,47 @@ export default function TaskDetail() {
 
   const isOverdue = isDateOverdue(due_date);
 
+  // Load the project name once the task (and its project_id) are available
+  useEffect(() => {
+    async function loadProjectName(projectId) {
+      try {
+        const res = await fetch(`/api/projects/${projectId}`);
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.error) {
+          console.error("API error loading project for task detail", data);
+          setProjectName(null);
+        } else {
+          setProjectName(data.name || null);
+        }
+      } catch (err) {
+        console.error("Fetch error loading project for task detail", err);
+        setProjectName(null);
+      }
+    }
+
+    if (task && task.project_id != null) {
+      loadProjectName(task.project_id);
+    } else {
+      setProjectName(null);
+    }
+  }, [task]);
+
+  let statusLabel = null;
+  if (task) {
+    if (column_id == null) {
+      statusLabel = "Backlog";
+    } else {
+      const matchingColumn = columnsForStatus.find(
+        (col) => Number(col.id) === Number(column_id),
+      );
+      if (matchingColumn) {
+        statusLabel = matchingColumn.name || matchingColumn.title || `Column ${column_id}`;
+      } else {
+        statusLabel = `Column ${column_id}`;
+      }
+    }
+  }
+
   return (
     <div className="task-detail-page">
 
@@ -114,6 +204,10 @@ export default function TaskDetail() {
       {error && <p>{error}</p>}
 
       <h1>{title || `Task ${id}`}</h1>
+
+      <button type="button" onClick={() => setShowEditModal(true)}>
+        Edit Task
+      </button>
 
       {description && <p>{description}</p>}
 
@@ -124,7 +218,14 @@ export default function TaskDetail() {
           {project_id != null && (
             <div>
               <dt>Project</dt>
-              <dd>{project_id}</dd>
+              <dd>{projectName || project_id}</dd>
+            </div>
+          )}
+
+          {statusLabel && (
+            <div>
+              <dt>Status</dt>
+              <dd>{statusLabel}</dd>
             </div>
           )}
           {sprint_id != null && (
@@ -138,13 +239,13 @@ export default function TaskDetail() {
           {assignee_id != null && (
             <div>
               <dt>Assignee</dt>
-              <dd>{assignee_id}</dd>
+              <dd>{getUserLabel(assignee_id)}</dd>
             </div>
           )}
           {reporter_id != null && (
             <div>
               <dt>Reporter</dt>
-              <dd>{reporter_id}</dd>
+              <dd>{getUserLabel(reporter_id)}</dd>
             </div>
           )}
         </dl>
@@ -183,13 +284,13 @@ export default function TaskDetail() {
           {created_by != null && (
             <div>
               <dt>Created by</dt>
-              <dd>{created_by}</dd>
+              <dd>{getUserLabel(created_by)}</dd>
             </div>
           )}
           {modified_by != null && (
             <div>
               <dt>Last modified by</dt>
-              <dd>{modified_by}</dd>
+              <dd>{getUserLabel(modified_by)}</dd>
             </div>
           )}
         </dl>
@@ -227,8 +328,8 @@ export default function TaskDetail() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                task_id: id,       
-                created_by: 1,     // TODO: replace this with current user when we add user data
+                task_id: id,
+                created_by: currentUser?.id ?? null,
                 content: newComment
               })
             });
@@ -246,6 +347,21 @@ export default function TaskDetail() {
           Add Comment
         </button>
       </section>
+
+      {showEditModal && (
+        <TaskForm
+          taskId={id}
+          projectId={project_id != null ? project_id : null}
+          columnsForStatus={columnsForStatus}
+          onSuccess={(updatedTask) => {
+            if (updatedTask) {
+              setTask(updatedTask);
+            }
+            setShowEditModal(false);
+          }}
+          onCancel={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 }

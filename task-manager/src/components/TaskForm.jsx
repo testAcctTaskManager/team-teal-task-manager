@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useUsers } from "../contexts/UsersContext.jsx";
 import "./taskform.css";
 
 /**
@@ -45,18 +46,26 @@ const EMPTY_FORM = {
   assignee_id: "",
   start_date: "",
   due_date: "",
+  // column_id is handled via the Status dropdown; empty string / null means Backlog
+  column_id: "",
 };
 
 export default function TaskForm({
   taskId = null,
-  projectId = null,
-  createdBy = null,
-  modifiedBy = null,
-  columnId = 1,
+  projectId = null, //TODO: auto-populate this depending on where button is clicked
+  // Optional starting column when launching from a specific column; null means Backlog
+  columnId = null,
+  // List of columns for the current project board, used to populate the Status dropdown
+  columnsForStatus = [],
   onSuccess,
   onCancel,
 }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+  const { users, loading: usersLoading, error: usersError, currentUser } = useUsers();
+  // Start with an empty form; the optional columnId prop will be applied
+  // as the default Status via an effect in create mode.
+  const [form, setForm] = useState(() => ({
+    ...EMPTY_FORM,
+  }));
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
@@ -95,6 +104,8 @@ export default function TaskForm({
           console.error("API error loading task for edit", data);
           setLoadError("Unable to load task for editing.");
         } else {
+          // Merge the existing task into the EMPTY_FORM; if the task has a column_id,
+          // it will pre-populate the Status dropdown, otherwise it will be treated as Backlog.
           setForm({
             ...EMPTY_FORM,
             ...data,
@@ -110,6 +121,30 @@ export default function TaskForm({
 
     loadExistingTask();
   }, [taskId]);
+
+  // When creating (no taskId), keep the Status dropdown in sync with the
+  // optional columnId prop:
+  // - If columnId is provided, default to that column.
+  // - If not, default to Backlog (empty string / no column).
+  useEffect(() => {
+    if (taskId) return; // edit mode owned by loaded task data
+    setForm((prev) => ({
+      ...prev,
+      column_id: columnId != null ? String(columnId) : "",
+    }));
+  }, [columnId, taskId]);
+
+  // When creating a new task and once a current user is available,
+  // default the reporter (and optionally assignee) to that user if
+  // they haven't already been set.
+  useEffect(() => {
+    if (taskId || !currentUser) return; // only apply in create mode
+    setForm((prev) => ({
+      ...prev,
+      reporter_id: prev.reporter_id || String(currentUser.id),
+      assignee_id: prev.assignee_id || String(currentUser.id),
+    }));
+  }, [taskId, currentUser]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -156,18 +191,22 @@ export default function TaskForm({
     if (projectId != null) {
       payload.project_id = projectId;
     }
-    if (createdBy != null) {
-      payload.created_by = createdBy;
-    }
-    if (modifiedBy != null) {
-      payload.modified_by = modifiedBy;
-    }
-    if (columnId != null && taskId == null) {
-      payload.column_id = columnId;
+
+    // Status / column handling:
+    // - Backlog: no column_id sent (form.column_id is "" or falsy)
+    // - Specific column: include its id so the Tasks API can position it
+    if (form.column_id) {
+      payload.column_id = Number(form.column_id);
     }
 
     try {
       const isEdit = taskId != null;
+
+      // Use currentUser for auditing fields.
+      if (!isEdit) {
+        payload.created_by = currentUser?.id ?? null;
+      }
+      payload.modified_by = currentUser?.id ?? null;
       let data = null;
       let message = isEdit ? "Task updated." : "Task created.";
 
@@ -190,7 +229,12 @@ export default function TaskForm({
       }
 
       if (!isEdit) {
-        setForm(EMPTY_FORM);
+        // After creating, reset the form but keep the same default Status
+        // behavior: Backlog when no columnId, or the provided columnId when set.
+        setForm({
+          ...EMPTY_FORM,
+          column_id: columnId != null ? String(columnId) : "",
+        });
       }
 
       setSubmitMessage(message);
@@ -263,25 +307,58 @@ export default function TaskForm({
               />
             </label>
 
-            {/* TODO In a perfect world, these would be searchable Select dropdowns with all eligible users */}
             <label>
-              Reporter ID
-              <input
-                type="number"
+              Reporter
+              {usersLoading && <div>Loading users…</div>}
+              {usersError && <div style={{ color: "red" }}>{usersError}</div>}
+              <select
+                id="reporter_id"
                 name="reporter_id"
                 value={form.reporter_id}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Select a user</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.display_name || u.email || `User ${u.id}`}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label>
-              Assignee ID
-              <input
-                type="number"
+              Assignee
+              {usersLoading && <div>Loading users…</div>}
+              {usersError && <div style={{ color: "red" }}>{usersError}</div>}
+              <select
+                id="assignee_id"
                 name="assignee_id"
                 value={form.assignee_id}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Select a user</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.display_name || u.email || `User ${u.id}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Status
+              <select
+                name="column_id"
+                value={form.column_id}
+                onChange={handleChange}
+              >
+                <option value="">Backlog</option>
+                {columnsForStatus.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {col.title || col.name || `Column ${col.id}`}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label>

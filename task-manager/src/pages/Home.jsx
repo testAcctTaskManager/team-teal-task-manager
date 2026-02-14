@@ -91,6 +91,7 @@ export default function Home({ projectId }) {
             projectId={projectId}
             createdBy={1}
             modifiedBy={1}
+            columnsForStatus={columns}
             onSuccess={handleCreated}
             onCancel={closeModal}
           />

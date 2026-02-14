@@ -75,7 +75,9 @@ describe("TaskDetail (Vitest)", () => {
   it("does not post empty comments", async () => {
     const { container } = renderTaskDetail(`/task/${taskId}`);
 
-    const addButton = container.querySelector("button");
+    const addButton = Array.from(container.querySelectorAll("button")).find(
+      (btn) => btn.textContent && btn.textContent.includes("Add Comment"),
+    );
     expect(addButton).not.toBeNull();
 
     await click(addButton);
@@ -91,7 +93,9 @@ describe("TaskDetail (Vitest)", () => {
     const { container } = renderTaskDetail(`/task/${taskId}`);
 
     const textarea = container.querySelector("textarea.comments-textbox");
-    const addButton = container.querySelector("button");
+    const addButton = Array.from(container.querySelectorAll("button")).find(
+      (btn) => btn.textContent && btn.textContent.includes("Add Comment"),
+    );
 
     expect(textarea).not.toBeNull();
     expect(addButton).not.toBeNull();
