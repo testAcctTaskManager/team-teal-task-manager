@@ -33,7 +33,7 @@ export default function TimeZone({ user }) {
   return (
     <div>
       {user && (
-        <div className="text-sm">
+        <div>
           Time: {otherFormatted ? otherFormatted : "No time zone found"}
         </div>
       )}

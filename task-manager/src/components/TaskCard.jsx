@@ -22,7 +22,7 @@ function UserWithTime({ userId, user, users }) {
   };
 
   return (
-    <dd className="relative">
+    <dd>
       <span
         onMouseEnter={() => setShowUserWithTime(true)}
         onMouseLeave={() => setShowUserWithTime(false)}
@@ -30,7 +30,7 @@ function UserWithTime({ userId, user, users }) {
         {getUserLabel(userId)}
       </span>
       {showUserWithTime && (
-        <div className="absolute z-[9999] bg-black/85 text-white rounded px-2 py-2 shadow-lg flex flex-col">
+        <div>
           <TimeZone user={user} />
         </div>
       )}
