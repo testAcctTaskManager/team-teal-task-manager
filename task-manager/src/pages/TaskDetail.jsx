@@ -2,8 +2,36 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
 import TaskForm from "../components/TaskForm.jsx";
+import TimeZone from "../components/TimeZone.jsx";
 import { useUsers } from "../contexts/UsersContext.jsx";
 import "./taskdetail.css";
+
+/**
+ * UserWithTime
+ * 
+ * Shows user label with time
+ */
+function UserWithTime({ userId, users }) {
+  const getUserLabel = (id) => {
+    if (id == null) return null;
+    const user = users.find((u) => u.id === Number(id));
+    if (!user) return `User ${id}`;
+    return user.display_name || user.email || `User ${user.id}`;
+  };
+
+  const user = users.find((u) => u.id === Number(userId));
+
+  return (
+    <dd>
+      {getUserLabel(userId)}
+      {user && (
+        <div>
+          <TimeZone user={user} />
+        </div>
+      )}
+    </dd>
+  );
+}
 
 /**
  * TaskDetail
@@ -239,13 +267,13 @@ export default function TaskDetail() {
           {assignee_id != null && (
             <div>
               <dt>Assignee</dt>
-              <dd>{getUserLabel(assignee_id)}</dd>
+              <UserWithTime userId={assignee_id} users={users} />
             </div>
           )}
           {reporter_id != null && (
             <div>
               <dt>Reporter</dt>
-              <dd>{getUserLabel(reporter_id)}</dd>
+              <UserWithTime userId={reporter_id} users={users} />
             </div>
           )}
         </dl>
@@ -284,13 +312,13 @@ export default function TaskDetail() {
           {created_by != null && (
             <div>
               <dt>Created by</dt>
-              <dd>{getUserLabel(created_by)}</dd>
+              <UserWithTime userId={created_by} users={users} />
             </div>
           )}
           {modified_by != null && (
             <div>
-              <dt>Last modified by</dt>
-              <dd>{getUserLabel(modified_by)}</dd>
+              <dt>Modified By</dt>
+              <UserWithTime userId={modified_by} users={users} />
             </div>
           )}
         </dl>

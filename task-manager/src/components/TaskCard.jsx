@@ -6,6 +6,37 @@ import { Draggable } from "@hello-pangea/dnd";
 import { useUsers } from "../contexts/UsersContext.jsx";
 import TimeZone from "./TimeZone.jsx";
 
+/**
+ * UserWithTime
+ * 
+ * Display user label with timezone
+ */
+function UserWithTime({ userId, user, users }) {
+  const [showUserWithTime, setShowUserWithTime] = useState(false);
+
+  const getUserLabel = (id) => {
+    if (id == null) return null;
+    const u = users.find((u) => u.id === Number(id));
+    if (!u) return `User ${id}`;
+    return u.display_name || u.email || `User ${u.id}`;
+  };
+
+  return (
+    <dd className="relative">
+      <span
+        onMouseEnter={() => setShowUserWithTime(true)}
+        onMouseLeave={() => setShowUserWithTime(false)}
+      >
+        {getUserLabel(userId)}
+      </span>
+      {showUserWithTime && (
+        <div className="absolute z-[9999] bg-black/85 text-white rounded px-2 py-2 shadow-lg flex flex-col">
+          <TimeZone user={user} />
+        </div>
+      )}
+    </dd>
+  );
+}
 
 /**
  * TaskCard
@@ -18,10 +49,7 @@ import TimeZone from "./TimeZone.jsx";
  */
 export default function TaskCard({ task, index }) {
   const navigate = useNavigate();
-
   const { users } = useUsers();
-  const [showAssigneeTime, setShowAssigneeTime] = useState(false);
-  const [showReporterTime, setShowReporterTime] = useState(false);
 
   if (!task || task.id == null) {
     return null;
@@ -40,13 +68,6 @@ export default function TaskCard({ task, index }) {
 
   const assigneeUser = assignee_id != null ? users.find((u) => u.id === Number(assignee_id)) : null;
   const reporterUser = reporter_id != null ? users.find((u) => u.id === Number(reporter_id)) : null;
-
-  function getUserLabel(userId) {
-    if (userId == null) return null;
-    const user = users.find((u) => u.id === Number(userId));
-    if (!user) return `User ${userId}`;
-    return user.display_name || user.email || `User ${user.id}`;
-  }
 
   return (
     <Draggable draggableId={String(id)} index={index}> 
@@ -74,37 +95,13 @@ export default function TaskCard({ task, index }) {
         {assignee_id != null && (
           <div>
             <dt>Assignee</dt>
-            <dd className="relative">
-              <span
-                onMouseEnter={() => setShowAssigneeTime(true)}
-                onMouseLeave={() => setShowAssigneeTime(false)}
-              >
-                {getUserLabel(assignee_id)}
-              </span>
-              {showAssigneeTime && (
-                <div>
-                  <TimeZone user={assigneeUser} />
-                </div>
-              )}
-            </dd>
+            <UserWithTime userId={assignee_id} user={assigneeUser} users={users} />
           </div>
         )}
         {reporter_id != null && (
           <div>
             <dt>Reporter</dt>
-            <dd className="relative">
-              <span
-                onMouseEnter={() => setShowReporterTime(true)}
-                onMouseLeave={() => setShowReporterTime(false)}
-              >
-                {getUserLabel(reporter_id)}
-              </span>
-              {showReporterTime && (
-                <div>
-                  <TimeZone user={reporterUser} />
-                </div>
-              )}
-            </dd>
+            <UserWithTime userId={reporter_id} user={reporterUser} users={users} />
           </div>
         )}
         <div className="task-card__dates-row">
