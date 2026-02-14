@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import "./taskcard.css";
 import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
 import { Draggable } from "@hello-pangea/dnd";
+import { useUsers } from "../contexts/UsersContext.jsx";
 
 
 /**
@@ -16,6 +17,8 @@ import { Draggable } from "@hello-pangea/dnd";
 export default function TaskCard({ task, index }) {
   const navigate = useNavigate();
 
+  const { users } = useUsers();
+
   if (!task || task.id == null) {
     return null;
   }
@@ -23,8 +26,6 @@ export default function TaskCard({ task, index }) {
   const {
     id,
     title,
-    description,
-    sprint_id,
     reporter_id,
     assignee_id,
     start_date,
@@ -32,6 +33,13 @@ export default function TaskCard({ task, index }) {
   } = task;
 
   const isOverdue = isDateOverdue(due_date);
+
+  function getUserLabel(userId) {
+    if (userId == null) return null;
+    const user = users.find((u) => u.id === Number(userId));
+    if (!user) return `User ${userId}`;
+    return user.display_name || user.email || `User ${user.id}`;
+  }
 
   return (
     <Draggable draggableId={String(id)} index={index}> 
@@ -55,46 +63,30 @@ export default function TaskCard({ task, index }) {
         <h3 className="task-card__title">{title}</h3>
       </div>
 
-      {description && (
-        <p className="task-card__description">
-          {description.length > 120
-            ? `${description.slice(0, 117)}...`
-            : description}
-        </p>
-      )}
-
       <dl className="task-card__meta">
-        <div>
-          <dt>ID</dt>
-          <dd>{id}</dd>
-        </div>
-        {sprint_id != null && (
-          <div>
-            <dt>Sprint</dt>
-            <dd>{sprint_id}</dd>
-          </div>
-        )}
         {assignee_id != null && (
           <div>
             <dt>Assignee</dt>
-            <dd>{assignee_id}</dd>
+            <dd>{getUserLabel(assignee_id)}</dd>
           </div>
         )}
         {reporter_id != null && (
           <div>
             <dt>Reporter</dt>
-            <dd>{reporter_id}</dd>
+            <dd>{getUserLabel(reporter_id)}</dd>
           </div>
         )}
-        <div>
-          <dt>Start</dt>
-          <dd>{formatDate(start_date)}</dd>
-        </div>
-        <div>
-          <dt>Due</dt>
-          <dd className={isOverdue ? "task-card__due task-card__overdue" : "task-card__due"}>
-            {formatDate(due_date)}
-          </dd>
+        <div className="task-card__dates-row">
+          <div>
+            <dt>Start</dt>
+            <dd>{formatDate(start_date)}</dd>
+          </div>
+          <div>
+            <dt>Due</dt>
+            <dd className={isOverdue ? "task-card__due task-card__overdue" : "task-card__due"}>
+              {formatDate(due_date)}
+            </dd>
+          </div>
         </div>
       </dl>
     </div>
