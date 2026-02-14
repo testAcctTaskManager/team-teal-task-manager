@@ -12,11 +12,9 @@
 		"test:ct": "cypress run --component --config-file cypress.config.mjs",
 		"build": "vite build",
 		"lint": "eslint .",
-
 		"dev:vite": "vite",
 		"preview": "npm run build && wrangler pages dev",
 		"deploy": "npm run build && wrangler pages deploy",
-
 		"cf-typegen": "wrangler types",
 		"cf:migrate:test": "npx wrangler d1 migrations apply cf_db --remote",
 		"cf:migrate:prod": "npx wrangler d1 migrations apply cf_db --remote --env production",
@@ -31,13 +29,14 @@
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1",
 		"react-router-dom": "^7.12.0"
-
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.33.0",
+		"@testing-library/react": "^16.3.2",
 		"@types/react": "^19.1.10",
 		"@types/react-dom": "^19.1.7",
 		"@vitejs/plugin-react": "^5.0.0",
+		"@vitest/coverage-v8": "^4.0.18",
 		"cypress": "^15.9.0",
 		"eslint": "^9.33.0",
 		"eslint-plugin-react-hooks": "^5.2.0",
