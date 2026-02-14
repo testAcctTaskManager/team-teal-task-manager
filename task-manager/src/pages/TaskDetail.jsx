@@ -8,7 +8,7 @@ import "./taskdetail.css";
 
 /**
  * UserWithTime
- * 
+ *
  * Shows user label with time
  */
 function UserWithTime({ userId, users }) {
@@ -72,13 +72,6 @@ export default function TaskDetail() {
   const [projectName, setProjectName] = useState(null);
 
   const { users, currentUser } = useUsers();
-
-  function getUserLabel(userId) {
-    if (userId == null) return null;
-    const user = users.find((u) => u.id === Number(userId));
-    if (!user) return `User ${userId}`;
-    return user.display_name || user.email || `User ${user.id}`;
-  }
 
   useEffect(() => {
     async function loadTask() {
@@ -165,7 +158,6 @@ export default function TaskDetail() {
     }
   }, [task]);
 
-
   const {
     title,
     description,
@@ -218,7 +210,8 @@ export default function TaskDetail() {
         (col) => Number(col.id) === Number(column_id),
       );
       if (matchingColumn) {
-        statusLabel = matchingColumn.name || matchingColumn.title || `Column ${column_id}`;
+        statusLabel =
+          matchingColumn.name || matchingColumn.title || `Column ${column_id}`;
       } else {
         statusLabel = `Column ${column_id}`;
       }
@@ -227,7 +220,6 @@ export default function TaskDetail() {
 
   return (
     <div className="task-detail-page">
-
       {loading && <p>Loading task details…</p>}
       {error && <p>{error}</p>}
 
@@ -288,7 +280,13 @@ export default function TaskDetail() {
           </div>
           <div>
             <dt>Due</dt>
-            <dd className={isOverdue ? "task-detail__due task-detail__overdue" : "task-detail__due"}>
+            <dd
+              className={
+                isOverdue
+                  ? "task-detail__due task-detail__overdue"
+                  : "task-detail__due"
+              }
+            >
               {formatDate(due_date)}
             </dd>
           </div>
@@ -325,51 +323,52 @@ export default function TaskDetail() {
       </section>
 
       <section className="task-detail-section">
-          <h2>Comments</h2>
-          {commentsError && <p>{commentsError}</p>}
-          {commentsLoading && <p>Loading comments…</p>}
-          {comments.length === 0 && !commentsLoading && <p>No comments yet.</p>}
+        <h2>Comments</h2>
+        {commentsError && <p>{commentsError}</p>}
+        {commentsLoading && <p>Loading comments…</p>}
+        {comments.length === 0 && !commentsLoading && <p>No comments yet.</p>}
 
-          <ul className="comments-list">
-            {comments.map((c) => (
-              <li key={c.id}>
-                <p>{c.content}</p>
-                <small>
-                  {c.created_by} {formatDate(c.created_at)}
-                </small>
-              </li>
-            ))}
-          </ul>
+        <ul className="comments-list">
+          {comments.map((c) => (
+            <li key={c.id}>
+              <p>{c.content}</p>
+              <small>
+                {c.created_by} {formatDate(c.created_at)}
+              </small>
+            </li>
+          ))}
+        </ul>
 
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            rows={3}
-            className="comments-textbox"
-          />
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          rows={3}
+          className="comments-textbox"
+        />
 
-      <button
-        onClick={async () => {
-          if (!newComment.trim()) return; // don't post empty comments
-          try {
-            const res = await fetch("/api/comments", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                task_id: id,
-                created_by: currentUser?.id ?? null,
-                content: newComment
-              })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Failed to post comment");
+        <button
+          onClick={async () => {
+            if (!newComment.trim()) return; // don't post empty comments
+            try {
+              const res = await fetch("/api/comments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  task_id: id,
+                  created_by: currentUser?.id ?? null,
+                  content: newComment,
+                }),
+              });
+              const data = await res.json();
+              if (!res.ok)
+                throw new Error(data?.error || "Failed to post comment");
 
-            setComments((prev) => [...prev, data]); // add the new comment to state
-            setNewComment(""); // clear textarea
-          } catch (err) {
-            console.error("Error posting comment:", err);
-            setCommentsError(err.message);
-              }
+              setComments((prev) => [...prev, data]); // add the new comment to state
+              setNewComment(""); // clear textarea
+            } catch (err) {
+              console.error("Error posting comment:", err);
+              setCommentsError(err.message);
+            }
           }}
         >
           Add Comment

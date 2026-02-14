@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 
 export default function TimeZone({ user }) {
-
   // Track current time
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -26,7 +25,10 @@ export default function TimeZone({ user }) {
     return new Intl.DateTimeFormat(undefined, options).format(date);
   };
 
-  const otherFormatted = user && user.timezone ? formatDateAndTime(currentTime, user.timezone) : null;
+  const otherFormatted =
+    user && user.timezone
+      ? formatDateAndTime(currentTime, user.timezone)
+      : null;
 
   return (
     <div>

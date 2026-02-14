@@ -8,7 +8,7 @@ import TimeZone from "./TimeZone.jsx";
 
 /**
  * UserWithTime
- * 
+ *
  * Display user label with timezone
  */
 function UserWithTime({ userId, user, users }) {
@@ -55,70 +55,83 @@ export default function TaskCard({ task, index }) {
     return null;
   }
 
-  const {
-    id,
-    title,
-    reporter_id,
-    assignee_id,
-    start_date,
-    due_date,
-  } = task;
+  const { id, title, reporter_id, assignee_id, start_date, due_date } = task;
 
   const isOverdue = isDateOverdue(due_date);
 
-  const assigneeUser = assignee_id != null ? users.find((u) => u.id === Number(assignee_id)) : null;
-  const reporterUser = reporter_id != null ? users.find((u) => u.id === Number(reporter_id)) : null;
+  const assigneeUser =
+    assignee_id != null
+      ? users.find((u) => u.id === Number(assignee_id))
+      : null;
+  const reporterUser =
+    reporter_id != null
+      ? users.find((u) => u.id === Number(reporter_id))
+      : null;
 
   return (
-    <Draggable draggableId={String(id)} index={index}> 
+    <Draggable draggableId={String(id)} index={index}>
       {(provided) => (
-    <div
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
-      className="task-card"
-      onClick={() => navigate(`/task/${id}`)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          navigate(`/task/${id}`);
-        }
-      }}
-    >
-      <div className="task-card__header">
-        <h3 className="task-card__title">{title}</h3>
-      </div>
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className="task-card"
+          onClick={() => navigate(`/task/${id}`)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate(`/task/${id}`);
+            }
+          }}
+        >
+          <div className="task-card__header">
+            <h3 className="task-card__title">{title}</h3>
+          </div>
 
-      <dl className="task-card__meta">
-        {assignee_id != null && (
-          <div>
-            <dt>Assignee</dt>
-            <UserWithTime userId={assignee_id} user={assigneeUser} users={users} />
-          </div>
-        )}
-        {reporter_id != null && (
-          <div>
-            <dt>Reporter</dt>
-            <UserWithTime userId={reporter_id} user={reporterUser} users={users} />
-          </div>
-        )}
-        <div className="task-card__dates-row">
-          <div>
-            <dt>Start</dt>
-            <dd>{formatDate(start_date)}</dd>
-          </div>
-          <div>
-            <dt>Due</dt>
-            <dd className={isOverdue ? "task-card__due task-card__overdue" : "task-card__due"}>
-              {formatDate(due_date)}
-            </dd>
-          </div>
+          <dl className="task-card__meta">
+            {assignee_id != null && (
+              <div>
+                <dt>Assignee</dt>
+                <UserWithTime
+                  userId={assignee_id}
+                  user={assigneeUser}
+                  users={users}
+                />
+              </div>
+            )}
+            {reporter_id != null && (
+              <div>
+                <dt>Reporter</dt>
+                <UserWithTime
+                  userId={reporter_id}
+                  user={reporterUser}
+                  users={users}
+                />
+              </div>
+            )}
+            <div className="task-card__dates-row">
+              <div>
+                <dt>Start</dt>
+                <dd>{formatDate(start_date)}</dd>
+              </div>
+              <div>
+                <dt>Due</dt>
+                <dd
+                  className={
+                    isOverdue
+                      ? "task-card__due task-card__overdue"
+                      : "task-card__due"
+                  }
+                >
+                  {formatDate(due_date)}
+                </dd>
+              </div>
+            </div>
+          </dl>
         </div>
-      </dl>
-    </div>
-    )}
+      )}
     </Draggable>
   );
 }
