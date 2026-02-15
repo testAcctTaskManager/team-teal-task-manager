@@ -29,23 +29,6 @@ vi.mock("../../src/contexts/UsersContext.jsx", () => {
   };
 });
 
-// Mock UsersContext so TaskCard can render human-readable user labels
-vi.mock("../../src/contexts/UsersContext.jsx", () => {
-  return {
-    useUsers: () => ({
-      users: [
-        { id: 1, display_name: "Reporter One", email: "reporter@example.com" },
-        { id: 2, display_name: "Assignee Two", email: "assignee@example.com" },
-      ],
-      loading: false,
-      error: null,
-      currentUser: null,
-      setCurrentUser: () => {},
-      refetch: () => {},
-    }),
-  };
-});
-
 function renderTaskCard(task, index = 0) {
   return renderWithRoot(<TaskCard task={task} index={index} />, {
     withDragDrop: true,
@@ -66,10 +49,10 @@ describe("TaskCard", () => {
 
   it("returns null when task or task.id is missing", () => {
     const { container } = renderTaskCard(null);
-    expect(container.querySelector(".task-card")).toBeNull();
+    expect(container.querySelector('[data-testid="task-card"]')).toBeNull();
 
     const { container: container2 } = renderTaskCard({});
-    expect(container2.querySelector(".task-card")).toBeNull();
+    expect(container2.querySelector('[data-testid="task-card"]')).toBeNull();
   });
 
   it("renders basic task information", () => {
@@ -86,21 +69,16 @@ describe("TaskCard", () => {
 
     const { container } = renderTaskCard(task);
 
-    const card = container.querySelector('[testid="task-card"]');
+    const card = container.querySelector('[data-testid="task-card"]');
     expect(card).not.toBeNull();
 
-    expect(card.querySelector('[testid="task-card__title"]').textContent).toContain(
+    expect(card.querySelector('[data-testid="task-card__title"]').textContent).toContain(
       "Example Task",
     );
 
     expect(card.textContent).toContain("Assignee");
     expect(card.textContent).toContain("Assignee Two");
-    expect(card.textContent).toContain("Assignee Two");
     expect(card.textContent).toContain("Reporter");
-    expect(card.textContent).toContain("Reporter One");
-  });
-
-  it("does not render a description even when provided", () => {
     expect(card.textContent).toContain("Reporter One");
   });
 
@@ -109,14 +87,12 @@ describe("TaskCard", () => {
       id: 2,
       title: "No description on card",
       description: "This should not appear on the card",
-      title: "No description on card",
-      description: "This should not appear on the card",
       start_date: null,
       due_date: null,
     };
 
     const { container } = renderTaskCard(task);
-    const descriptionEl = container.querySelector('[testid="task-card__description"]');
+    const descriptionEl = container.querySelector('[data-testid="task-card__description"]');
     expect(descriptionEl).toBeNull();
     expect(container.textContent).not.toContain("This should not appear on the card");
   });
@@ -132,9 +108,9 @@ describe("TaskCard", () => {
     };
 
     const { container } = renderTaskCard(task);
-    const dueEl = container.querySelector('[testid="task-card-due"]');
+    const dueEl = container.querySelector('[data-testid="task-card-due"]');
     expect(dueEl).not.toBeNull();
-    expect(dueEl.className).toContain("m-0 text-[#ff6b6b]");
+    expect(dueEl.className).toContain("text-[#ff6b6b]");
   });
 
   it("does not mark future due dates as overdue", () => {
@@ -147,9 +123,9 @@ describe("TaskCard", () => {
     };
 
     const { container } = renderTaskCard(task);
-    const dueEl = container.querySelector(".task-card__due");
+    const dueEl = container.querySelector('[data-testid="task-card-due"]');
     if (dueEl) {
-      expect(dueEl.className).not.toContain("task-card__overdue");
+      expect(dueEl.className).not.toContain("text-[#ff6b6b]");
     }
   });
 
@@ -163,7 +139,7 @@ describe("TaskCard", () => {
     };
 
     const { container } = renderTaskCard(task);
-    const card = container.querySelector('[testid="task-card"]');
+    const card = container.querySelector('[data-testid="task-card"]');
     expect(card).not.toBeNull();
 
     await click(card);

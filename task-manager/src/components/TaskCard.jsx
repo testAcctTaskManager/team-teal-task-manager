@@ -47,7 +47,6 @@ function UserWithTime({ userId, user, users }) {
 export default function TaskCard({ task, index }) {
   const navigate = useNavigate();
   const { users } = useUsers();
-  const { users } = useUsers();
 
   if (!task || task.id == null) {
     return null;
@@ -74,7 +73,7 @@ export default function TaskCard({ task, index }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className="px-4 py-3.5 my-2 rounded-[10px] bg-white/[0.04] shadow-[0_4px_10px_rgba(0,0,0,0.3)] cursor-pointer text-left"
-          testid="task-card"
+          data-testid="task-card"
           onClick={() => navigate(`/task/${id}`)}
           role="button"
           tabIndex={0}
@@ -86,22 +85,12 @@ export default function TaskCard({ task, index }) {
           }}
         >
           <div className="flex justify-between items-center mb-[0.4rem]">
-            <h3 className="m-0 text-base" testid="task-card__title">
+            <h3 className="m-0 text-base" data-testid="task-card__title">
               {title}
             </h3>
           </div>
 
           <dl className="flex flex-wrap gap-x-[1.2rem] gap-y-[0.6rem] m-0 p-0 text-xs">
-            <div className="flex gap-1 text-[0.6rem]">
-              <dt className="opacity-70">ID</dt>
-              <dd className="m-0">{id}</dd>
-            </div>
-            {sprint_id != null && (
-              <div className="flex gap-1 text-[0.6rem]">
-                <dt className="opacity-70">Sprint</dt>
-                <dd className="m-0">{sprint_id}</dd>
-              </div>
-            )}
             {assignee_id != null && (
               <div className="flex gap-1 text-[0.6rem]">
                 <dt className="opacity-70">Assignee</dt>
@@ -130,7 +119,7 @@ export default function TaskCard({ task, index }) {
               <dt className="opacity-70">Due</dt>
               <dd
                 className={`m-0 ${isOverdue ? "text-[#ff6b6b]" : ""}`}
-                testid="task-card-due"
+                data-testid="task-card-due"
               >
                 {formatDate(due_date)}
               </dd>

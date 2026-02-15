@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./taskform.css";
+import { useUsers } from "../contexts/UsersContext.jsx";
 
 /**
  * TaskForm
@@ -325,42 +325,62 @@ export default function TaskForm({
                 />
               </label>
 
-            {/* TODO In a perfect world, these would be searchable Select dropdowns with all eligible users */}
-            <label>
-              Reporter ID
-              <input
-                type="number"
-                name="reporter_id"
-                value={form.reporter_id}
-                onChange={handleChange}
-              />
-            </label>
+              <label className="flex flex-col">
+                <span className="text-white/80 text-sm mb-1.5">Reporter</span>
+                {usersLoading && <div className="text-white/60 text-xs">Loading users…</div>}
+                {usersError && <div className="text-red-400 text-xs">{usersError}</div>}
+                <select
+                  id="reporter_id"
+                  name="reporter_id"
+                  value={form.reporter_id}
+                  onChange={handleChange}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                >
+                  <option value="">Select a user</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.display_name || u.email || `User ${u.id}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Assignee ID
-              <input
-                type="number"
-                name="assignee_id"
-                value={form.assignee_id}
-                onChange={handleChange}
-              />
-            </label>
+              <label className="flex flex-col">
+                <span className="text-white/80 text-sm mb-1.5">Assignee</span>
+                {usersLoading && <div className="text-white/60 text-xs">Loading users…</div>}
+                {usersError && <div className="text-red-400 text-xs">{usersError}</div>}
+                <select
+                  id="assignee_id"
+                  name="assignee_id"
+                  value={form.assignee_id}
+                  onChange={handleChange}
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                >
+                  <option value="">Select a user</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.display_name || u.email || `User ${u.id}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Status
-              <select
-                name="column_id"
-                value={form.column_id}
-                onChange={handleChange}
-              >
-                <option value="">Backlog</option>
-                {columnsForStatus.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.title || col.name || `Column ${col.id}`}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="flex flex-col">
+                <span className="text-white/80 text-sm mb-1.5">Status</span>
+                <select
+                  name="column_id"
+                  value={form.column_id}
+                  onChange={handleChange}
+                  className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                >
+                  <option value="">Backlog</option>
+                  {columnsForStatus.map((col) => (
+                    <option key={col.id} value={col.id}>
+                      {col.title || col.name || `Column ${col.id}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
               <label className="flex flex-col">
                 <span className="text-white/80 text-sm mb-1.5">Start Date</span>
