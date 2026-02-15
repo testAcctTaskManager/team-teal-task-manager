@@ -7,7 +7,7 @@ describe("Kanban component", () => {
     it("renders empty when there are no columns", () => {
         const columns = [];
         cy.mount(<Kanban columns={columns}/>);
-        cy.get("body").contains("No Columns").should("be.visible");
+        cy.get("p").contains("No Columns").should("be.visible");
     });
 
     it("renders all five columns", () => {
@@ -22,7 +22,7 @@ describe("Kanban component", () => {
     });
 
     it("shows tasks in the correct column", () => {
-         mountKanban();
+        mountKanban();
          
         cy.contains("To Do").parent().within(() => {
             cy.contains("Set up project").should("exist");
