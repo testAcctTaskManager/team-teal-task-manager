@@ -51,12 +51,12 @@ VALUES
   (1, 1, 1, 1, 1, 2, 1, 2, 'Set up project', 'Initialize repo, CI and migrations', '2026-01-02', '2026-01-04', 0),
   (2, 1, 1, 1, 2, 2, 2, 2, 'Create tasks endpoint', 'Implement CRUD handlers for Tasks', '2026-01-03', '2026-01-07', 1),
   (3, 1, 2, 1, NULL, 1, NULL, NULL, 'Write docs', 'Add README notes for local dev', NULL, NULL, 2),
-  (4, 2, 1, 1, 1, 1, 1, 2, 'Design UI', 'Mockup screens', '2023-02-02', '2023-02-05', 0),
-  (5, 2, 2, 1, 2, 1, 2, 2, 'Review PR', 'Check code quality', '2023-02-03', '2023-02-07', 1),
-  (6, 2, 3, 1, 1, 1, 1, 2, 'Fix login bug', 'Auth error', NULL, NULL, 2),
-  (7, 3, 1, 1, 2, 2, 1, 2, 'Update dependencies', 'Update packages', '2025-03-02', '2025-03-05', 0),
-  (8, 3, 4, 1, 2, 1, 2, 2, 'Deploy staging', 'Push to server', '2025-03-03', '2025-03-07', 1),
-  (9, 3, 5, 1, 1, 1, 2, 2, 'Gather feedback', 'User survey', NULL, NULL, 2);
+  (4, 2, 6, 1, 1, 1, 1, 2, 'Design UI', 'Mockup screens', '2023-02-02', '2023-02-05', 0),
+  (5, 2, 7, 1, 2, 1, 2, 2, 'Review PR', 'Check code quality', '2023-02-03', '2023-02-07', 1),
+  (6, 2, 8, 1, 1, 1, 1, 2, 'Fix login bug', 'Auth error', NULL, NULL, 2),
+  (7, 3, 11, 1, 2, 2, 1, 2, 'Update dependencies', 'Update packages', '2025-03-02', '2025-03-05', 0),
+  (8, 3, 14, 1, 2, 1, 2, 2, 'Deploy staging', 'Push to server', '2025-03-03', '2025-03-07', 1),
+  (9, 3, 15, 1, 1, 1, 2, 2, 'Gather feedback', 'User survey', NULL, NULL, 2);
   
 
   -- Seed example comments

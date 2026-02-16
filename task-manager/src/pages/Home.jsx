@@ -4,11 +4,11 @@ import Kanban from "../components/Kanban.jsx";
 import { Link } from "react-router-dom";
 import ProjectSelector from "../components/ProjectSelector.jsx";
 
-export default function Home({ projectId }) {
+export default function Home({ projectId: initialProjectId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [currentProjectId, setCurrentProjectId] = useState(projectId);
+  const [projectId, setProjectId] = useState(initialProjectId);
 
   // Load the columns and tasks for the provided project ID
   async function loadColumns(projectId) {
@@ -31,7 +31,7 @@ export default function Home({ projectId }) {
         setColumns([]);
         return;
       }
-
+      console.log(taskList);
       const columnsWithTasks = cols.map((col) => {
         const colTasks = taskList
           .filter((t) => Number(t.column_id) === Number(col.id))
@@ -76,8 +76,12 @@ export default function Home({ projectId }) {
 
   useEffect(() => {
     loadProjects();
-    loadColumns(currentProjectId);
-  }, [currentProjectId]);
+  }, []);
+
+  useEffect(() => {
+    if (!projectId) return;
+    loadColumns(projectId);
+  }, [projectId]);
 
   function openModal() {
     setShowCreateModal(true);
@@ -100,7 +104,7 @@ export default function Home({ projectId }) {
 
   return (
     <div>
-      <ProjectSelector projects={projects} selectedProjectId={currentProjectId} onSelectProject={setCurrentProjectId}/>
+      <ProjectSelector projects={projects} selectedProjectId={projectId} onSelectProject={setProjectId}/>
       <header>
         <Link to="/profile" style={{float: "right"}}>
           My Profile
