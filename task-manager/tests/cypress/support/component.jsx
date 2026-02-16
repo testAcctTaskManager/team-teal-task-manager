@@ -44,6 +44,7 @@ export function mountTaskForm(props = {}) {
   return { onSuccess, onCancel };
 }
 
+// Helper to mount Kanban with test columns and tasks
 export function mountKanban() {
   const columns = [
             {
