@@ -124,8 +124,10 @@ export function mountKanban() {
             }
         ];
   return mount(
-    <MemoryRouter>
-      <Kanban columns={columns}/>
-    </MemoryRouter>
+    <UsersProvider>
+      <MemoryRouter>
+        <Kanban columns={columns}/>
+      </MemoryRouter>
+    </UsersProvider>
   );
 }

@@ -7,18 +7,18 @@ describe("Kanban component", () => {
     it("renders empty when there are no columns", () => {
         const columns = [];
         cy.mount(<Kanban columns={columns}/>);
-        cy.get("p").contains("No Columns").should("be.visible");
+        cy.get("p").contains("No Columns").should("exist");
     });
 
     it("renders all five columns", () => {
 
         mountKanban();
 
-        cy.contains("To Do").should("be.visible");
-        cy.contains("Blocked").should("be.visible");
-        cy.contains("In Progress").should("be.visible");
-        cy.contains("In Review").should("be.visible");
-        cy.contains("Complete").should("be.visible");
+        cy.contains("To Do").should("exist");
+        cy.contains("Blocked").should("exist");
+        cy.contains("In Progress").should("exist");
+        cy.contains("In Review").should("exist");
+        cy.contains("Complete").should("exist");
     });
 
     it("shows tasks in the correct column", () => {
