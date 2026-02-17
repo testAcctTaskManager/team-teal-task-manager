@@ -96,18 +96,6 @@ export default function Home({ projectId: initialProjectId }) {
     loadProjects();
   }, []);
 
-  /* Custom data loader for task filtering - added to fetch user/project lists */
-  async function loadFilterMetadata() {
-    try {
-      const [uRes, pRes] = await Promise.all([fetch("/api/users"), fetch("/api/projects")]);
-      const uData = await uRes.json();
-      const pData = await pRes.json();
-      if (Array.isArray(uData)) setUsers(uData);
-      if (Array.isArray(pData)) setProjects(pData);
-    } catch (e) { console.error("Filter metadata error", e); }
-  }
-
-
   useEffect(() => {
     if (!projectId) return;
     loadColumns(projectId);
