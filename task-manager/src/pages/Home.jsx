@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import TaskForm from "../components/TaskForm.jsx";
 import Kanban from "../components/Kanban.jsx";
 import { Link } from "react-router-dom";
@@ -6,6 +6,14 @@ import { Link } from "react-router-dom";
 export default function Home({ projectId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
+
+  /* Adding states for task filtering */
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedAssignee, setSelectedAssignee] = useState("all");
+  const [selectedReporter, setSelectedReporter] = useState("all");
+  const [selectedProject, setSelectedProject] = useState("all");
+  const [users, setUsers] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   // Load the columns and tasks for the provided project ID
   async function loadColumns(projectId) {
@@ -49,9 +57,39 @@ export default function Home({ projectId }) {
     }
   }
 
+  /* Custom data loader for task filtering - added to fetch user/project lists */
+  async function loadFilterMetadata() {
+    try {
+      const [uRes, pRes] = await Promise.all([fetch("/api/users"), fetch("/api/projects")]);
+      const uData = await uRes.json();
+      const pData = await pRes.json();
+      if (Array.isArray(uData)) setUsers(uData);
+      if (Array.isArray(pData)) setProjects(pData);
+    } catch (e) { console.error("Filter metadata error", e); }
+  }
+
+
   useEffect(() => {
     loadColumns(projectId);
+    // Added to trigger task filtering metadata load
+    loadFilterMetadata();
   }, [projectId]);
+
+  /* Task filtering engine - Calculates a 'view' without changing columns state */
+  const filteredColumns = useMemo(() => {
+    return columns.map(col => ({
+      ...col,
+      tasks: col.tasks.filter(t => {
+        const mStatus = selectedStatus === "all" || Number(t.column_id) === Number(selectedStatus);
+        const mAssignee = selectedAssignee === "all" || Number(t.assignee_id) === Number(selectedAssignee);
+        const mReporter = selectedReporter === "all" || Number(t.reporter_id) === Number(selectedReporter);
+        const mProject = selectedProject === "all" || Number(t.project_id) === Number(selectedProject);
+        return mStatus && mAssignee && mReporter && mProject;
+      })
+    }));
+  }, [columns, selectedStatus, selectedAssignee, selectedReporter, selectedProject]);
+ 
+
 
   function openModal() {
     setShowCreateModal(true);
@@ -86,6 +124,66 @@ export default function Home({ projectId }) {
           + New Task
         </button>
 
+        {/* Task Filtering UI Section */}
+
+        <div style={{ display: "flex", gap: "10px", margin: "20px 0", padding: "10px", background: "#0f172a", borderRadius: "5px" }}>
+
+          <span style={{ fontWeight: "bold", color: "#ffffff", fontSize: "14px" }}>
+
+            Filter Board:
+
+          </span>
+
+
+
+          <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
+
+            <option value="all" style={{color: "#0f172a"}}>All Statuses</option>
+
+            <option value="1" style={{color: "#0f172a"}}>To Do</option>
+
+            <option value="2" style={{color: "#0f172a"}}>Blocked</option>
+
+            <option value="3" style={{color: "#0f172a"}}>In Progress</option>
+
+            <option value="4" style={{color: "#0f172a"}}>In Review</option>
+
+            <option value="5" style={{color: "#0f172a"}}>Complete</option>
+
+          </select>
+
+
+
+          <select value={selectedAssignee} onChange={e => setSelectedAssignee(e.target.value)}>
+
+            <option value="all" style={{color: "#0f172a"}}>All Assignees</option>
+
+            {users.map(u => <option key={u.id} value={u.id} style={{color: "#0f172a"}}>{u.display_name}</option>)}
+
+          </select>
+
+
+
+          <select value={selectedReporter} onChange={e => setSelectedReporter(e.target.value)}>
+
+            <option value="all" style={{color: "#0f172a"}}>All Reporters</option>
+
+            {users.map(u => <option key={u.id} value={u.id} style={{color: "#0f172a"}}>{u.display_name}</option>)}
+
+          </select>
+
+
+
+          <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
+
+            <option value="all" style={{color: "#0f172a"}}>All Projects</option>
+
+            {projects.map(p => <option key={p.id} value={p.id} style={{color: "#0f172a"}}>{p.name}</option>)}
+
+          </select>
+
+        </div>
+
         {showCreateModal && (
           <TaskForm
             projectId={projectId}
@@ -99,7 +197,7 @@ export default function Home({ projectId }) {
       </div>
 
       <div>
-        <Kanban columns={columns} setColumns={setColumns} />
+        <Kanban columns={filteredColumns} setColumns={setColumns} />
       </div>
     </div>
   );
