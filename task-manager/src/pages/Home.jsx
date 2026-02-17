@@ -2,10 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import TaskForm from "../components/TaskForm.jsx";
 import Kanban from "../components/Kanban.jsx";
 import { Link } from "react-router-dom";
+import ProjectSelector from "../components/ProjectSelector.jsx";
 
-export default function Home({ projectId }) {
+export default function Home({ projectId: initialProjectId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [projectId, setProjectId] = useState(initialProjectId);
 
   /* Adding states for task filtering */
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -36,7 +39,7 @@ export default function Home({ projectId }) {
         setColumns([]);
         return;
       }
-
+      console.log(taskList);
       const columnsWithTasks = cols.map((col) => {
         const colTasks = taskList
           .filter((t) => Number(t.column_id) === Number(col.id))
@@ -57,6 +60,32 @@ export default function Home({ projectId }) {
     }
   }
 
+  async function loadProjects(){
+    try {
+      // Fetch projects from API
+      const res = await fetch(`/api/projects`);
+
+      // Ensure projectsArr is an array and there was no error
+      const projectsArr = await res.json().catch(() => null);
+      if (!Array.isArray(projectsArr) || projectsArr.error) {
+        console.error("API error loading projects", projectsArr);
+        setProjects([]);
+        return;
+      }
+
+      // Update projects useState
+      setProjects(projectsArr);
+    } 
+    catch (err) {
+      console.error("Fetch error", err);
+      setProjects([]);
+    }
+  }
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
   /* Custom data loader for task filtering - added to fetch user/project lists */
   async function loadFilterMetadata() {
     try {
@@ -70,6 +99,7 @@ export default function Home({ projectId }) {
 
 
   useEffect(() => {
+    if (!projectId) return;
     loadColumns(projectId);
     // Added to trigger task filtering metadata load
     loadFilterMetadata();
@@ -112,6 +142,7 @@ export default function Home({ projectId }) {
 
   return (
     <div>
+      <ProjectSelector projects={projects} selectedProjectId={projectId} onSelectProject={setProjectId}/>
       <header>
         <Link to="/profile" style={{float: "right"}}>
           My Profile
