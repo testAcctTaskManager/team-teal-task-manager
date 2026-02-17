@@ -127,61 +127,33 @@ export default function Home({ projectId }) {
         {/* Task Filtering UI Section */}
 
         <div style={{ display: "flex", gap: "10px", margin: "20px 0", padding: "10px", background: "#0f172a", borderRadius: "5px" }}>
-
           <span style={{ fontWeight: "bold", color: "#ffffff", fontSize: "14px" }}>
-
             Filter Board:
-
           </span>
 
-
-
           <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
-
             <option value="all" style={{color: "#0f172a"}}>All Statuses</option>
-
             <option value="1" style={{color: "#0f172a"}}>To Do</option>
-
             <option value="2" style={{color: "#0f172a"}}>Blocked</option>
-
             <option value="3" style={{color: "#0f172a"}}>In Progress</option>
-
             <option value="4" style={{color: "#0f172a"}}>In Review</option>
-
             <option value="5" style={{color: "#0f172a"}}>Complete</option>
-
           </select>
-
-
 
           <select value={selectedAssignee} onChange={e => setSelectedAssignee(e.target.value)}>
-
             <option value="all" style={{color: "#0f172a"}}>All Assignees</option>
-
             {users.map(u => <option key={u.id} value={u.id} style={{color: "#0f172a"}}>{u.display_name}</option>)}
-
           </select>
-
-
 
           <select value={selectedReporter} onChange={e => setSelectedReporter(e.target.value)}>
-
             <option value="all" style={{color: "#0f172a"}}>All Reporters</option>
-
             {users.map(u => <option key={u.id} value={u.id} style={{color: "#0f172a"}}>{u.display_name}</option>)}
-
           </select>
-
-
 
           <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-
             <option value="all" style={{color: "#0f172a"}}>All Projects</option>
-
             {projects.map(p => <option key={p.id} value={p.id} style={{color: "#0f172a"}}>{p.name}</option>)}
-
           </select>
-
         </div>
 
         {showCreateModal && (
