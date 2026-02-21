@@ -27,6 +27,7 @@
 		"@tailwindcss/vite": "^4.1.18",
 		"better-sqlite3": "^12.6.2",
 		"fs": "^0.0.1-security",
+		"jose": "^6.1.3",
 		"react-router-dom": "^7.12.0",
 		"tailwindcss": "^4.1.18"
 	},

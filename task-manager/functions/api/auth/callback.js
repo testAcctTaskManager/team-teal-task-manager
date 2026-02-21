@@ -1,10 +1,33 @@
+import { SignJWT } from "jose";
+import { queryOne, queryAll, execute } from "../helpers.js";
+
+function buildSessionCookie(token) {
+  return `session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
+}
+
+async function redirectWithSession(url, userId, email, jwtSecret) {
+  const secret = new TextEncoder().encode(jwtSecret);
+  const token = await new SignJWT({ sub: String(userId), email })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(secret);
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: url,
+      "Set-Cookie": buildSessionCookie(token),
+    },
+  });
+}
+
 export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
   const debug = url.searchParams.get("debug") === "1";
 
-  // determine origin for internal API calls and redirect URI
   const origin = env.FRONTEND_ORIGIN || `https://${request.headers.get("host")}`;
 
   if (error) {
@@ -16,11 +39,11 @@ export async function onRequest({ request, env }) {
   if (!code) {
     return new Response("missing code", { status: 400 });
   }
-  
+
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
+  const db = env.cf_db;
 
   try {
-    // exchange code for tokens
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -40,7 +63,6 @@ export async function onRequest({ request, env }) {
       return Response.redirect(origin, 302);
     }
 
-    // fetch user info
     const userInfoRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
@@ -51,86 +73,67 @@ export async function onRequest({ request, env }) {
       return Response.redirect(origin, 302);
     }
 
-    // attempt to create or resolve user
+    // Resolve or create the user directly via DB
     let userId = null;
-    let addUserRes = await fetch(new URL("/api/users", origin).toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ display_name: userInfoData.name, email: userInfoData.email }),
-    });
-    let addUserBody = await addUserRes.json().catch(() => null);
 
-    if (addUserRes.ok && addUserBody && addUserBody.id) {
-      userId = addUserBody.id;
+    const existingUser = await queryOne(
+      db,
+      "SELECT id FROM Users WHERE email = ?",
+      [userInfoData.email]
+    );
+
+    if (existingUser) {
+      userId = existingUser.id;
     } else {
-      // if creation fails, link provider to existing user
-      const errMsg = addUserBody && addUserBody.error ? String(addUserBody.error) : "";
-      if (errMsg.includes("Email already in use")) {
-        // look up existing user by email
-        const usersRes = await fetch(new URL(`/api/users?email=${encodeURIComponent(userInfoData.email)}`, origin).toString(), {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const usersList = await usersRes.json().catch(() => []);
-        const existingUser = Array.isArray(usersList) && usersList.length ? usersList[0] : null;
-        if (!existingUser) {
-          console.error("email conflict but no user found", { email: userInfoData.email, addUserBody });
-          if (debug) return new Response(JSON.stringify({ error: "email conflict but lookup failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
-          return Response.redirect("/auth/error?reason=email_conflict_lookup_failed", 302);
-        }
-        userId = existingUser.id;
-
-        // check if provider mapping already exists for this provider_user_id
-        const provCheckRes = await fetch(new URL(`/api/auth/user-providers?provider=google&provider_user_id=${encodeURIComponent(userInfoData.sub)}`, origin).toString(), {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const provList = await provCheckRes.json().catch(() => []);
-        const existingProv = Array.isArray(provList) && provList.length ? provList[0] : null;
-
-        if (existingProv) {
-          if (existingProv.user_id !== userId) {
-            console.error("provider linked to another account", { providerUserId: userInfoData.sub, linkedTo: existingProv.user_id, email: userInfoData.email });
-            if (debug) return new Response(JSON.stringify({ error: "provider-linked-to-different-account" }), { status: 409, headers: { "Content-Type": "application/json" } });
-            return Response.redirect("/auth/error?reason=provider_conflict", 302);
-          }
-        } else {
-          // create provider record linking this provider_user_id to the existing user
-          const expiresAt = tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null;
-          const createProvRes = await fetch(new URL("/api/auth/user-providers", origin).toString(), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId, provider_user_id: userInfoData.sub ?? null, provider: "google", refresh_token: tokenData.refresh_token, token_expires_at: expiresAt }),
-          });
-          const createdProv = await createProvRes.json().catch(() => null);
-          if (!createProvRes.ok) {
-            console.error("failed creating provider after email exists", createdProv);
-            if (debug) return new Response(JSON.stringify({ error: "failed-create-provider", detail: createdProv }), { status: 500, headers: { "Content-Type": "application/json" } });
-            return Response.redirect("/auth/error?reason=create_provider_failed", 302);
-          }
-        }
-      } else {
-        console.error("could not insert user", addUserBody);
-        if (debug) return new Response(JSON.stringify({ addUserError: addUserBody }), { status: 502, headers: { "Content-Type": "application/json" } });
-        return Response.redirect("/auth/error?reason=create_user_failed", 302);
+      const insertResult = await execute(
+        db,
+        "INSERT INTO Users (display_name, email) VALUES (?, ?)",
+        [userInfoData.name, userInfoData.email]
+      );
+      const newUser = await queryOne(
+        db,
+        "SELECT id FROM Users WHERE id = last_insert_rowid()"
+      );
+      if (!newUser) {
+        console.error("failed to create user");
+        if (debug) return new Response(JSON.stringify({ error: "failed to create user" }), { status: 500, headers: { "Content-Type": "application/json" } });
+        return Response.redirect(`${origin}/auth/error?reason=create_user_failed`, 302);
       }
+      userId = newUser.id;
     }
 
-    // we should have a user id by now, now we ensure a provider row exists
-    const provExistsRes = await fetch(new URL(`/api/auth/user-providers?provider=google&provider_user_id=${encodeURIComponent(userInfoData.sub)}`, origin).toString(), { method: "GET", headers: { "Content-Type": "application/json" } });
-    const provExistsList = await provExistsRes.json().catch(() => []);
-    if (!(Array.isArray(provExistsList) && provExistsList.length)) {
-      const expiresAt = tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null;
-      await fetch(new URL("/api/auth/user-providers", origin).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, provider_user_id: userInfoData.sub ?? null, provider: "google", refresh_token: tokenData.refresh_token, token_expires_at: expiresAt }),
-      });
+    // Ensure a provider mapping exists
+    const existingProvider = await queryOne(
+      db,
+      "SELECT id, user_id FROM User_Providers WHERE provider = ? AND provider_user_id = ?",
+      ["google", userInfoData.sub]
+    );
+
+    if (existingProvider) {
+      if (existingProvider.user_id !== userId) {
+        console.error("provider linked to another account", {
+          providerUserId: userInfoData.sub,
+          linkedTo: existingProvider.user_id,
+          email: userInfoData.email,
+        });
+        if (debug) return new Response(JSON.stringify({ error: "provider-linked-to-different-account" }), { status: 409, headers: { "Content-Type": "application/json" } });
+        return Response.redirect(`${origin}/auth/error?reason=provider_conflict`, 302);
+      }
+    } else {
+      const expiresAt = tokenData.expires_in
+        ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        : null;
+      await execute(
+        db,
+        "INSERT INTO User_Providers (user_id, provider, provider_user_id, refresh_token, token_expires_at) VALUES (?, ?, ?, ?, ?)",
+        [userId, "google", userInfoData.sub ?? null, tokenData.refresh_token ?? null, expiresAt]
+      );
     }
+
+    return await redirectWithSession(origin, userId, userInfoData.email, env.JWT_SECRET);
   } catch (err) {
     console.error("callback onRequest error", err);
     if (debug) return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
     return Response.redirect(origin, 302);
   }
-  return Response.redirect(origin, 302);
 }
