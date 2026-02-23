@@ -1,6 +1,6 @@
 # Team Teal Task Manager
 
-## Architecture 
+## Architecture
 
 ### Front End: CloudFlare Pages
 
@@ -38,6 +38,20 @@ For adding a new table, you'll need to add the schema to the migrations folder.
 Then you'll want to add the API endpoints. Lastly, you'll want to interact with
 those API endpoints in the component.
 
+## Authentication Setup
+
+The app uses Google OAuth for authentication. To run locally, you need a `.dev.vars` file in the `task-manager/` directory with the required secrets.
+
+1. Copy the example file:
+
+    ```cp .dev.vars.example .dev.vars```
+
+2. Fill in `GOOGLE_CLIENT_SECRET` -- it should be on the Slack, or ask Kayla
+
+3. The other values in the example file can be used as-is for local development.
+
+For deployed environments, these values are set as Cloudflare Pages secrets.
+
 ## Testing changes locally
 
 To run a local copy of the DB and test your changes on a local host:
@@ -65,7 +79,7 @@ To run a local copy of the DB and test your changes on a local host:
 5. API URLs can be viewed using this local host. For example, this URL should
    let you view all tasks in the DB, if the port being used is 8788:
 
-    ```http://localhost:8788/api/tasks```  
+    ```http://localhost:8788/api/tasks```
 
 
 ## Reseeding the DB
