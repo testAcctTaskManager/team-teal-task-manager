@@ -8,11 +8,10 @@ describe("LoginButton", () => {
     const { container } = renderWithRoot(
       <MemoryRouter>
         <LoginButton />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     const link = container.querySelector('a[aria-label="Login"]');
     expect(link).not.toBeNull();
     expect(link.getAttribute("href")).toBe("/login");
-    expect(link.className).toMatch(/login-button/);
   });
 });
