@@ -42,11 +42,11 @@ those API endpoints in the component.
 
 The app uses Google OAuth for authentication. To run locally, you need a `.dev.vars` file in the `task-manager/` directory with the required secrets.
 
-1. Copy the example file:
+1. Copy the example file to .dev.vars:
 
     ```cp .dev.vars.example .dev.vars```
 
-2. Fill in `GOOGLE_CLIENT_SECRET` -- it should be on the Slack, or ask Kayla
+2. Fill in `GOOGLE_CLIENT_SECRET` -- it should be on the Slack, or ask Kayla.
 
 3. The other values in the example file can be used as-is for local development.
 
