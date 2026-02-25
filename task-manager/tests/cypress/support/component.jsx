@@ -8,11 +8,30 @@ import "../../../src/index.css";
 
 import TaskDetail from "../../../src/pages/TaskDetail.jsx";
 import TaskForm from "../../../src/components/TaskForm.jsx";
-import { UsersProvider } from "../../../src/contexts/UsersContext.jsx";
+import { UsersContext } from "../../../src/contexts/UsersContext.jsx";
 import KanbanColumn from "../../../src/components/KanbanColumn";
 import { DragDropContext } from "@hello-pangea/dnd";
 
 import Kanban from "../../../src/components/Kanban.jsx";
+
+const defaultMockUsersValue = {
+  users: [],
+  loading: false,
+  error: null,
+  refetch: () => {},
+  currentUser: { id: 1, email: "test@example.com", display_name: "Test User" },
+  isAuthenticated: true,
+  authLoading: false,
+  logout: () => {},
+};
+
+function MockUsersProvider({ children, value = {} }) {
+  return (
+    <UsersContext.Provider value={{ ...defaultMockUsersValue, ...value }}>
+      {children}
+    </UsersContext.Provider>
+  );
+}
 
 // Make mount available globally in Cypress tests via cy.mount
 Cypress.Commands.add("mount", mount);
@@ -20,30 +39,30 @@ Cypress.Commands.add("mount", mount);
 // Helper to mount TaskDetail with a router and initial route
 export function mountTaskDetail(initialPath = "/task/1") {
   return mount(
-    <UsersProvider>
+    <MockUsersProvider>
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
           <Route path="/task/:id" element={<TaskDetail />} />
         </Routes>
       </MemoryRouter>
-    </UsersProvider>
+    </MockUsersProvider>
   );
 }
 
 // Helper to mount TaskForm with common default props
-export function mountTaskForm(props = {}) {
+export function mountTaskForm(props = {}, mockUsersValue = {}) {
   const onSuccess = cy.stub().as("onSuccess");
   const onCancel = cy.stub().as("onCancel");
 
   cy.mount(
-    <UsersProvider>
+    <MockUsersProvider value={mockUsersValue}>
       <TaskForm
         projectId={1}
         {...props}
         onSuccess={onSuccess}
         onCancel={onCancel}
       />
-    </UsersProvider>,
+    </MockUsersProvider>,
   );
 
   return { onSuccess, onCancel };
@@ -53,11 +72,11 @@ export function mountTaskForm(props = {}) {
 export function mountKanbanColumn(tasks = []) {
   return cy.mount(
     <MemoryRouter>
-      <UsersProvider>
+      <MockUsersProvider>
         <DragDropContext onDragEnd={() => {}}>
           <KanbanColumn title="Test Column" colIndex={0} tasks={tasks} />
         </DragDropContext>
-      </UsersProvider>
+      </MockUsersProvider>
     </MemoryRouter>
   )
 }
@@ -138,10 +157,10 @@ export function mountKanban() {
             }
         ];
   return mount(
-    <UsersProvider>
+    <MockUsersProvider>
       <MemoryRouter>
         <Kanban columns={columns}/>
       </MemoryRouter>
-    </UsersProvider>
+    </MockUsersProvider>
   );
 }

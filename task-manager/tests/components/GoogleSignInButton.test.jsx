@@ -4,26 +4,20 @@ import { GoogleSignInButton } from "../../src/components/login/GoogleSignInButto
 
 describe("GoogleSignInButton", () => {
   it("renders button with aria and class and navigates on click", async () => {
-    const url = "https://example.com/auth";
+    // replace window.location to capture assignment
+    const originalLocation = window.location;
+    delete window.location;
+    window.location = { href: "", assign: vi.fn() };
 
-  // replace window.location to capture assignment
-  const originalLocation = window.location;
-  // delete then set so we can assign
-  delete window.location;
-  // create a mutable location object
-  window.location = { href: "", assign: vi.fn() };
-
-    const { container } = renderWithRoot(<GoogleSignInButton authURL={url} />);
+    const { container } = renderWithRoot(<GoogleSignInButton />);
     const btn = container.querySelector('button[aria-label="Sign in with Google"]');
     expect(btn).not.toBeNull();
     expect(btn.className).toMatch(/google-sign-in-button/);
 
-  await click(btn);
+    await click(btn);
 
-  // component sets window.location.href = authURL
-  expect(window.location.href).toBe(url);
+    expect(window.location.href).toBe("/api/auth/login");
 
-  // restore
     window.location = originalLocation;
   });
 });
