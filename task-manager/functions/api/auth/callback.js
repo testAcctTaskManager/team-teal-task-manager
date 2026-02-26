@@ -1,5 +1,5 @@
 import { SignJWT } from "jose";
-import { queryOne, queryAll, execute } from "../helpers.js";
+import { queryOne, execute } from "../helpers.js";
 
 function buildSessionCookie(token) {
   return `session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
@@ -85,7 +85,7 @@ export async function onRequest({ request, env }) {
     if (existingUser) {
       userId = existingUser.id;
     } else {
-      const insertResult = await execute(
+      await execute(
         db,
         "INSERT INTO Users (display_name, email) VALUES (?, ?)",
         [userInfoData.name, userInfoData.email]

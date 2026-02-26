@@ -1,4 +1,4 @@
-import React from "react";
+import React, { act } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import Profile from "../../src/pages/Profile";
@@ -50,7 +50,7 @@ describe("Profile page", () => {
     it("Renders a user profile", async () => {
         const {container} = renderProfile();
 
-        await new Promise((r) => setTimeout(r, 0));
+        await act(async () => {});
 
         expect(container.textContent).toContain("Alice Developer");
         expect(container.textContent).toContain("alice@example.com");
