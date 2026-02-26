@@ -1,7 +1,7 @@
 /* eslint react-refresh/only-export-components: "off" */
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 
-const UsersContext = createContext({
+export const UsersContext = createContext({
   users: [],
   loading: false,
   error: null,
@@ -87,3 +87,4 @@ export function UsersProvider({ children }) {
 export function useUsers() {
   return useContext(UsersContext);
 }
+
