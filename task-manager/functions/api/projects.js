@@ -4,7 +4,7 @@ import { makeCrudHandlers } from "./helpers.js";
 const projectHandlers = makeCrudHandlers({
     table: "projects",
     primaryKey: "id",
-    allowedColumns: ["name", "created_by", "status", "created_at", "updated_at"],
+    allowedColumns: ["name", "created_by", "status", "type", "created_at", "updated_at"],
     dbEnvVar: "cf_db",
     orderBy: "id ASC",
 });

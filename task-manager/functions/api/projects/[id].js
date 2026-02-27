@@ -4,7 +4,7 @@ import { makeCrudHandlers, selectOneFrom, updateTable } from "../helpers.js";
 const projectHandlers = makeCrudHandlers({
   table: "projects",
   primaryKey: "id",
-  allowedColumns: ["name", "created_by", "status", "created_at", "updated_at"],
+  allowedColumns: ["name", "created_by", "status", "type", "created_at", "updated_at"],
   dbEnvVar: "cf_db",
   orderBy: "id ASC",
 });
@@ -30,7 +30,7 @@ const updateProjectTimestamps = async (context) => {
      const incomingData = await request.json();
 
     // Prepare update object
-    const allowed = ["name", "created_by", "status"];
+    const allowed = ["name", "created_by", "status", "type"];
     const updatesObj = {};
 
     for (const key of allowed) {
