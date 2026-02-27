@@ -10,16 +10,11 @@ function Scrum({ columns = [], setColumns = () => {} }) {
             (column) => (column.title || "").trim().toLowerCase() === "backlog",
         );
 
-        if (hasBacklog) return columns;
+        if (!hasBacklog) {
+            throw new Error("Scrum board requires exactly one 'Backlog' column.");
+        }
 
-        return [
-            {
-                id: "backlog",
-                title: "Backlog",
-                tasks: [],
-            },
-            ...columns,
-        ];
+        return columns;
     }, [columns]);
 
     return (
