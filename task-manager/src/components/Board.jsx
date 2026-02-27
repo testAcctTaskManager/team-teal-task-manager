@@ -89,7 +89,7 @@ function Board({
         <div className="bg-gradient-to-r from-slate-700 to-slate-600 text-white text-center px-5 py-3 rounded-t-lg shadow-md">
           <h2 className="text-xl font-semibold m-0">{boardTitle}</h2>
         </div>
-        <div className="grid grid-flow-col auto-cols-[minmax(14rem,1fr)] gap-4 border border-white/10 border-t-0 rounded-b-lg px-4 py-6 overflow-x-auto bg-gradient-to-b from-slate-900/20 to-slate-900/40">
+        <div className="flex gap-4 border border-white/10 border-t-0 rounded-b-lg px-4 py-6 overflow-x-auto bg-gradient-to-b from-slate-900/20 to-slate-900/40">
           {columns.length > 0 ? (
             <>
               {columns.map((column, colIndex) => (

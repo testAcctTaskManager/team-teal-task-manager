@@ -48,11 +48,7 @@ export async function onRequestPut(context) {
 
   const id = params && (params.id || params[config.primaryKey]);
   const db = env[config.dbEnvVar];
-  const CORS = buildCorsHeaders(
-    env,
-    request,
-    "GET,PUT,PATCH,DELETE,OPTIONS",
-  );
+  const CORS = buildCorsHeaders(env, request, "GET,PUT,PATCH,DELETE,OPTIONS");
 
   if (request.headers.get("Origin") && !CORS) {
     return new Response(JSON.stringify({ error: "Origin not allowed" }), {
@@ -111,6 +107,18 @@ export async function onRequestPut(context) {
       });
     }
 
+    if (updates.sprint_id !== undefined) {
+      const sprint = await queryOne(db, `SELECT id FROM Sprints WHERE id = ?`, [
+        updates.sprint_id,
+      ]);
+      if (!sprint) {
+        return new Response(JSON.stringify({ error: "Sprint not found" }), {
+          status: 400,
+          headers: CORS,
+        });
+      }
+    }
+
     // If no explicit position is provided and the column_id is changing to a
     // non-null value, append this task to the bottom of the new column.
     const originalColumnId = existing.column_id;
@@ -153,13 +161,9 @@ export async function onRequestPut(context) {
       }
     }
 
-    await updateTable(
-      db,
-      config.table,
-      updates,
-      `${config.primaryKey} = ?`,
-      [id],
-    );
+    await updateTable(db, config.table, updates, `${config.primaryKey} = ?`, [
+      id,
+    ]);
 
     const updated = await queryOne(
       db,

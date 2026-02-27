@@ -12,10 +12,8 @@ export default function Home({ projectId: initialProjectId }) {
   const [projectId, setProjectId] = useState(initialProjectId);
 
   /* Adding states for task filtering */
-  const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedAssignee, setSelectedAssignee] = useState("all");
   const [selectedReporter, setSelectedReporter] = useState("all");
-  const [selectedProject, setSelectedProject] = useState("all");
   const [users, setUsers] = useState([]);
 
   // Load the columns and tasks for the provided project ID
@@ -63,15 +61,20 @@ export default function Home({ projectId: initialProjectId }) {
   /* Custom data loader for task filtering - added to fetch user/project lists */
   async function loadFilterMetadata() {
     try {
-      const [uRes, pRes] = await Promise.all([fetch("/api/users"), fetch("/api/projects")]);
+      const [uRes, pRes] = await Promise.all([
+        fetch("/api/users"),
+        fetch("/api/projects"),
+      ]);
       const uData = await uRes.json();
       const pData = await pRes.json();
       if (Array.isArray(uData)) setUsers(uData);
       if (Array.isArray(pData)) setProjects(pData);
-    } catch (e) { console.error("Filter metadata error", e); }
+    } catch (e) {
+      console.error("Filter metadata error", e);
+    }
   }
 
-  async function loadProjects(){
+  async function loadProjects() {
     try {
       // Fetch projects from API
       const res = await fetch(`/api/projects`);
@@ -86,8 +89,7 @@ export default function Home({ projectId: initialProjectId }) {
 
       // Update projects useState
       setProjects(projectsArr);
-    } 
-    catch (err) {
+    } catch (err) {
       console.error("Fetch error", err);
       setProjects([]);
     }
@@ -106,15 +108,17 @@ export default function Home({ projectId: initialProjectId }) {
 
   /* Task filtering engine - Calculates a 'view' without changing columns state */
   const filteredColumns = useMemo(() => {
-    return columns.map(col => ({
+    return columns.map((col) => ({
       ...col,
-      tasks: col.tasks.filter(t => {
-        const mStatus = selectedStatus === "all" || Number(t.column_id) === Number(selectedStatus);
-        const mAssignee = selectedAssignee === "all" || Number(t.assignee_id) === Number(selectedAssignee);
-        const mReporter = selectedReporter === "all" || Number(t.reporter_id) === Number(selectedReporter);
-        const mProject = selectedProject === "all" || Number(t.project_id) === Number(selectedProject);
-        return mStatus && mAssignee && mReporter && mProject;
-      })
+      tasks: col.tasks.filter((t) => {
+        const mAssignee =
+          selectedAssignee === "all" ||
+          Number(t.assignee_id) === Number(selectedAssignee);
+        const mReporter =
+          selectedReporter === "all" ||
+          Number(t.reporter_id) === Number(selectedReporter);
+        return mAssignee && mReporter;
+      }),
     }));
   }, [columns, selectedStatus, selectedAssignee, selectedReporter, selectedProject]);
  
@@ -154,49 +158,87 @@ export default function Home({ projectId: initialProjectId }) {
 
   return (
     <div>
-      <ProjectSelector projects={projects} selectedProjectId={projectId} onSelectProject={setProjectId}/>
       <header>
-        <Link to="/profile" style={{float: "right"}}>
+        <Link
+          to="/profile"
+          className="fixed top-6 right-28 z-50 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200"
+        >
           My Profile
         </Link>
       </header>
 
-      <h1>Project {projectId} Board</h1>
-      <div>
-        <button type="button" onClick={openModal}>
+      <div className="bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg px-6 py-4 shadow-lg mb-6">
+        <h1 className="text-3xl font-bold text-white m-0">
+          Project {projectId} Board
+        </h1>
+      </div>
+      <div className="flex items-center gap-4 mb-6">
+        <ProjectSelector
+          projects={projects}
+          selectedProjectId={projectId}
+          onSelectProject={setProjectId}
+        />
+
+        <button
+          type="button"
+          onClick={openModal}
+          className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-md transition-all duration-200 whitespace-nowrap"
+        >
           + New Task
         </button>
 
-        {/* Task Filtering UI Section */}
-
-        <div style={{ display: "flex", gap: "10px", margin: "20px 0", padding: "10px", background: "#0f172a", borderRadius: "5px", alignContent: "left" }}>
-          <span style={{ fontWeight: "bold", color: "#ffffff", fontSize: "14px" }}>
+        <div className="flex items-center gap-3 flex-1">
+          <span className="font-semibold text-white text-sm whitespace-nowrap">
             Filter Board:
           </span>
 
-          <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
-            <option value="all" style={{color: "#0f172a"}}>All Statuses</option>
-            <option value="1" style={{color: "#0f172a"}}>To Do</option>
-            <option value="2" style={{color: "#0f172a"}}>Blocked</option>
-            <option value="3" style={{color: "#0f172a"}}>In Progress</option>
-            <option value="4" style={{color: "#0f172a"}}>In Review</option>
-            <option value="5" style={{color: "#0f172a"}}>Complete</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="assignee-filter"
+              className="text-white/70 text-sm whitespace-nowrap"
+            >
+              Assignee:
+            </label>
+            <select
+              id="assignee-filter"
+              value={selectedAssignee}
+              onChange={(e) => setSelectedAssignee(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 cursor-pointer"
+            >
+              <option value="all" className="bg-slate-800">
+                All Assignees
+              </option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id} className="bg-slate-800">
+                  {u.display_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select value={selectedAssignee} onChange={e => setSelectedAssignee(e.target.value)}>
-            <option value="all" style={{color: "#0f172a"}}>All Assignees</option>
-            {users.map(u => <option key={u.id} value={u.id} style={{color: "#0f172a"}}>{u.display_name}</option>)}
-          </select>
-
-          <select value={selectedReporter} onChange={e => setSelectedReporter(e.target.value)}>
-            <option value="all" style={{color: "#0f172a"}}>All Reporters</option>
-            {users.map(u => <option key={u.id} value={u.id} style={{color: "#0f172a"}}>{u.display_name}</option>)}
-          </select>
-
-          <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-            <option value="all" style={{color: "#0f172a"}}>All Projects</option>
-            {projects.map(p => <option key={p.id} value={p.id} style={{color: "#0f172a"}}>{p.name}</option>)}
-          </select>
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="reporter-filter"
+              className="text-white/70 text-sm whitespace-nowrap"
+            >
+              Reporter:
+            </label>
+            <select
+              id="reporter-filter"
+              value={selectedReporter}
+              onChange={(e) => setSelectedReporter(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 cursor-pointer"
+            >
+              <option value="all" className="bg-slate-800">
+                All Reporters
+              </option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id} className="bg-slate-800">
+                  {u.display_name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {showCreateModal && (

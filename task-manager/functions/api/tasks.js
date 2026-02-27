@@ -1,4 +1,10 @@
-import { makeCrudHandlers, parseJson, queryOne, insertInto, buildCorsHeaders } from "./helpers.js";
+import {
+  makeCrudHandlers,
+  parseJson,
+  queryOne,
+  insertInto,
+  buildCorsHeaders,
+} from "./helpers.js";
 
 const config = {
   table: "Tasks",
@@ -60,12 +66,28 @@ export async function onRequestPost(context) {
           "SELECT COALESCE(MAX(position), -1) AS maxpos FROM Tasks WHERE column_id = ?",
           [body.column_id],
         );
-        const maxpos = row && Number.isFinite(Number(row.maxpos)) ? Number(row.maxpos) : -1;
+        const maxpos =
+          row && Number.isFinite(Number(row.maxpos)) ? Number(row.maxpos) : -1;
         body.position = maxpos + 1;
       } catch (err) {
         // If the `position` column doesn't exist in the DB, fall back to position 0
-        console.warn("Could not compute max(position) — falling back to position 0", err && err.stack ? err.stack : err);
+        console.warn(
+          "Could not compute max(position) — falling back to position 0",
+          err && err.stack ? err.stack : err,
+        );
         body.position = 0;
+      }
+    }
+
+    if (body.sprint_id !== undefined) {
+      const sprint = await queryOne(db, `SELECT id FROM Sprints WHERE id = ?`, [
+        body.sprint_id,
+      ]);
+      if (!sprint) {
+        return new Response(JSON.stringify({ error: "Sprint not found" }), {
+          status: 400,
+          headers: CORS,
+        });
       }
     }
 
@@ -74,7 +96,12 @@ export async function onRequestPost(context) {
       config.allowedColumns && config.allowedColumns.length
         ? config.allowedColumns.filter((c) => body[c] !== undefined)
         : Object.keys(body || {}).filter((k) => body[k] !== undefined);
-    insertInto(db, config.table, payloadCols, payloadCols.map((c) => body[c]));
+    insertInto(
+      db,
+      config.table,
+      payloadCols,
+      payloadCols.map((c) => body[c]),
+    );
     const created = await queryOne(
       db,
       `SELECT * FROM ${config.table} WHERE ${config.primaryKey} = last_insert_rowid()`,
@@ -84,7 +111,10 @@ export async function onRequestPost(context) {
       headers: CORS,
     });
   } catch (err) {
-    console.error(`/api/${config.table} collection POST error:`, err && err.stack ? err.stack : err);
+    console.error(
+      `/api/${config.table} collection POST error:`,
+      err && err.stack ? err.stack : err,
+    );
     return new Response(
       JSON.stringify({ error: String(err || "Internal error") }),
       { status: 500, headers: CORS || { "Content-Type": "application/json" } },
