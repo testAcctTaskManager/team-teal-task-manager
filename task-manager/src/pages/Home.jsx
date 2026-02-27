@@ -212,7 +212,7 @@ export default function Home({ projectId: initialProjectId }) {
       </div>
 
       <div>
-        <Kanban columns={filteredColumns} setColumns={setColumns} />
+        <BoardComponent columns={filteredColumns} setColumns={setColumns} />
       </div>
     </div>
   );
