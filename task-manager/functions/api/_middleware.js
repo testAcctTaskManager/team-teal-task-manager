@@ -38,8 +38,23 @@ export async function onRequest(context) {
     const secret = new TextEncoder().encode(env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
 
+    const userId = Number(payload.sub);
+    if (Number.isNaN(userId)) {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (typeof payload.email !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     context.data = context.data || {};
-    context.data.user = { id: Number(payload.sub), email: payload.email };
+    context.data.user = { id: userId, email: payload.email };
   } catch {
     return new Response(JSON.stringify({ error: "Invalid session" }), {
       status: 401,
