@@ -59,7 +59,12 @@ export default function TaskForm({
   onSuccess,
   onCancel,
 }) {
-  const { users, loading: usersLoading, error: usersError, currentUser } = useUsers();
+  const {
+    users,
+    loading: usersLoading,
+    error: usersError,
+    currentUser,
+  } = useUsers();
   // Start with an empty form; the optional columnId prop will be applied
   // as the default Status via an effect in create mode.
   const [form, setForm] = useState(() => ({
@@ -213,7 +218,9 @@ export default function TaskForm({
         const { resp, data: body } = await updateTaskApi(taskId, payload);
         if (!resp.ok) {
           console.error("Task update failed", body);
-          setSubmitMessage("Unable to save task (API not ready or error).");
+          setSubmitMessage(
+            body?.error || "Unable to save task (API not ready or error).",
+          );
           return;
         }
         data = body;
@@ -221,7 +228,9 @@ export default function TaskForm({
         const { resp, data: body } = await createTaskApi(payload);
         if (!resp.ok) {
           console.error("Task create failed", body);
-          setSubmitMessage("Unable to save task (API not ready or error).");
+          setSubmitMessage(
+            body?.error || "Unable to save task (API not ready or error).",
+          );
           return;
         }
         data = body;
@@ -327,8 +336,12 @@ export default function TaskForm({
 
               <label className="flex flex-col">
                 <span className="text-white/80 text-sm mb-1.5">Reporter</span>
-                {usersLoading && <div className="text-white/60 text-xs">Loading users…</div>}
-                {usersError && <div className="text-red-400 text-xs">{usersError}</div>}
+                {usersLoading && (
+                  <div className="text-white/60 text-xs">Loading users…</div>
+                )}
+                {usersError && (
+                  <div className="text-red-400 text-xs">{usersError}</div>
+                )}
                 <select
                   id="reporter_id"
                   name="reporter_id"
@@ -347,8 +360,12 @@ export default function TaskForm({
 
               <label className="flex flex-col">
                 <span className="text-white/80 text-sm mb-1.5">Assignee</span>
-                {usersLoading && <div className="text-white/60 text-xs">Loading users…</div>}
-                {usersError && <div className="text-red-400 text-xs">{usersError}</div>}
+                {usersLoading && (
+                  <div className="text-white/60 text-xs">Loading users…</div>
+                )}
+                {usersError && (
+                  <div className="text-red-400 text-xs">{usersError}</div>
+                )}
                 <select
                   id="assignee_id"
                   name="assignee_id"

@@ -43,4 +43,50 @@ describe("Tasks API with D1 (integration)", () => {
     const found = comments.find((c) => c.content === uniqueContent);
     expect(found).toBeTruthy();
   });
+
+  it("Rejects creating a task with a sprint that does not exist", async () => {
+    const res = await fetch(`${BASE_URL}/api/tasks`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project_id: 1,
+        title: "Bad Sprint Task",
+        created_by: 1,
+        sprint_id: 99999,
+      }),
+    });
+    expect([400, 500]).toContain(res.status);
+    const body = await res.json();
+    expect(body).toBeTruthy();
+  });
+
+  it("Rejects updating a task to a sprint that does not exist", async () => {
+    const res = await fetch(`${BASE_URL}/api/tasks/1`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sprint_id: 99999,
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBeTruthy();
+  });
+
+  it("Can change to a different sprint", async () => {
+    const createRes = await fetch(`${BASE_URL}/api/tasks/1`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        task_id: 1,
+        sprint_id: 2,
+      }),
+    });
+
+    expect(createRes.status).toBe(200);
+    const created = await createRes.json();
+
+    expect(created).toBeTruthy();
+    expect(created.sprint_id).toBe(2);
+  });
 });

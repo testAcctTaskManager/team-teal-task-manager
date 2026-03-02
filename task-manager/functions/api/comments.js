@@ -96,7 +96,7 @@ export async function onRequestPost(context) {
     await insertInto(db, "Comments", payloadCols, values, []);
     const created = await queryOne(
       db,
-      "SELECT * FROM Comments WHERE id = last_insert_rowid()",
+      "SELECT * FROM Comments ORDER BY id DESC LIMIT 1",
     );
     return new Response(JSON.stringify(created || {}), {
       status: 201,

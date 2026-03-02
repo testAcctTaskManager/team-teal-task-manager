@@ -405,6 +405,22 @@ export function makeCrudHandlers(options = {}) {
             body.status = "not_started";
           }
         }
+
+        if (table === "sprints") {
+          if (!body.project_id || !body.created_by || !body.name) {
+            return new Response(
+              JSON.stringify({
+                error:
+                  "Missing one or more required fields: project_id, created_by, and name are required.",
+              }),
+              {
+                status: 400,
+                headers: CORS,
+              },
+            );
+          }
+        }
+
         // Choose columns from allowedColumns if provided (but only those present in body), otherwise from body keys
         const payloadCols =
           allowedColumns && allowedColumns.length
@@ -422,7 +438,7 @@ export function makeCrudHandlers(options = {}) {
         await insertInto(db, table, payloadCols, values, allowedTables);
         const created = await queryOne(
           db,
-          `SELECT * FROM ${table} WHERE ${primaryKey} = last_insert_rowid()`,
+          `SELECT * FROM ${table} ORDER BY ${primaryKey} DESC LIMIT 1`,
         );
         return new Response(JSON.stringify(created || {}), {
           status: 201,
@@ -508,6 +524,20 @@ export function makeCrudHandlers(options = {}) {
             status: 400,
             headers: CORS,
           });
+        }
+
+        if (table === "Tasks" && updates.sprint_id !== undefined) {
+          const sprint = await queryOne(
+            db,
+            `SELECT id FROM Sprints WHERE id = ?`,
+            [updates.sprint_id],
+          );
+          if (!sprint) {
+            return new Response(JSON.stringify({ error: "Sprint not found" }), {
+              status: 400,
+              headers: CORS,
+            });
+          }
         }
 
         await updateTable(
