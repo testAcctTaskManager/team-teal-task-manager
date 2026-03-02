@@ -19,21 +19,21 @@ describe("Profile page", () => {
 
     beforeEach(() => {
         originalFetch = global.fetch;
-        
+
         global.fetch = vi.fn(async (url) => {
-            if (url === "/api/users/1") {
+            if (url === "/api/auth/me") {
                 return {
-                    ok: true, 
+                    ok: true,
                     json: async () => ({
-                        id: 1, 
-                        display_name: "Alice Developer", 
-                        email: "alice@example.com", 
+                        id: 1,
+                        display_name: "Alice Developer",
+                        email: "alice@example.com",
                         timezone: "UTC",
                     }),
                 };
             }
             return {
-                ok: false, 
+                ok: false,
                 json: async () => ({
                     error: "unhandled"
                 }),
@@ -43,7 +43,7 @@ describe("Profile page", () => {
     });
 
     afterEach(() => {
-        global.fetch = originalFetch; 
+        global.fetch = originalFetch;
         vi.restoreAllMocks();
     });
 
