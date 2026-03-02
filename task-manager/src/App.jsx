@@ -39,7 +39,7 @@ export default function App() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
       </Routes>
-      <LoginButton />
+      {/* <LoginButton /> */}
     </div>
   );
 }
