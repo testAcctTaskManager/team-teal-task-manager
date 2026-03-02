@@ -45,7 +45,7 @@ describe("Tasks API with D1 (integration)", () => {
   });
 
   it("Rejects creating a task with a sprint that does not exist", async () => {
-    const res = await fetch(`${BASE_URL}/api/tasks`, {
+    const res = await authFetch(`${BASE_URL}/api/tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -61,7 +61,7 @@ describe("Tasks API with D1 (integration)", () => {
   });
 
   it("Rejects updating a task to a sprint that does not exist", async () => {
-    const res = await fetch(`${BASE_URL}/api/tasks/1`, {
+    const res = await authFetch(`${BASE_URL}/api/tasks/1`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -74,7 +74,7 @@ describe("Tasks API with D1 (integration)", () => {
   });
 
   it("Can change to a different sprint", async () => {
-    const createRes = await fetch(`${BASE_URL}/api/tasks/1`, {
+    const createRes = await authFetch(`${BASE_URL}/api/tasks/1`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
