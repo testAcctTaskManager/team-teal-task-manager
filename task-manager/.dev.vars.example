@@ -1,5 +1,4 @@
 GOOGLE_CLIENT_ID=459719729310-mf1vkob8e7ljhcn44obrujolbsfpil27.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=PASTE_CLIENT_SECRET_HERE
 GOOGLE_REDIRECT_URI=http://localhost:8788/api/auth/callback
-FRONTEND_ORIGIN=http://localhost:8788
 JWT_SECRET=shhhh_its_a_secret
