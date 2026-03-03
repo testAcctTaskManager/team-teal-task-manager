@@ -2,18 +2,17 @@ import Board from "./Board";
 import { useMemo } from "react";
 
 function Scrum({ columns = [], setColumns = () => {} }) {
-
     const scrumColumns = useMemo(() => {
         const hasColumn = (columnName) => {
             return columns.some(
-                (column) => (column.title || column.name || "").trim().toLowerCase() === columnName,
+                (column) => (column.title || column.name || "").trim().toLowerCase().replace(/\s/g, "") === columnName,
             );
         }
         
         if (columns.length === 0) return columns;
 
-        if (!hasColumn("backlog") || !hasColumn("todo")) {
-            throw new Error("Scrum board requires exactly one 'Backlog' column, and one 'Todo' column.");
+        if (!hasColumn("todo")) {
+            throw new Error("Scrum board requires exactly one 'Todo' column.");
         }
 
         return columns;
