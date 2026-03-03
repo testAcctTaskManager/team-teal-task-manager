@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import TaskForm from "../components/TaskForm.jsx";
 import Kanban from "../components/Kanban.jsx";
-import { Link } from "react-router-dom";
+
 import ProjectSelector from "../components/ProjectSelector.jsx";
 
 export default function Home({ projectId: initialProjectId }) {
@@ -142,15 +142,6 @@ export default function Home({ projectId: initialProjectId }) {
 
   return (
     <div>
-      <header>
-        <Link
-          to="/profile"
-          className="fixed top-6 right-28 z-50 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200"
-        >
-          My Profile
-        </Link>
-      </header>
-
       <div className="bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg px-6 py-4 shadow-lg mb-6">
         <h1 className="text-3xl font-bold text-white m-0">
           Project {projectId} Board
