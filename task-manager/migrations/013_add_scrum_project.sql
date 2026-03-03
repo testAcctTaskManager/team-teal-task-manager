@@ -1,127 +1,45 @@
 PRAGMA foreign_keys = ON;
 
--- adds a 'type' column to Projects allowing "kanban" or "scrum"
+-- add project type
 ALTER TABLE Projects
 ADD COLUMN type TEXT NOT NULL DEFAULT 'kanban'
 CHECK (type IN ('kanban', 'scrum'));
 
--- scrum projects must be associated with one and only one Backlog column
--- prevent creating a second Backlog column for the same scrum project
-CREATE TRIGGER IF NOT EXISTS prevent_duplicate_scrum_backlog_insert
-BEFORE INSERT ON Columns
-FOR EACH ROW
-WHEN
-	LOWER(TRIM(NEW.name)) = 'backlog'
-	AND EXISTS (
-		SELECT 1
-		FROM Projects p
-		WHERE p.id = NEW.project_id AND p.type = 'scrum'
-	)
-	AND EXISTS (
-		SELECT 1
-		FROM Columns c
-		WHERE c.project_id = NEW.project_id
-			AND LOWER(TRIM(c.name)) = 'backlog'
-	)
-BEGIN
-	SELECT RAISE(ABORT, 'Scrum project can only have one Backlog column');
-END;
+-- ensure at least one user exists for required FK fields
+INSERT INTO Users (display_name, email, timezone)
+SELECT 'Seed User', 'seed.user@example.com', 'UTC'
+WHERE NOT EXISTS (SELECT 1 FROM Users);
 
--- prevent creating a second Backlog column on updates
-CREATE TRIGGER IF NOT EXISTS prevent_duplicate_scrum_backlog_update
-BEFORE UPDATE OF name, project_id ON Columns
-FOR EACH ROW
-WHEN
-	LOWER(TRIM(NEW.name)) = 'backlog'
-	AND EXISTS (
-		SELECT 1
-		FROM Projects p
-		WHERE p.id = NEW.project_id AND p.type = 'scrum'
-	)
-	AND EXISTS (
-		SELECT 1
-		FROM Columns c
-		WHERE c.project_id = NEW.project_id
-			AND LOWER(TRIM(c.name)) = 'backlog'
-			AND c.id <> OLD.id
-	)
-BEGIN
-	SELECT RAISE(ABORT, 'Scrum project can only have one Backlog column');
-END;
-
--- prevent deleting the only Backlog column from a scrum project
-CREATE TRIGGER IF NOT EXISTS prevent_removing_scrum_backlog_delete
-BEFORE DELETE ON Columns
-FOR EACH ROW
-WHEN
-	LOWER(TRIM(OLD.name)) = 'backlog'
-	AND EXISTS (
-		SELECT 1
-		FROM Projects p
-		WHERE p.id = OLD.project_id AND p.type = 'scrum'
-	)
-BEGIN
-	SELECT RAISE(ABORT, 'Scrum project must have a Backlog column');
-END;
-
--- prevent renaming/moving away the only Backlog column from a scrum project
-CREATE TRIGGER IF NOT EXISTS prevent_removing_scrum_backlog_update
-BEFORE UPDATE OF name, project_id ON Columns
-FOR EACH ROW
-WHEN
-	LOWER(TRIM(OLD.name)) = 'backlog'
-	AND EXISTS (
-		SELECT 1
-		FROM Projects p
-		WHERE p.id = OLD.project_id AND p.type = 'scrum'
-	)
-	AND (
-		LOWER(TRIM(NEW.name)) <> 'backlog'
-		OR NEW.project_id <> OLD.project_id
-	)
-BEGIN
-	SELECT RAISE(ABORT, 'Scrum project must have a Backlog column');
-END;
-
--- if a scrum project has no columns yet, require Backlog to be the first column created
-CREATE TRIGGER IF NOT EXISTS require_backlog_first_for_scrum
-BEFORE INSERT ON Columns
-FOR EACH ROW
-WHEN
-	LOWER(TRIM(NEW.name)) <> 'backlog'
-	AND EXISTS (
-		SELECT 1
-		FROM Projects p
-		WHERE p.id = NEW.project_id AND p.type = 'scrum'
-	)
-	AND NOT EXISTS (
-		SELECT 1
-		FROM Columns c
-		WHERE c.project_id = NEW.project_id
-			AND LOWER(TRIM(c.name)) = 'backlog'
-	)
-BEGIN
-	SELECT RAISE(ABORT, 'Scrum project must create Backlog column first');
-END;
-
--- sample scrum w/tasks
+-- sample scrum project
 INSERT OR IGNORE INTO Projects (id, name, created_by, type)
-VALUES (4, 'Scrum Seed Project', 1, 'scrum');
+VALUES (
+  4,
+  'Scrum Sample Project',
+  (SELECT id FROM Users ORDER BY id LIMIT 1),
+  'scrum'
+);
 
+-- scrum columns
 INSERT OR IGNORE INTO Columns (id, project_id, name, key, position)
 VALUES
-	(100, 4, 'Backlog', 'backlog', 1),
-	(101, 4, 'In Progress', 'in_progress', 2),
-	(102, 4, 'Blocked', 'blocked', 3),
-	(103, 4, 'Done', 'done', 4);
+  (100, 4, 'to do', 'to_do', 1),
+  (101, 4, 'in progress', 'in_progress', 2),
+  (102, 4, 'done', 'done', 3),
+  (103, 4, 'blocked', 'blocked', 4);
 
+-- sample tasks (some intentionally have NULL column_id for backlog testing)
 INSERT OR IGNORE INTO Tasks (
-	id, project_id, column_id, sprint_id, reporter_id, assignee_id, created_by, modified_by,
-	title, description, start_date, due_date, position
+  id, project_id, column_id, sprint_id, reporter_id, assignee_id, created_by, modified_by,
+  title, description, start_date, due_date, position
 )
 VALUES
-	(1000, 4, 100, NULL, 1, 2, 1, 1, 'Backlog: Epic planning', 'Outline high-level epics', NULL, NULL, 0),
-	(1001, 4, 100, NULL, 1, NULL, 1, NULL, 'Backlog: User research', 'Collect user interviews', NULL, NULL, 1),
-	(1002, 4, 101, NULL, 2, 2, 1, 2, 'Implement login flow', 'Add OAuth and session handling', '2026-02-01', '2026-02-10', 0),
-	(1003, 4, 102, NULL, 2, 1, 1, 2, 'Fix signup bug', 'Resolve validation error on submit', NULL, NULL, 0),
-	(1004, 4, 103, NULL, 3, 3, 1, 3, 'Release v1.0', 'Prepare release notes and tag', NULL, NULL, 0);
+  (1000, 4, 100, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Setup sprint board', 'Create initial board and workflow', NULL, NULL, 0),
+  (1001, 4, 100, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Write task templates', 'Define standard ticket format', NULL, NULL, 1),
+  (1002, 4, 101, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), (SELECT id FROM Users ORDER BY id LIMIT 1), (SELECT id FROM Users ORDER BY id LIMIT 1), (SELECT id FROM Users ORDER BY id LIMIT 1), 'Implement auth checks', 'Add role checks to protected routes', '2026-03-01', '2026-03-08', 0),
+  (1003, 4, 101, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Add project filters', 'Filter by assignee/reporter', NULL, NULL, 1),
+  (1004, 4, 102, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), (SELECT id FROM Users ORDER BY id LIMIT 1), (SELECT id FROM Users ORDER BY id LIMIT 1), (SELECT id FROM Users ORDER BY id LIMIT 1), 'Ship first UI pass', 'Deliver first styled version', NULL, NULL, 0),
+  (1005, 4, 103, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Resolve API timeout', 'Investigate intermittent timeout errors', NULL, NULL, 0),
+  (1006, 4, NULL, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Backlog: Profile page polish', 'Improve spacing and labels', NULL, NULL, 0),
+  (1007, 4, NULL, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Backlog: Add empty states', 'Create useful zero-data messages', NULL, NULL, 1),
+  (1008, 4, NULL, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Backlog: Audit accessibility', 'Check heading/contrast/navigation', NULL, NULL, 2),
+  (1009, 4, 100, NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, (SELECT id FROM Users ORDER BY id LIMIT 1), NULL, 'Plan sprint goals', 'Draft goals for next sprint', NULL, NULL, 2);
