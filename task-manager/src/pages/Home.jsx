@@ -161,6 +161,11 @@ export default function Home({ projectId: initialProjectId }) {
     setProjectTab(e.target.value)
   }
 
+  function handleProjectChange(nextProjectId) {
+    setProjectId(nextProjectId);
+    setProjectTab("Board");
+  }
+
   const projectTabs = {
     Board: 
       <BoardComponent
@@ -231,7 +236,7 @@ export default function Home({ projectId: initialProjectId }) {
         <ProjectSelector
           projects={projects}
           selectedProjectId={projectId}
-          onSelectProject={setProjectId}
+          onSelectProject={handleProjectChange}
         />
 
         {selectedProjectType === "scrum" && projectTab === "Board" ? (null) : (
