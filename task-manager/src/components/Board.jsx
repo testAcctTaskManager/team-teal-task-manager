@@ -2,10 +2,12 @@ import KanbanColumn from "./KanbanColumn";
 import { DragDropContext } from "@hello-pangea/dnd";
 
 function Board({
-    columns = [],
-    setColumns = () => {},
-    boardTitle = "Board",
-    emptyColumnsText = "No Columns",
+  columns = [],
+  setColumns = () => {},
+  boardTitle = "Board",
+  emptyColumnsText = "No Columns",
+  layout = "horizontal",
+  fullWidthColumns = false,
 }) {
   // When the dragging ends
   const onDragEnd = (result) => {
@@ -89,7 +91,7 @@ function Board({
         <div className="bg-gradient-to-r from-slate-700 to-slate-600 text-white text-center px-5 py-3 rounded-t-lg shadow-md">
           <h2 className="text-xl font-semibold m-0">{boardTitle}</h2>
         </div>
-        <div className="flex gap-4 border border-white/10 border-t-0 rounded-b-lg px-4 py-6 overflow-x-auto bg-gradient-to-b from-slate-900/20 to-slate-900/40">
+        <div className={`border border-white/10 border-t-0 rounded-b-lg px-4 py-6 bg-gradient-to-b from-slate-900/20 to-slate-900/40 ${layout === "vertical" ? "flex flex-col gap-4" : "flex gap-4 overflow-x-auto"}`}>
           {columns.length > 0 ? (
             <>
               {columns.map((column, colIndex) => (
@@ -98,6 +100,7 @@ function Board({
                   colIndex={colIndex}
                   title={column.title}
                   tasks={column.tasks}
+                  fullWidth={fullWidthColumns}
                 />
               ))}
             </>
