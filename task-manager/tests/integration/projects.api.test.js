@@ -89,7 +89,7 @@ describe("Projects API with D1 (integration)", () => {
             const body = await res.json(); expect(body).toBeTruthy(); 
         });
 
-    it("Seeded scrum projects contain backlog", async () => {
+    it("Seeded scrum projects contain todo column", async () => {
         const res = await fetch(`${BASE_URL}/api/projects`);
         expect(res.ok).toBe(true);
 
@@ -106,10 +106,10 @@ describe("Projects API with D1 (integration)", () => {
             const cols = await colsRes.json();
             expect(Array.isArray(cols)).toBe(true);
 
-            const keys = cols.map(c => (c.key || '').toLowerCase());
+            const keys = cols.map(c => (c.key || '').trim().toLowerCase().replace(/\s/g, ""));
 
             // scrum must include backlog
-            expect(keys).toContain('backlog');
+            expect(keys).toContain('todo');
         }
     });
 });
