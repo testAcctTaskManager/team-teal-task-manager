@@ -76,7 +76,6 @@ export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
-  const debug = url.searchParams.get("debug") === "1";
   const fallbackOrigin = url.origin;
 
   const oauthState = getOAuthState(request);
@@ -99,7 +98,6 @@ export async function onRequest({ request, env }) {
 
   if (error) {
     console.error("oauth error:", error);
-    if (debug) return new Response(JSON.stringify({ error }), { status: 400, headers: { "Content-Type": "application/json" } });
     return redirectWithClear(origin, url.hostname);
   }
 
@@ -134,7 +132,6 @@ export async function onRequest({ request, env }) {
     const tokenData = await tokenResponse.json().catch(() => null);
     if (!tokenResponse.ok) {
       console.error("token exchange failed", tokenData);
-      if (debug) return new Response(JSON.stringify({ tokenError: tokenData }), { status: 502, headers: { "Content-Type": "application/json" } });
       return redirectWithClear(origin, url.hostname);
     }
 
@@ -144,7 +141,6 @@ export async function onRequest({ request, env }) {
     const userInfoData = await userInfoRes.json().catch(() => null);
     if (!userInfoRes.ok) {
       console.error("could not fetch user info", userInfoData);
-      if (debug) return new Response(JSON.stringify({ userInfoError: userInfoData }), { status: 502, headers: { "Content-Type": "application/json" } });
       return redirectWithClear(origin, url.hostname);
     }
 
@@ -170,7 +166,6 @@ export async function onRequest({ request, env }) {
       );
       if (!newUser) {
         console.error("failed to create user");
-        if (debug) return new Response(JSON.stringify({ error: "failed to create user" }), { status: 500, headers: { "Content-Type": "application/json" } });
         return redirectWithClear(`${origin}/auth/error?reason=create_user_failed`, url.hostname);
       }
       userId = newUser.id;
@@ -189,7 +184,6 @@ export async function onRequest({ request, env }) {
           linkedTo: existingProvider.user_id,
           email: userInfoData.email,
         });
-        if (debug) return new Response(JSON.stringify({ error: "provider-linked-to-different-account" }), { status: 409, headers: { "Content-Type": "application/json" } });
         return redirectWithClear(`${origin}/auth/error?reason=provider_conflict`, url.hostname);
       }
     } else {
@@ -206,7 +200,6 @@ export async function onRequest({ request, env }) {
     return await redirectWithSession(origin, userId, userInfoData.email, env.JWT_SECRET, url.hostname);
   } catch (err) {
     console.error("callback onRequest error", err);
-    if (debug) return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
     return redirectWithClear(origin, url.hostname);
   }
 }
