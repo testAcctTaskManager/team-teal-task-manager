@@ -305,6 +305,6 @@ export default function Home({ projectId: initialProjectId }) {
       <div>
         {projectTabs[projectTab] ?? <div>unknown tab</div>}
       </div>
-    </PageLayout>
+    </div>
   );
 }
