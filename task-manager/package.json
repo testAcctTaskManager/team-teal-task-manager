@@ -4,7 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler pages dev --local",
+		"dev": "wrangler pages dev --local --ip localhost",
 		"test": "npm run test:vitest && npm run test:ct",
 		"test:integration": "node ./scripts/test-with-server.mjs",
 		"test:integration:vitest": "vitest run tests/integration",
@@ -27,6 +27,7 @@
 		"@tailwindcss/vite": "^4.1.18",
 		"better-sqlite3": "^12.6.2",
 		"fs": "^0.0.1-security",
+		"jose": "^6.1.3",
 		"react-router-dom": "^7.12.0",
 		"tailwindcss": "^4.1.18"
 	},

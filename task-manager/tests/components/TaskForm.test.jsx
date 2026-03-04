@@ -38,6 +38,13 @@ describe("TaskForm (Vitest)", () => {
     originalBodyHTML = document.body.innerHTML;
     originalFetch = global.fetch;
     fetchMock = vi.fn(async (url) => {
+      if (url === "/api/auth/me") {
+        return {
+          ok: true,
+          json: async () => ({ id: 1, display_name: "Default User" }),
+        };
+      }
+
       if (url === "/api/users") {
         return {
           ok: true,
@@ -100,6 +107,13 @@ describe("TaskForm (Vitest)", () => {
     let updatedPayload = null;
 
     fetchMock.mockImplementation(async (url, options = {}) => {
+      if (url === "/api/auth/me") {
+        return {
+          ok: true,
+          json: async () => ({ id: 7, display_name: "Test User" }),
+        };
+      }
+
       if (url === "/api/users") {
         return {
           ok: true,

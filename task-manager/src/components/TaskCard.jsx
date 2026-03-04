@@ -44,7 +44,7 @@ function UserWithTime({ userId, user, users }) {
  * - The parent column / list is responsible for loading tasks from the backend
  *   and passing the correct data into this component.
  */
-export default function TaskCard({ task, index }) {
+export default function TaskCard({ task, index, fullWidth }) {
   const navigate = useNavigate();
   const { users } = useUsers();
 
@@ -72,7 +72,7 @@ export default function TaskCard({ task, index }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="px-4 py-3.5 my-2 rounded-[10px] bg-white/[0.04] shadow-[0_4px_10px_rgba(0,0,0,0.3)] cursor-pointer text-left"
+          className={`px-4 py-3.5 my-2 rounded-[10px] bg-white/[0.04] shadow-[0_4px_10px_rgba(0,0,0,0.3)] cursor-pointer text-left ${fullWidth ? "w-full" : ""}`}
           data-testid="task-card"
           onClick={() => navigate(`/task/${id}`)}
           role="button"

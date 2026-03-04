@@ -47,6 +47,21 @@ export function buildCorsHeaders(env, req, methods = "GET,POST,OPTIONS") {
 }
 
 /**
+ * Parse cookies from a Cookie header string.
+ * @param {string|null} cookieHeader - The Cookie header value
+ * @returns {Record<string,string>} - Object mapping cookie names to values
+ */
+export function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+  for (const pair of cookieHeader.split(";")) {
+    const [name, ...rest] = pair.trim().split("=");
+    if (name) cookies[name.trim()] = rest.join("=").trim();
+  }
+  return cookies;
+}
+
+/**
  * Execute a query and return an array of rows.
  * Normalizes driver responses (some return { results: [...] }).
  * @param {object} db - D1/database binding
@@ -276,6 +291,8 @@ export async function deleteFrom(
  * - `allowedTables` (Array<string>): optional allowlist of table names
  * - `allowedColumns` (Array<string>): columns accepted for inserts/updates and allowed for
  *     safe query-param filtering on collection GET (see notes at top).
+ * - `selectColumns` (Array<string>): columns to return in SELECT queries. When provided,
+ *     replaces `SELECT *` with an explicit column list so sensitive columns can be excluded.
  * - `dbEnvVar` (string): env key for DB binding (default: 'cf_db')
  * - `orderBy` (string): ORDER BY clause for collection GET
  *
@@ -298,6 +315,7 @@ export function makeCrudHandlers(options = {}) {
     primaryKey = "id",
     allowedTables = [],
     allowedColumns = [],
+    selectColumns = [],
     dbEnvVar = "cf_db",
     orderBy = "",
   } = options;
@@ -307,6 +325,11 @@ export function makeCrudHandlers(options = {}) {
   validateIdentifier(primaryKey);
   if (allowedColumns && allowedColumns.length)
     validateColumnNames(allowedColumns);
+  if (selectColumns && selectColumns.length)
+    validateColumnNames(selectColumns);
+
+  const selectClause =
+    selectColumns && selectColumns.length ? selectColumns.join(", ") : "*";
 
   // Collection handler: GET (list), POST (create), OPTIONS
   async function collection(context) {
@@ -358,7 +381,7 @@ export function makeCrudHandlers(options = {}) {
 
         const whereClause = whereParts.length ? whereParts.join(" AND ") : "";
         const order = orderBy ? ` ORDER BY ${orderBy}` : "";
-        const sql = `SELECT * FROM ${table}${whereClause ? " WHERE " + whereClause : ""}${order}`;
+        const sql = `SELECT ${selectClause} FROM ${table}${whereClause ? " WHERE " + whereClause : ""}${order}`;
         const rows = await queryAll(db, sql, params);
         return new Response(JSON.stringify(rows || []), { headers: CORS });
       }
@@ -423,7 +446,7 @@ export function makeCrudHandlers(options = {}) {
         await insertInto(db, table, payloadCols, values, allowedTables);
         const created = await queryOne(
           db,
-          `SELECT * FROM ${table} ORDER BY ${primaryKey} DESC LIMIT 1`,
+          `SELECT ${selectClause} FROM ${table} ORDER BY ${primaryKey} DESC LIMIT 1`,
         );
         return new Response(JSON.stringify(created || {}), {
           status: 201,
@@ -478,11 +501,10 @@ export function makeCrudHandlers(options = {}) {
         });
 
       if (request.method === "GET") {
-        const row = await selectOneFrom(
+        const row = await queryOne(
           db,
-          table,
-          { whereClause: `${primaryKey} = ?`, params: [id] },
-          allowedTables,
+          `SELECT ${selectClause} FROM ${table} WHERE ${primaryKey} = ?`,
+          [id],
         );
         if (!row)
           return new Response(JSON.stringify({}), {
@@ -533,11 +555,10 @@ export function makeCrudHandlers(options = {}) {
           [id],
           allowedTables,
         );
-        const updated = await selectOneFrom(
+        const updated = await queryOne(
           db,
-          table,
-          { whereClause: `${primaryKey} = ?`, params: [id] },
-          allowedTables,
+          `SELECT ${selectClause} FROM ${table} WHERE ${primaryKey} = ?`,
+          [id],
         );
         return new Response(JSON.stringify(updated || {}), { headers: CORS });
       }

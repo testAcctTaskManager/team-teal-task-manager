@@ -1,11 +1,9 @@
 import { describe, it, expect } from "vitest";
-
-const DEV_PORT = process.env.WRANGLER_DEV_PORT ?? "8788";
-const BASE_URL = `http://127.0.0.1:${DEV_PORT}`;
+import { authFetch, BASE_URL } from "./helpers.js";
 
 describe("Sprints API with D1 (integration)", () => {
   it("Returns seeded Sprint from database", async () => {
-    const res = await fetch(`${BASE_URL}/api/sprints`);
+    const res = await authFetch(`${BASE_URL}/api/sprints`);
     expect(res.ok).toBe(true);
 
     const data = await res.json();
@@ -27,7 +25,7 @@ describe("Sprints API with D1 (integration)", () => {
 
   it("Creates a new sprint with default timestamps", async () => {
     // Create a sprint
-    const createRes = await fetch(`${BASE_URL}/api/sprints`, {
+    const createRes = await authFetch(`${BASE_URL}/api/sprints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -48,7 +46,7 @@ describe("Sprints API with D1 (integration)", () => {
 
   it("Updates a sprints's start_date and end_date and refreshes updated_at", async () => {
     // First create a sprint
-    const createRes = await fetch(`${BASE_URL}/api/sprints`, {
+    const createRes = await authFetch(`${BASE_URL}/api/sprints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -64,7 +62,7 @@ describe("Sprints API with D1 (integration)", () => {
     expect(id).toBeDefined();
 
     // Update status
-    const updateRes = await fetch(`${BASE_URL}/api/sprints/${id}`, {
+    const updateRes = await authFetch(`${BASE_URL}/api/sprints/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -82,7 +80,7 @@ describe("Sprints API with D1 (integration)", () => {
   });
 
   it("Rejects a sprint missing required fields", async () => {
-    const res = await fetch(`${BASE_URL}/api/sprints`, {
+    const res = await authFetch(`${BASE_URL}/api/sprints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -96,14 +94,14 @@ describe("Sprints API with D1 (integration)", () => {
   });
 
   it("Returns 404 for a sprint that does not exist", async () => {
-    const res = await fetch(`${BASE_URL}/api/sprints/99999`);
+    const res = await authFetch(`${BASE_URL}/api/sprints/99999`);
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body).toBeTruthy();
   });
 
   it("Deletes a sprint and confirms it is gone", async () => {
-    const createRes = await fetch(`${BASE_URL}/api/sprints`, {
+    const createRes = await authFetch(`${BASE_URL}/api/sprints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -116,13 +114,13 @@ describe("Sprints API with D1 (integration)", () => {
     const id = created.id;
     expect(id).toBeDefined();
 
-    const deleteRes = await fetch(`${BASE_URL}/api/sprints/${id}`, {
+    const deleteRes = await authFetch(`${BASE_URL}/api/sprints/${id}`, {
       method: "DELETE",
     });
     expect(deleteRes.ok).toBe(true);
 
     // Should not be able to find deleted sprint
-    const getRes = await fetch(`${BASE_URL}/api/sprints/${id}`);
+    const getRes = await authFetch(`${BASE_URL}/api/sprints/${id}`);
     expect(getRes.status).toBe(404);
   });
 });
