@@ -1,7 +1,8 @@
-export function GoogleSignInButton({ authURL }) {
+export function GoogleSignInButton() {
   const handleClick = () => {
-    window.location.href = authURL;
+    window.location.href = "/api/auth/login";
   };
+
 
   return (
     <button

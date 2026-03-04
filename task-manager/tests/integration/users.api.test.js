@@ -1,11 +1,9 @@
 import { describe, it, expect } from "vitest";
-
-const DEV_PORT = process.env.WRANGLER_DEV_PORT ?? "8788";
-const BASE_URL = `http://127.0.0.1:${DEV_PORT}`;
+import { authFetch, BASE_URL } from "./helpers.js";
 
 describe("Users API with D1 (integration)", () => {
   it("returns seeded users from the database", async () => {
-    const res = await fetch(`${BASE_URL}/api/users`);
+    const res = await authFetch(`${BASE_URL}/api/users`);
     expect(res.ok).toBe(true);
 
     const data = await res.json();
@@ -22,7 +20,7 @@ describe("Users API with D1 (integration)", () => {
 
   it("prevents creating a user with a duplicate email", async () => {
     // alice@example.com is seeded in 007_data_seed.sql with id=1
-    const createRes = await fetch(`${BASE_URL}/api/users`, {
+    const createRes = await authFetch(`${BASE_URL}/api/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -39,14 +37,14 @@ describe("Users API with D1 (integration)", () => {
   });
 
   it("returns seeded users with role", async () => {
-    const res = await fetch(`${BASE_URL}/api/users`);
+    const res = await authFetch(`${BASE_URL}/api/users`);
     const data = await res.json();
     const user1 = data.find((u) => u.id === 1);
     expect(user1.role).toBeTruthy();
   });
 
   it("updates a user's role via PATCH", async () => {
-    const patchRes = await fetch(`${BASE_URL}/api/users/2`, {
+    const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: "clinician" }),
@@ -58,7 +56,7 @@ describe("Users API with D1 (integration)", () => {
   });
 
   it("rejects invalid role on POST", async () => {
-  const res = await fetch(`${BASE_URL}/api/users`, {
+  const res = await authFetch(`${BASE_URL}/api/users`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

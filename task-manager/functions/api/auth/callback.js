@@ -1,26 +1,121 @@
+import { SignJWT } from "jose";
+import { queryOne, execute } from "../helpers.js";
+
+const PAGES_DEV_SUFFIX = ".team-teal-task-manager.pages.dev";
+const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
+
+function isAllowedOrigin(origin) {
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === COOKIE_DOMAIN ||
+      hostname.endsWith(PAGES_DEV_SUFFIX) ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isLocalhost(hostname) {
+  const h = hostname.split(":")[0];
+  return h === "localhost" || h === "127.0.0.1";
+}
+
+function buildSessionCookie(token, hostname) {
+  const secure = isLocalhost(hostname) ? "" : " Secure;";
+  let cookie = `session=${token}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=604800`;
+  if (hostname === COOKIE_DOMAIN || hostname.endsWith(PAGES_DEV_SUFFIX)) {
+    cookie += `; Domain=${COOKIE_DOMAIN}`;
+  }
+  return cookie;
+}
+
+function clearOAuthStateCookie(hostname) {
+  const secure = isLocalhost(hostname) ? "" : " Secure;";
+  return `oauth_state=; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=0`;
+}
+
+function getOAuthState(request) {
+  const header = request.headers.get("Cookie") || "";
+  for (const pair of header.split(";")) {
+    const [name, ...rest] = pair.trim().split("=");
+    if (name === "oauth_state") {
+      try {
+        return JSON.parse(atob(rest.join("=")));
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+function redirectWithClear(url, hostname) {
+  const headers = new Headers({ Location: url });
+  headers.append("Set-Cookie", clearOAuthStateCookie(hostname));
+  return new Response(null, { status: 302, headers });
+}
+
+async function redirectWithSession(url, userId, email, jwtSecret, hostname) {
+  const secret = new TextEncoder().encode(jwtSecret);
+  const token = await new SignJWT({ sub: String(userId), email })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(secret);
+
+  const headers = new Headers({ Location: url });
+  headers.append("Set-Cookie", buildSessionCookie(token, hostname));
+  headers.append("Set-Cookie", clearOAuthStateCookie(hostname));
+  return new Response(null, { status: 302, headers });
+}
+
 export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
-  const debug = url.searchParams.get("debug") === "1";
+  const fallbackOrigin = url.origin;
 
-  // determine origin for internal API calls and redirect URI
-  const origin = env.FRONTEND_ORIGIN || `https://${request.headers.get("host")}`;
+  const oauthState = getOAuthState(request);
+  const returnedState = url.searchParams.get("state");
+
+  if (!oauthState || returnedState !== oauthState.s) {
+    return new Response("state mismatch – possible CSRF", { status: 403 });
+  }
+
+  let origin =
+    oauthState.o && isAllowedOrigin(oauthState.o)
+      ? oauthState.o
+      : fallbackOrigin;
+
+  if (isLocalhost(url.hostname)) {
+    origin = fallbackOrigin;
+  }
+
+  const codeVerifier = oauthState.v;
 
   if (error) {
     console.error("oauth error:", error);
-    if (debug) return new Response(JSON.stringify({ error }), { status: 400, headers: { "Content-Type": "application/json" } });
-    return Response.redirect(origin, 302);
+    return redirectWithClear(origin, url.hostname);
   }
 
   if (!code) {
     return new Response("missing code", { status: 400 });
   }
-  
+
+  if (!env.JWT_SECRET) {
+    return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
+  const db = env.cf_db;
 
   try {
-    // exchange code for tokens
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -30,107 +125,81 @@ export async function onRequest({ request, env }) {
         client_secret: env.GOOGLE_CLIENT_SECRET,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
+        code_verifier: codeVerifier,
       }),
     });
 
     const tokenData = await tokenResponse.json().catch(() => null);
     if (!tokenResponse.ok) {
       console.error("token exchange failed", tokenData);
-      if (debug) return new Response(JSON.stringify({ tokenError: tokenData }), { status: 502, headers: { "Content-Type": "application/json" } });
-      return Response.redirect(origin, 302);
+      return redirectWithClear(origin, url.hostname);
     }
 
-    // fetch user info
     const userInfoRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const userInfoData = await userInfoRes.json().catch(() => null);
     if (!userInfoRes.ok) {
       console.error("could not fetch user info", userInfoData);
-      if (debug) return new Response(JSON.stringify({ userInfoError: userInfoData }), { status: 502, headers: { "Content-Type": "application/json" } });
-      return Response.redirect(origin, 302);
+      return redirectWithClear(origin, url.hostname);
     }
 
-    // attempt to create or resolve user
     let userId = null;
-    let addUserRes = await fetch(new URL("/api/users", origin).toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ display_name: userInfoData.name, email: userInfoData.email }),
-    });
-    let addUserBody = await addUserRes.json().catch(() => null);
 
-    if (addUserRes.ok && addUserBody && addUserBody.id) {
-      userId = addUserBody.id;
+    const existingUser = await queryOne(
+      db,
+      "SELECT id FROM Users WHERE email = ?",
+      [userInfoData.email]
+    );
+
+    if (existingUser) {
+      userId = existingUser.id;
     } else {
-      // if creation fails, link provider to existing user
-      const errMsg = addUserBody && addUserBody.error ? String(addUserBody.error) : "";
-      if (errMsg.includes("Email already in use")) {
-        // look up existing user by email
-        const usersRes = await fetch(new URL(`/api/users?email=${encodeURIComponent(userInfoData.email)}`, origin).toString(), {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const usersList = await usersRes.json().catch(() => []);
-        const existingUser = Array.isArray(usersList) && usersList.length ? usersList[0] : null;
-        if (!existingUser) {
-          console.error("email conflict but no user found", { email: userInfoData.email, addUserBody });
-          if (debug) return new Response(JSON.stringify({ error: "email conflict but lookup failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
-          return Response.redirect("/auth/error?reason=email_conflict_lookup_failed", 302);
-        }
-        userId = existingUser.id;
-
-        // check if provider mapping already exists for this provider_user_id
-        const provCheckRes = await fetch(new URL(`/api/auth/user-providers?provider=google&provider_user_id=${encodeURIComponent(userInfoData.sub)}`, origin).toString(), {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const provList = await provCheckRes.json().catch(() => []);
-        const existingProv = Array.isArray(provList) && provList.length ? provList[0] : null;
-
-        if (existingProv) {
-          if (existingProv.user_id !== userId) {
-            console.error("provider linked to another account", { providerUserId: userInfoData.sub, linkedTo: existingProv.user_id, email: userInfoData.email });
-            if (debug) return new Response(JSON.stringify({ error: "provider-linked-to-different-account" }), { status: 409, headers: { "Content-Type": "application/json" } });
-            return Response.redirect("/auth/error?reason=provider_conflict", 302);
-          }
-        } else {
-          // create provider record linking this provider_user_id to the existing user
-          const expiresAt = tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null;
-          const createProvRes = await fetch(new URL("/api/auth/user-providers", origin).toString(), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId, provider_user_id: userInfoData.sub ?? null, provider: "google", refresh_token: tokenData.refresh_token, token_expires_at: expiresAt }),
-          });
-          const createdProv = await createProvRes.json().catch(() => null);
-          if (!createProvRes.ok) {
-            console.error("failed creating provider after email exists", createdProv);
-            if (debug) return new Response(JSON.stringify({ error: "failed-create-provider", detail: createdProv }), { status: 500, headers: { "Content-Type": "application/json" } });
-            return Response.redirect("/auth/error?reason=create_provider_failed", 302);
-          }
-        }
-      } else {
-        console.error("could not insert user", addUserBody);
-        if (debug) return new Response(JSON.stringify({ addUserError: addUserBody }), { status: 502, headers: { "Content-Type": "application/json" } });
-        return Response.redirect("/auth/error?reason=create_user_failed", 302);
+      await execute(
+        db,
+        "INSERT INTO Users (display_name, email) VALUES (?, ?)",
+        [userInfoData.name, userInfoData.email]
+      );
+      const newUser = await queryOne(
+        db,
+        "SELECT id FROM Users WHERE id = last_insert_rowid()"
+      );
+      if (!newUser) {
+        console.error("failed to create user");
+        return redirectWithClear(`${origin}/auth/error?reason=create_user_failed`, url.hostname);
       }
+      userId = newUser.id;
     }
 
-    // we should have a user id by now, now we ensure a provider row exists
-    const provExistsRes = await fetch(new URL(`/api/auth/user-providers?provider=google&provider_user_id=${encodeURIComponent(userInfoData.sub)}`, origin).toString(), { method: "GET", headers: { "Content-Type": "application/json" } });
-    const provExistsList = await provExistsRes.json().catch(() => []);
-    if (!(Array.isArray(provExistsList) && provExistsList.length)) {
-      const expiresAt = tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString() : null;
-      await fetch(new URL("/api/auth/user-providers", origin).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, provider_user_id: userInfoData.sub ?? null, provider: "google", refresh_token: tokenData.refresh_token, token_expires_at: expiresAt }),
-      });
+    const existingProvider = await queryOne(
+      db,
+      "SELECT id, user_id FROM User_Providers WHERE provider = ? AND provider_user_id = ?",
+      ["google", userInfoData.sub]
+    );
+
+    if (existingProvider) {
+      if (existingProvider.user_id !== userId) {
+        console.error("provider linked to another account", {
+          providerUserId: userInfoData.sub,
+          linkedTo: existingProvider.user_id,
+          email: userInfoData.email,
+        });
+        return redirectWithClear(`${origin}/auth/error?reason=provider_conflict`, url.hostname);
+      }
+    } else {
+      const expiresAt = tokenData.expires_in
+        ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        : null;
+      await execute(
+        db,
+        "INSERT INTO User_Providers (user_id, provider, provider_user_id, token_expires_at) VALUES (?, ?, ?, ?)",
+        [userId, "google", userInfoData.sub ?? null, expiresAt]
+      );
     }
+
+    return await redirectWithSession(origin, userId, userInfoData.email, env.JWT_SECRET, url.hostname);
   } catch (err) {
     console.error("callback onRequest error", err);
-    if (debug) return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
-    return Response.redirect(origin, 302);
+    return redirectWithClear(origin, url.hostname);
   }
-  return Response.redirect(origin, 302);
 }

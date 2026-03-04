@@ -8,6 +8,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { SignJWT } from "jose";
 
 // Resolve project root (one level up from this script file).
 const __filename = fileURLToPath(import.meta.url);
@@ -151,6 +152,27 @@ async function main() {
   console.log(
     `Wrangler dev server (test env) is ready at ${DEV_URL}, running all tests...`,
   );
+
+  // 4b) Generate a signed JWT so integration tests can authenticate.
+  //     Read JWT_SECRET from .dev.vars (same file Wrangler reads for local secrets).
+  const devVarsPath = path.join(projectRoot, ".dev.vars");
+  let jwtSecret = "test-integration-secret";
+  try {
+    const devVarsContent = await fs.readFile(devVarsPath, "utf-8");
+    const match = devVarsContent.match(/^JWT_SECRET=(.+)$/m);
+    if (match) jwtSecret = match[1].trim();
+  } catch {
+    console.warn("[test-with-server] Could not read .dev.vars; using default test JWT secret");
+  }
+
+  const secret = new TextEncoder().encode(jwtSecret);
+  const testToken = await new SignJWT({ sub: "1", email: "alice@example.com" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(secret);
+
+  process.env.TEST_SESSION_TOKEN = testToken;
 
   try {
     // 5) Run only the integration tests that rely on Wrangler + D1.

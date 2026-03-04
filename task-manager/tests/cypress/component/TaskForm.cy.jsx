@@ -8,10 +8,7 @@ describe("TaskForm component", () => {
   });
 
   it("creates a new task and links it to a column when columnId is provided", () => {
-    cy.intercept("GET", "/api/users", {
-      statusCode: 200,
-      body: [{ id: 7, display_name: "Cypress User" }],
-    }).as("getUsers");
+    const mockUser = { id: 7, display_name: "Cypress User", email: "cypress@test.com" };
 
     cy.intercept("POST", "/api/tasks", (req) => {
       expect(req.body).to.include({
@@ -31,7 +28,10 @@ describe("TaskForm component", () => {
       });
     }).as("createTask");
 
-    const { onSuccess } = mountTaskForm();
+    const { onSuccess } = mountTaskForm({}, {
+      currentUser: mockUser,
+      users: [mockUser],
+    });
 
     cy.get('input[name="title"]').type("New Cypress Task", { force: true });
 
@@ -47,11 +47,7 @@ describe("TaskForm component", () => {
 
   it("loads an existing task in edit mode and saves changes", () => {
     const taskId = 42;
-
-    cy.intercept("GET", "/api/users", {
-      statusCode: 200,
-      body: [{ id: 7, display_name: "Cypress User" }],
-    }).as("getUsers");
+    const mockUser = { id: 7, display_name: "Cypress User", email: "cypress@test.com" };
 
     cy.intercept("GET", "**/api/tasks/*", {
       statusCode: 200,
@@ -86,7 +82,10 @@ describe("TaskForm component", () => {
       });
     }).as("updateTask");
 
-    const { onSuccess } = mountTaskForm({ taskId });
+    const { onSuccess } = mountTaskForm({ taskId }, {
+      currentUser: mockUser,
+      users: [mockUser],
+    });
 
     cy.wait("@getTask");
 
@@ -120,10 +119,7 @@ describe("TaskForm component", () => {
   });
 
   it("creates a new task without columnId and does not link to column", () => {
-    cy.intercept("GET", "/api/users", {
-      statusCode: 200,
-      body: [{ id: 7, display_name: "Cypress User" }],
-    }).as("getUsers");
+    const mockUser = { id: 7, display_name: "Cypress User", email: "cypress@test.com" };
 
     cy.intercept("POST", "/api/tasks", (req) => {
       expect(req.body).to.include({
@@ -145,7 +141,10 @@ describe("TaskForm component", () => {
 
     cy.intercept("POST", "/api/column_tasks").as("linkColumn");
 
-    mountTaskForm();
+    mountTaskForm({}, {
+      currentUser: mockUser,
+      users: [mockUser],
+    });
 
     cy.get('input[name="title"]').type("Task without column", {
       force: true,

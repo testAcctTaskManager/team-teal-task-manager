@@ -54,6 +54,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
+        
+      - name: Create .dev.vars for test JWT
+        run: echo "JWT_SECRET=shhhh_its_a_secret" > .dev.vars
+        
       - name: DB-backed integration tests (Wrangler + D1)
         run: npm run test:integration
+

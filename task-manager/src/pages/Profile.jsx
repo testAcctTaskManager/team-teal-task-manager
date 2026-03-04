@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 
-//Current_User_1 will need to be replaces with the logged in user.
-
 function Profile() {
   const [user, setUser] = useState(null);
-  //Borrowed setError UseState from TaskDetail.jsx
   const [error, setError] = useState(null);
-  const CURRENT_USER_ID = 1;
 
   useEffect(() => {
     const fetchUser = async () => {
       setError(null);
 
       try {
-        const res = await fetch(`/api/users/${CURRENT_USER_ID}`);
+        const res = await fetch("/api/auth/me");
         const data = await res.json();
 
         if (!res.ok) {

@@ -1,16 +1,15 @@
 /* eslint react-refresh/only-export-components: "off" */
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 
-const UsersContext = createContext({
+export const UsersContext = createContext({
   users: [],
   loading: false,
   error: null,
   refetch: () => {},
-  // DEV-ONLY: currentUser is inferred from the users list for now.
-  // TODO: Once real auth is implemented, currentUser should come from
-  // an auth-backed endpoint (e.g. /api/auth/me) instead of guessing.
   currentUser: null,
-  setCurrentUser: () => {},
+  isAuthenticated: false,
+  authLoading: true,
+  logout: () => {},
 });
 
 export function UsersProvider({ children }) {
@@ -18,8 +17,9 @@ export function UsersProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -40,22 +40,35 @@ export function UsersProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    loadUsers();
   }, []);
 
-  // DEV-ONLY currentUser behavior:
-  // Infer a "current" user from the loaded users list so components can
-  // consume useUsers().currentUser while real auth is still in progress.
-  // We simply pick the first user once, and allow consumers to override
-  // via setCurrentUser (e.g., for a future user-switcher UI).
   useEffect(() => {
-    if (!currentUser && users.length > 0) {
-      setCurrentUser(users[0]);
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const user = await res.json();
+          setCurrentUser(user);
+          await loadUsers();
+        }
+      } catch {
+        // not authenticated
+      } finally {
+        setAuthLoading(false);
+      }
     }
-  }, [users, currentUser]);
+    checkAuth();
+  }, [loadUsers]);
+
+  async function logout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // best-effort
+    }
+    setCurrentUser(null);
+    setUsers([]);
+  }
 
   const value = {
     users,
@@ -63,7 +76,9 @@ export function UsersProvider({ children }) {
     error,
     refetch: loadUsers,
     currentUser,
-    setCurrentUser,
+    isAuthenticated: !!currentUser,
+    authLoading,
+    logout,
   };
 
   return <UsersContext.Provider value={value}>{children}</UsersContext.Provider>;
@@ -72,3 +87,4 @@ export function UsersProvider({ children }) {
 export function useUsers() {
   return useContext(UsersContext);
 }
+

@@ -1,11 +1,9 @@
 import { describe, it, expect } from "vitest";
-
-const DEV_PORT = process.env.WRANGLER_DEV_PORT ?? "8788";
-const BASE_URL = `http://127.0.0.1:${DEV_PORT}`;
+import { authFetch, BASE_URL } from "./helpers.js";
 
 describe("Projects API with D1 (integration)", () => {
     it("Returns seeded projects from database", async () => {
-        const res = await fetch(`${BASE_URL}/api/projects`);
+        const res = await authFetch(`${BASE_URL}/api/projects`);
         expect(res.ok).toBe(true);
 
         const data = await res.json();
@@ -27,7 +25,7 @@ describe("Projects API with D1 (integration)", () => {
 
     it("Creates a new project with default status", async () => {
         // Create a project
-        const createRes = await fetch(`${BASE_URL}/api/projects`, {
+        const createRes = await authFetch(`${BASE_URL}/api/projects`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -49,7 +47,7 @@ describe("Projects API with D1 (integration)", () => {
 
     it("Updates a project's status and refreshes updated_at", async () => { 
         // First create a project 
-        const createRes = await fetch(`${BASE_URL}/api/projects`, { 
+        const createRes = await authFetch(`${BASE_URL}/api/projects`, { 
             method: "POST", 
             headers: {"Content-Type": "application/json"}, 
             body: JSON.stringify({
@@ -64,7 +62,7 @@ describe("Projects API with D1 (integration)", () => {
         expect(id).toBeDefined();
 
         // Update status
-        const updateRes = await fetch(`${BASE_URL}/api/projects/${id}`, { 
+        const updateRes = await authFetch(`${BASE_URL}/api/projects/${id}`, { 
             method: "PATCH", 
             headers: {"Content-Type": "application/json"}, 
             body: JSON.stringify({status: "in_progress"}), 
@@ -78,7 +76,7 @@ describe("Projects API with D1 (integration)", () => {
     }); 
     
     it("Rejects invalid status values", async () => { 
-        const res = await fetch(`${BASE_URL}/api/projects`, { 
+        const res = await authFetch(`${BASE_URL}/api/projects`, { 
             method: "POST",
             headers: {"Content-Type": "application/json"}, 
             body: JSON.stringify({name: "Bad Status Project", created_by: 1, status: "almost_done"/*invalid*/}), 
@@ -90,7 +88,7 @@ describe("Projects API with D1 (integration)", () => {
         });
 
     it("Ensures no project has duplicate column names", async () => {
-        const projectRes = await fetch(`${BASE_URL}/api/projects`);
+        const projectRes = await authFetch(`${BASE_URL}/api/projects`);
         expect(projectRes.ok).toBe(true);
 
         const projectData = await projectRes.json();
@@ -99,7 +97,7 @@ describe("Projects API with D1 (integration)", () => {
         const normalizeName = (name) => String(name ?? "").trim().toLowerCase();
 
         for (const project of projectData) {
-            const columnsRes = await fetch(`${BASE_URL}/api/columns?project_id=${project.id}`);
+            const columnsRes = await authFetch(`${BASE_URL}/api/columns?project_id=${project.id}`);
             expect(columnsRes.ok).toBe(true);
 
             const columnsData = await columnsRes.json();

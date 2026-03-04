@@ -1,7 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import LoginButton from "../../src/components/login/LoginButton.jsx";
 import { renderWithRoot } from "../test-utils/reactTestUtils.jsx";
 import { MemoryRouter } from "react-router-dom";
+
+vi.mock("../../src/contexts/UsersContext.jsx", () => ({
+  useUsers: () => ({
+    isAuthenticated: false,
+    currentUser: null,
+    authLoading: false,
+    logout: vi.fn(),
+  }),
+}));
 
 describe("LoginButton", () => {
   it("renders link to /login with proper class and aria", () => {
