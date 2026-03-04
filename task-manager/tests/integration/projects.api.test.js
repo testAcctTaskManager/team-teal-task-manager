@@ -20,6 +20,8 @@ describe("Projects API with D1 (integration)", () => {
             expect(project1.name).toBeDefined(); expect(project1.created_by).toBeDefined(); 
             expect(project1.status).toBeDefined();
             expect(["not_started", "in_progress", "complete"]).toContain(project1.status);
+            expect(project1.type).toBeDefined();
+            expect(["kanban", "scrum"]).toContain(project1.type);
         }
     });
 
@@ -39,6 +41,7 @@ describe("Projects API with D1 (integration)", () => {
         expect(created.name).toBe("Integration Test Project"); 
         expect(created.created_by).toBe(1); 
         expect(created.status).toBe("not_started"); 
+        expect(created.type).toBe("kanban");
         // default from schema 
         expect(created.created_at).toBeDefined();
         expect(created.updated_at).toBeDefined();
@@ -85,4 +88,32 @@ describe("Projects API with D1 (integration)", () => {
             expect([400, 500]).toContain(res.status); 
             const body = await res.json(); expect(body).toBeTruthy(); 
         });
+
+    it("Ensures no project has duplicate column names", async () => {
+        const projectRes = await fetch(`${BASE_URL}/api/projects`);
+        expect(projectRes.ok).toBe(true);
+
+        const projectData = await projectRes.json();
+        expect(Array.isArray(projectData)).toBe(true);
+
+        const normalizeName = (name) => String(name ?? "").trim().toLowerCase();
+
+        for (const project of projectData) {
+            const columnsRes = await fetch(`${BASE_URL}/api/columns?project_id=${project.id}`);
+            expect(columnsRes.ok).toBe(true);
+
+            const columnsData = await columnsRes.json();
+            expect(Array.isArray(columnsData)).toBe(true);
+
+            const seenNames = new Set();
+
+            for (const column of columnsData) {
+                const normalizedName = normalizeName(column.name);
+                expect(seenNames.has(normalizedName)).toBe(false);
+                seenNames.add(normalizedName);
+            }
+        }
+    });
+
+
 });

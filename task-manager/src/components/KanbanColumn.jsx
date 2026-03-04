@@ -23,23 +23,23 @@ import { Droppable } from "@hello-pangea/dnd";
  * TODO: Create KanbanColumn tests
  *
  */
-export default function KanbanColumn({ title, tasks = [], colIndex }) {
+export default function KanbanColumn({ title, tasks = [], colIndex, fullWidth = false }) {
   return (
     <Droppable droppableId={String(colIndex)}>
       {(provided) => (
-        <section className="flex flex-col rounded-lg w-64 flex-shrink-0 h-auto min-h-96 bg-white/5 shadow-lg">
+        <section className={`flex flex-col rounded-lg h-auto min-h-96 bg-white/5 shadow-lg ${fullWidth ? "w-full" : "w-64 flex-shrink-0"}`}>
           <div className="bg-gradient-to-r from-slate-700 to-slate-600 text-white text-left px-5 py-3 rounded-t-lg font-medium shadow-sm">
             {title}
           </div>
           <div
-            className="flex-1 flex flex-col items-center min-h-80 overflow-y-auto scrollbar-none border border-white/10 border-t-0 rounded-b-lg p-2 bg-gradient-to-b from-transparent to-black/10"
+            className={`flex-1 flex flex-col ${fullWidth ? "items-stretch" : "items-center"} min-h-80 overflow-y-auto scrollbar-none border border-white/10 border-t-0 rounded-b-lg p-2 bg-gradient-to-b from-transparent to-black/10`}
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
             {tasks.length > 0 ? (
               <>
                 {tasks.map((task, index) => (
-                  <TaskCard key={task.id} task={task} index={index} />
+                  <TaskCard key={task.id} task={task} fullWidth={fullWidth} index={index} />
                 ))}
                 {provided.placeholder}
               </>
