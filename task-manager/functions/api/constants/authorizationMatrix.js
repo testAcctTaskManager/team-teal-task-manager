@@ -358,53 +358,6 @@ export const AUTHORIZATION_MATRIX = Object.freeze({
       professor: OWN_COMMENT,
     }),
   }),
-
-  "/api/customers": Object.freeze({
-    GET: decisionsByRole({
-      admin: ALLOW,
-      developer: ALLOW,
-      aiTeam: ALLOW,
-      clinician: ALLOW,
-      professor: ALLOW,
-    }),
-    POST: decisionsByRole({
-      admin: ALLOW,
-      developer: ALLOW,
-      aiTeam: ALLOW,
-      clinician: DENY,
-      professor: DENY,
-    }),
-  }),
-  "/api/customers/:id": Object.freeze({
-    GET: decisionsByRole({
-      admin: ALLOW,
-      developer: ALLOW,
-      aiTeam: ALLOW,
-      clinician: ALLOW,
-      professor: ALLOW,
-    }),
-    PUT: decisionsByRole({
-      admin: ALLOW,
-      developer: ALLOW,
-      aiTeam: ALLOW,
-      clinician: DENY,
-      professor: DENY,
-    }),
-    PATCH: decisionsByRole({
-      admin: ALLOW,
-      developer: ALLOW,
-      aiTeam: ALLOW,
-      clinician: DENY,
-      professor: DENY,
-    }),
-    DELETE: decisionsByRole({
-      admin: ALLOW,
-      developer: ALLOW,
-      aiTeam: ALLOW,
-      clinician: DENY,
-      professor: DENY,
-    }),
-  }),
 });
 
 /**
