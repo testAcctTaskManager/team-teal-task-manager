@@ -29,12 +29,12 @@ describe("Users API with D1 (integration)", () => {
     const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "ai-team" }),
+      body: JSON.stringify({ role: "clinician" }),
     });
     expect(patchRes.ok).toBe(true);
 
     const updated = await patchRes.json();
-    expect(updated.role).toBe("ai-team");
+    expect(updated.role).toBe("clinician");
   });
 
   it("rejects invalid role on PATCH", async () => {
