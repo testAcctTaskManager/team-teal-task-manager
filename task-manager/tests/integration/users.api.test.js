@@ -29,12 +29,24 @@ describe("Users API with D1 (integration)", () => {
     const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "clinician" }),
+      body: JSON.stringify({ role: "ai-team" }),
     });
     expect(patchRes.ok).toBe(true);
 
     const updated = await patchRes.json();
-    expect(updated.role).toBe("clinician");
+    expect(updated.role).toBe("ai-team");
+  });
+
+  it("rejects invalid role on PATCH", async () => {
+    const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "superadmin" }),
+    });
+
+    expect(patchRes.status).toBe(400);
+    const body = await patchRes.json();
+    expect(body).toEqual({ error: "Unknown role." });
   });
 
 });
