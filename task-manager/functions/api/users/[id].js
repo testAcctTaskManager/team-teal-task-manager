@@ -1,6 +1,6 @@
 import { makeCrudHandlers } from "../helpers.js";
 
-// Use the generic CRUD handlers for the Customers item endpoint
+// Use the generic CRUD handlers for the Users item endpoint
 const createHandlers = makeCrudHandlers({
   table: "Users",
   primaryKey: "id",
