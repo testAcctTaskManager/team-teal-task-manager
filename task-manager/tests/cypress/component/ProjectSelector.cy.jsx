@@ -18,6 +18,10 @@ describe("ProjectSelector Component", () => {
         cy.contains("Select Project").should("be.visible");
         cy.contains("Project One").should("not.exist");
         cy.contains("Project Two").should("not.exist");
+
+        cy.contains("Select Project").click();
+        cy.contains("Project One").should("be.visible");
+        cy.contains("Project Two").should("be.visible");
     });
 
     it("allows project selection", () => {
