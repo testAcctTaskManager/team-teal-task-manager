@@ -404,6 +404,8 @@ export function getAuthorizationDecision({ pathname, method, role }) {
   if (!entry) return DEFAULT_AUTHORIZATION_DECISION;
 
   const methodKey = String(method || "").toUpperCase();
+  // Allow CORS preflight checks even when endpoint methods are otherwise restricted.
+  if (methodKey === "OPTIONS") return AUTHZ_DECISIONS.ALLOW;
   const methodRule = entry[methodKey];
   if (!methodRule) return DEFAULT_AUTHORIZATION_DECISION;
 
