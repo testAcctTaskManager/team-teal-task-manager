@@ -1,12 +1,6 @@
 import {
-	makeCrudHandlers,
-	parseJson,
-	insertInto,
-	queryOne,
-	buildCorsHeaders,
+	makeCrudHandlers
 } from "./helpers.js";
-
-import { isValidUserRole } from "./constants/roles.js";
 
 const config = {
 	table: "Users",
