@@ -1,5 +1,5 @@
--- Expand Users.role allowed values without dropping/rebuilding Users.
--- This avoids foreign-key churn in runtimes that enforce strict FK validity.
+-- NOTE: This leaves a temporary `role_legacy` column behind.
+-- Cleanup requires a future full Users table rebuild/reset migration.
 ALTER TABLE Users RENAME COLUMN role TO role_legacy;
 
 ALTER TABLE Users
