@@ -1,18 +1,12 @@
 import { useEffect, useState } from "react";
 import Board from "./Board";
 
-function Sprints({ sprints = [] }) {
-    const [sprintColumns, setSprintColumns] = useState(sprints);
-
-    useEffect(() => {
-        setSprintColumns(sprints);
-    }, [sprints]);
-
+function Sprints({ columns = [], setSprintColumns = () => {}, boardTitle = "Sprint"}) {
     return (
         <Board
-            columns={sprintColumns}
+            columns={columns}
             setColumns={setSprintColumns}
-            boardTitle="Sprints"
+            boardTitle={boardTitle}
             emptyColumnsText="No Sprints"
             layout="vertical"
             fullWidthColumns={true}
