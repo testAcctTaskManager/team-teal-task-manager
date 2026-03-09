@@ -42,8 +42,13 @@ export async function onRequestGet({ request, env }) {
   const payload = btoa(JSON.stringify({ s: state, o: origin, v: codeVerifier }));
   const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
   const secure = isLocal ? "" : " Secure;";
+  const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
+  const domain =
+    hostname === COOKIE_DOMAIN || hostname.endsWith(`.${COOKIE_DOMAIN}`)
+      ? `; Domain=${COOKIE_DOMAIN}`
+      : "";
   const cookie =
-    `oauth_state=${payload}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=600`;
+    `oauth_state=${payload}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=600${domain}`;
 
   return new Response(null, {
     status: 302,
