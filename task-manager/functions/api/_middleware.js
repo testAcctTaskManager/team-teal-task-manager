@@ -106,6 +106,50 @@ export async function onRequest(context) {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Context-dependent decisions
+
+    // Enforce self-only access on /api/users/:id routes.
+    if (decision === AUTHZ_DECISIONS.SELF) {
+      if (url.pathname.startsWith("/api/users/")) {
+        const idStr = url.pathname.split("/").filter(Boolean).at(-1);
+        const targetId = Number(idStr);
+        if (!Number.isFinite(targetId) || targetId !== context.data.user.id) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
+    // Logged-in user can only edit their own comments
+    if (decision === AUTHZ_DECISIONS.OWN_COMMENT) {
+      const idStr = url.pathname.split("/").filter(Boolean).at(-1);
+      const commentId = Number(idStr);
+      if (!Number.isFinite(commentId)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // Query for the comment we are attempting to route to
+      const comment = await queryOne(
+        db,
+        "SELECT created_by FROM Comments WHERE id = ?",
+        [commentId],
+      );
+
+      // Reject if we find a comment and logged in user did not create it.
+      // Let comment endpoints retain normal 404 behavior for missing records.
+      if (comment && Number(comment.created_by) !== context.data.user.id) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
   } catch {
     return new Response(JSON.stringify({ error: "Invalid session" }), {
       status: 401,
