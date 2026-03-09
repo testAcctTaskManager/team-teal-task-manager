@@ -6,14 +6,17 @@ import { Link } from "react-router-dom";
 import ProjectSelector from "../components/ProjectSelector.jsx";
 import Scrum from "../components/Scrum.jsx";
 import Backlog from "../components/Backlog.jsx";
+import Sprints from "../components/Sprints.jsx";
 
-export default function Home({ projectId: initialProjectId }) {
+export default function Home({ projectId: initialProjectId, sprintId: initialSprintId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
   const [backlogColumns, setBacklogColumns] = useState([]);
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectTab, setProjectTab] = useState("Board");
+  const [sprintColumns, setSprintColumns] = useState([]);
+  const [sprintId, setSprintId] = useState(initialSprintId)
 
   /* Adding states for task filtering */
   const [selectedAssignee, setSelectedAssignee] = useState("all");
@@ -64,6 +67,14 @@ export default function Home({ projectId: initialProjectId }) {
       }];
       setBacklogColumns(backlogTaskCollection);
       console.log(backlogTaskCollection);
+
+      const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
+      const sprintTaskCollection = [{
+        id: sprintId,
+        title: "Sprint " + sprintId,
+        tasks: sprintTasks
+      }];
+      setSprintColumns(sprintTaskCollection);
     } catch (err) {
       console.error("Fetch error", err);
       setColumns([]);
@@ -174,10 +185,16 @@ export default function Home({ projectId: initialProjectId }) {
         setColumns={setColumns}
       />,
     Backlog:
-      <Backlog
-        key={projectId}
-        backlog={backlogColumns}
-      />,
+      <div>
+        <Sprints
+        columns={sprintColumns}
+        setSprintColumns={setSprintColumns}
+        boardTitle="Sprints"/>
+        <Backlog
+          key={projectId}
+          backlog={backlogColumns}
+        />
+      </div>
   }
 
   function openModal() {

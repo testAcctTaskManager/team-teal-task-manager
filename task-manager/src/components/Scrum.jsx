@@ -7,6 +7,8 @@ function Scrum({ columns = [], setColumns = () => {} }) {
             setColumns={setColumns}
             boardTitle="Scrum Board"
             emptyColumnsText="No Columns"
+            layout="horizontal"
+            fullWidthColumns={false}
         />
     )
 }
