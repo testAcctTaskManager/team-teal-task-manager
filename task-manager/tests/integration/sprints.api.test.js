@@ -80,7 +80,7 @@ describe("Sprints API with D1 (integration)", () => {
   });
 
   it("Rejects a sprint missing required fields", async () => {
-    const res = await authFetch(`${BASE_URL}/api/sprints`, {
+    const res = await authFetchAsAdmin(`${BASE_URL}/api/sprints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
