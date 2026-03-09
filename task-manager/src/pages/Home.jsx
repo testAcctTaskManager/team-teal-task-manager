@@ -15,6 +15,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectTab, setProjectTab] = useState("Board");
+  const [sprints, setSprints] = useState([]);
   const [sprintColumns, setSprintColumns] = useState([]);
   const [sprintId, setSprintId] = useState(initialSprintId)
 
@@ -26,9 +27,10 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   // Load the columns and tasks for the provided project ID
   async function loadColumns(projectId) {
     try {
-      const [colRes, taskRes] = await Promise.all([
+      const [colRes, taskRes, sprintRes] = await Promise.all([
         fetch(`/api/columns?project_id=${projectId}`),
         fetch(`/api/tasks?project_id=${projectId}`),
+        fetch(`/api/sprints?project_id=${projectId}`),
       ]);
 
       const cols = await colRes.json().catch(() => null);
@@ -44,6 +46,15 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         setColumns([]);
         return;
       }
+
+      const sprintList = await sprintRes.json().catch(() => null);
+      if (!Array.isArray(sprintList) || sprintList.error) {
+        console.error("API error loading sprints", sprintList);
+        setSprints([]);
+        setSprintColumns([]);
+        return;
+      }
+      setSprints(sprintList);
 
       const columnsWithTasks = cols.map((col) => {
         const colTasks = taskList
@@ -176,7 +187,8 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
     setProjectId(nextProjectId);
     setProjectTab("Board");
   }
-
+  console.log("test")
+  console.log(sprints);
   const projectTabs = {
     Board: 
       <BoardComponent
@@ -188,7 +200,10 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       <div>
         <Sprints
         columns={sprintColumns}
+        sprints={sprints}
         setSprintColumns={setSprintColumns}
+        setSprints={setSprints}
+        setSprintId={setSprintId}
         boardTitle="Sprints"/>
         <Backlog
           key={projectId}
