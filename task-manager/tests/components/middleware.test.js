@@ -65,7 +65,8 @@ describe("api middleware authorization", () => {
     expect(res.status).toBe(200);
   });
 
-  it("denies developer on admin-only route", async () => {
+  // TODO: change this test if we restrict who can see api/users
+  it("allows developer on /api/users route", async () => {
     const context = makeContext({
       path: "/api/users",
       user: { id: 2, email: "user@example.com", role: "developer" },
@@ -76,8 +77,8 @@ describe("api middleware authorization", () => {
     });
 
     const res = await onRequest(context);
-    expect(res.status).toBe(403);
-    expect(context.next).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(context.next).toHaveBeenCalledTimes(1);
   });
 
   it("allows admin on admin-only route", async () => {

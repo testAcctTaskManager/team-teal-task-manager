@@ -88,13 +88,15 @@ export const AUTHORIZATION_MATRIX = Object.freeze({
       professor: ALLOW,
     }),
   }),
+  // TODO(authz): tighten this back down once a scoped/minimal user-directory
+  // endpoint exists for board/filter display needs.
   "/api/users": Object.freeze({
     GET: decisionsByRole({
       admin: ALLOW,
-      developer: DENY,
-      aiTeam: DENY,
-      clinician: DENY,
-      professor: DENY,
+      developer: ALLOW,
+      aiTeam: ALLOW,
+      clinician: ALLOW,
+      professor: ALLOW,
     }),
   }),
   "/api/users/:id": Object.freeze({

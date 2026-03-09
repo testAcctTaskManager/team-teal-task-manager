@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import { authFetch, authFetchAsAdmin, BASE_URL } from "./helpers.js";
 
 describe("Users API with D1 (integration)", () => {
-  it("rejects non-admin user listing", async () => {
+  it("allows non-admin user listing", async () => {
     const res = await authFetch(`${BASE_URL}/api/users`);
-    expect(res.status).toBe(403);
+    expect(res.ok).toBe(true);
 
     const body = await res.json();
-    expect(body).toEqual({ error: "Forbidden" });
+    expect(Array.isArray(body)).toBe(true);
+    expect(body.length).toBeGreaterThan(0);
   });
 
   it("allows admin user listing", async () => {
