@@ -1,5 +1,6 @@
 import { jwtVerify } from "jose";
-import { parseCookies } from "./helpers.js";
+import { parseCookies, queryOne } from "./helpers.js";
+import { isValidUserRole } from "./constants/roles.js";
 
 const PUBLIC_PREFIX = "/api/auth/";
 
@@ -52,9 +53,39 @@ export async function onRequest(context) {
         headers: { "Content-Type": "application/json" },
       });
     }
+  
+    // Look for database
+    const db = env.cf_db;
+    if (!db) {
+      return new Response(JSON.stringify({ error: "Database not found" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Query DB for userID and find their role  
+    const user = await queryOne(db, "SELECT id, email, role FROM Users WHERE id = ?", [
+      userId,
+    ]);
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Check that the user role is valid
+    if (!isValidUserRole(user.role)) {
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     context.data = context.data || {};
-    context.data.user = { id: userId, email: payload.email };
+
+    // Add role to context along with id and email
+    context.data.user = { id: user.id, email: user.email, role: user.role };
   } catch {
     return new Response(JSON.stringify({ error: "Invalid session" }), {
       status: 401,
