@@ -21,7 +21,7 @@ const config = {
     "title",
     "description",
     "start_date",
-    "end_date",
+    "due_date",
     "updated_at",
     "position",
   ],
@@ -79,7 +79,7 @@ export async function onRequestPost(context) {
       }
     }
 
-    if (body.sprint_id !== undefined) {
+    if (body.sprint_id !== undefined && body.sprint_id !== null) {
       const sprint = await queryOne(db, `SELECT id FROM Sprints WHERE id = ?`, [
         body.sprint_id,
       ]);

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import Home from "./pages/Home.jsx";
+import Clinician from "./pages/Clinician.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
 import ProjectSidebar from "./pages/ProjectSidebar.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -31,18 +32,35 @@ export default function App() {
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center p-8 text-center bg-slate-900 scrollbar-none">
-      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+      <div className="mb-6 flex gap-8">
         {!authLoading && isAuthenticated && (
-          <Link
-            to="/profile"
-            className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200"
-          >
-            My Profile
-          </Link>
+          <>
+            <Link
+              to="/profile"
+              className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200"
+            >
+              My Profile
+            </Link>
+            <Link
+              to="/"
+              className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200 border border-slate-300"
+              aria-label="Kanban"
+            >
+              Kanban
+            </Link>
+            <Link
+              to="/clinician"
+              className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200 border border-slate-300"
+              aria-label="Clinician"
+            >
+              Clinician
+            </Link>
+          </>
         )}
         <LoginButton />
       </div>
       <Routes>
+        <Route path="/clinician" element={<ProtectedRoute><Clinician /></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<ProtectedRoute><Home projectId={1} /></ProtectedRoute>} />
         <Route path="/task/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
