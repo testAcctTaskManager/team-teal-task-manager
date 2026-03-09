@@ -12,7 +12,7 @@ import { onRequest } from "../../functions/api/_middleware.js";
 function makeDbWithRows(rows) {
   return {
     prepare: vi.fn((sql) => ({
-      bind: vi.fn((...params) => ({
+      bind: vi.fn(() => ({
         first: vi.fn(async () => {
           if (sql.includes("FROM Users")) {
             return rows.user ?? null;
@@ -28,7 +28,12 @@ function makeDbWithRows(rows) {
 }
 
 // Populate mock DB Users and Comments tables
-function makeContext({ method = "GET", path = "/api/users", user, comment } = {}) {
+function makeContext({
+  method = "GET",
+  path = "/api/users",
+  user,
+  comment,
+} = {}) {
   const request = new Request(`https://example.test${path}`, { method });
   const db = makeDbWithRows({ user, comment });
   const next = vi.fn(async () => new Response("next-ok", { status: 200 }));
@@ -97,7 +102,10 @@ describe("api middleware authorization", () => {
     });
     context.request = new Request("https://example.test/api/users/3", {
       method: "PATCH",
-      headers: { Cookie: "session=test-token", "Content-Type": "application/json" },
+      headers: {
+        Cookie: "session=test-token",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ timezone: "UTC" }),
     });
 
@@ -113,7 +121,10 @@ describe("api middleware authorization", () => {
     });
     context.request = new Request("https://example.test/api/users/2", {
       method: "PATCH",
-      headers: { Cookie: "session=test-token", "Content-Type": "application/json" },
+      headers: {
+        Cookie: "session=test-token",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ timezone: "UTC" }),
     });
 
@@ -130,7 +141,10 @@ describe("api middleware authorization", () => {
     });
     context.request = new Request("https://example.test/api/comments/7", {
       method: "PATCH",
-      headers: { Cookie: "session=test-token", "Content-Type": "application/json" },
+      headers: {
+        Cookie: "session=test-token",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ content: "changed" }),
     });
 
