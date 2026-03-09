@@ -27,7 +27,7 @@ describe("Users API with D1 (integration)", () => {
   });
 
   it("updates a user's role via PATCH", async () => {
-    const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
+    const patchRes = await authFetch(`${BASE_URL}/api/users/1`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: "clinician" }),
@@ -38,8 +38,20 @@ describe("Users API with D1 (integration)", () => {
     expect(updated.role).toBe("clinician");
   });
 
-  it("rejects invalid role on PATCH", async () => {
+  it("rejects non-self role update via PATCH", async () => {
     const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "clinician" }),
+    });
+
+    expect(patchRes.status).toBe(403);
+    const body = await patchRes.json();
+    expect(body).toEqual({ error: "Forbidden" });
+  });
+
+  it("rejects invalid role on PATCH", async () => {
+    const patchRes = await authFetch(`${BASE_URL}/api/users/1`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: "superadmin" }),
