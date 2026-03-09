@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { authFetch, BASE_URL } from "./helpers.js";
+import { authFetch, authFetchAsAdmin, BASE_URL } from "./helpers.js";
 
 describe("Users API with D1 (integration)", () => {
   it("rejects non-admin user listing", async () => {
@@ -8,6 +8,22 @@ describe("Users API with D1 (integration)", () => {
 
     const body = await res.json();
     expect(body).toEqual({ error: "Forbidden" });
+  });
+
+  it("allows admin user listing", async () => {
+    const res = await authFetchAsAdmin(`${BASE_URL}/api/users`);
+    expect(res.ok).toBe(true);
+
+    const data = await res.json();
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThan(0);
+
+    const adminUser = data.find((u) => u.id === 3);
+    expect(adminUser).toBeTruthy();
+    if (adminUser) {
+      expect(adminUser.email).toBe("carol@example.com");
+      expect(adminUser.role).toBeTruthy();
+    }
   });
 
   it("updates a user's role via PATCH", async () => {

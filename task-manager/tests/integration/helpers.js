@@ -16,3 +16,15 @@ export function authFetch(url, options = {}) {
   const headers = { ...options.headers, Cookie: `session=${token}` };
   return fetch(url, { ...options, headers });
 }
+
+export function authFetchAsAdmin(url, options = {}) {
+  const token = process.env.TEST_ADMIN_SESSION_TOKEN;
+  if (!token) {
+    throw new Error(
+      "TEST_ADMIN_SESSION_TOKEN is not set – run integration tests via `npm run test:integration`",
+    );
+  }
+
+  const headers = { ...options.headers, Cookie: `session=${token}` };
+  return fetch(url, { ...options, headers });
+}
