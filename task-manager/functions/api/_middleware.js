@@ -1,8 +1,14 @@
 import { jwtVerify } from "jose";
 import { parseCookies, queryOne } from "./helpers.js";
 import { isValidUserRole } from "./constants/roles.js";
+import {
+  AUTHZ_DECISIONS,
+  getAuthorizationDecision,
+} from "./constants/authorizationMatrix.js";
 
 const PUBLIC_PREFIX = "/api/auth/";
+// take property DENY from AUTHZ_DECISIONS and create const DENY with that value
+const { DENY } = AUTHZ_DECISIONS; 
 
 export async function onRequest(context) {
   const { request, env, next } = context;
@@ -86,6 +92,20 @@ export async function onRequest(context) {
 
     // Add role to context along with id and email
     context.data.user = { id: user.id, email: user.email, role: user.role };
+
+    // Check if this combination of route + method + role is authorized
+    const decision = getAuthorizationDecision({
+      pathname: url.pathname,
+      method: request.method,
+      role: user.role,
+    });
+
+    if (decision === DENY) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   } catch {
     return new Response(JSON.stringify({ error: "Invalid session" }), {
       status: 401,
