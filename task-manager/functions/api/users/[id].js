@@ -41,7 +41,7 @@ export const onRequestGet = createHandlers.item;
 
 // UPDATE row/user
 export async function onRequestPatch(context) {
-  const { request, env } = context;
+  const { request, env, data } = context;
   const CORS = buildCorsHeaders(env, request, "GET,PUT,PATCH,DELETE,OPTIONS");
   if (request.headers.get("Origin") && !CORS) {
     return new Response(JSON.stringify({ error: "Origin not allowed" }), {
@@ -52,6 +52,15 @@ export async function onRequestPatch(context) {
 
   // Parse a clone so the original request body remains readable by updateHandlers.item().
   const body = await parseJson(request.clone());
+
+  // Allow only admins to change user roles
+  if (body.role !== undefined && data?.user?.role !== "admin") {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: CORS || { "Content-Type": "application/json" },
+    });
+  }
+  
   if (body.role !== undefined && !isValidUserRole(body.role)) {
     return new Response(JSON.stringify({ error: "Unknown role." }), {
       status: 400,
