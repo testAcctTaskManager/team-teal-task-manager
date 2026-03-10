@@ -26,8 +26,8 @@ export async function onRequestGet({ request, env }) {
     });
 
     const db = env.cf_db;
-    const user = await queryOne(db, "SELECT * FROM Users WHERE id = ?", [
-      payload.sub,
+    const user = await queryOne(db, "SELECT * FROM Users WHERE email = ?", [
+      payload.email,
     ]);
 
     if (!user) {
