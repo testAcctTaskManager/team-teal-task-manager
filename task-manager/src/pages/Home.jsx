@@ -80,21 +80,21 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       setBacklogColumns(backlogTaskCollection);
       console.log(backlogTaskCollection);
 
-      const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
-      const sprintTaskCollection = [{
-        id: sprintId,
-        title: "Sprint " + sprintId,
-        tasks: sprintTasks
-      }];
-      setSprintColumns(sprintTaskCollection);
-      
-      const sprintById = sprintList.filter((s) => s.sprint_id == sprintId);
-      if (!Array.isArray(sprintById) || sprintById.error) {
+      const currentSprint = sprintList.filter((s) => s.id == sprintId);
+      if (!Array.isArray(currentSprint) || currentSprint.error) {
         return;
       }
-      else if (!sprintById.length == 0){
-        setSprintStatus(sprintById[0].status);
+      else if (!currentSprint.length == 0){
+        setSprintStatus(currentSprint[0].status);
+        const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
+        const sprintTaskCollection = [{
+          id: sprintId,
+          title: currentSprint[0].name,
+          tasks: sprintTasks
+        }];
+        setSprintColumns(sprintTaskCollection);
       }
+
 
     } catch (err) {
       console.error("Fetch error", err);
@@ -199,11 +199,19 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   }
 
   async function updateSprintStatus(newStatus) {
-    fetch(`/api/sprints/${sprintId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({projectId: projectId, status: newStatus}),
-    })
+    try {
+      const statusRes = await fetch(`/api/sprints/${sprintId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({projectId: projectId, status: newStatus}),
+      });
+      const bodyRes = await statusRes.json().catch(() => null);
+        if (!statusRes.ok) {
+          console.error("Error updating sprint status", bodyRes);
+        }
+    } catch (err) {
+      console.error("Error updating sprint status", err);
+    }
   }
 
   const projectTabs = {

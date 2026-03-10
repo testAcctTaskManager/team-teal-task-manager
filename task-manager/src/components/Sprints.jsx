@@ -11,6 +11,7 @@ function Sprints({
     boardTitle = "Sprint"}) {
 
         const [buttonText, setButtonText] = useState("Not started");
+        const [buttonDisabled, setButtonDisabled] = useState(false);
 
         const handleSprintSelection = (e) => {
             setSprintId(e.target.value);
@@ -21,12 +22,11 @@ function Sprints({
                 case 'not_started':
                     setButtonText("In progress");
                     setSprintStatus('in_progress');
-                    console.log("progress");
                     break;
                 case 'in_progress':
                     setButtonText("Complete");
+                    setButtonDisabled(true);
                     setSprintStatus('complete');
-                    console.log("complete");
                     break;
             }
         };
@@ -34,6 +34,7 @@ function Sprints({
     return (
         <>
             <select 
+                id="sprint-selection"
                 onChange={handleSprintSelection}
                 className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 cursor-pointer"
             >
@@ -43,7 +44,7 @@ function Sprints({
                 </option>
               ))}
             </select>
-            <button onClick={handleSprintState}>{buttonText}</button>
+            <button onClick={handleSprintState} disabled={buttonDisabled}>{buttonText}</button>
             <Board
                 columns={columns}
                 setColumns={setSprintColumns}
