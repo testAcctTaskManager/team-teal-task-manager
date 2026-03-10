@@ -37,6 +37,7 @@ export function buildCorsHeaders(env, req, methods = "GET,POST,OPTIONS") {
 
   const headers = {
     "Content-Type": "application/json",
+    "Cache-Control": "private, no-store",
     "Access-Control-Allow-Origin": origin,
     Vary: "Origin",
     "Access-Control-Allow-Methods": methods,

@@ -38,7 +38,10 @@ export async function onRequestGet({ request, env }) {
     }
 
     return new Response(JSON.stringify(user), {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+      },
     });
   } catch {
     return new Response(JSON.stringify({ error: "Invalid session" }), {
