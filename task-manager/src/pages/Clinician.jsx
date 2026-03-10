@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ClinicianForm from "../components/ClinicianForm.jsx";
 import PageLayout from "../components/PageLayout.jsx";
+import ClinicianBoard from "../components/ClinicianBoard.jsx";
 
 export default function ClinicianPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -32,6 +33,8 @@ export default function ClinicianPage() {
           <ClinicianForm onSuccess={handleCreated} onCancel={closeModal} />
         )}
       </div>
+
+      <ClinicianBoard/>
     </PageLayout>
   );
 }

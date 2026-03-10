@@ -8,6 +8,7 @@ import LoginButton from "./components/login/LoginButton.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
 import UserManagement from "./pages/UserManagement.jsx";
 import { useUsers } from "./contexts/UsersContext.jsx";
+import { USER_ROLES } from "./constants/roles.js";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authLoading } = useUsers();
@@ -22,6 +23,16 @@ function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const { currentUser } = useUsers();
+
+  if (currentUser?.role !== USER_ROLES.ADMIN) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -67,7 +78,16 @@ export default function App() {
         <Route path="/project-sidebar" element={<ProtectedRoute><ProjectSidebar /></ProtectedRoute>} />
         <Route path="/task-demo" element={<ProtectedRoute><Navigate to="/task/1" replace /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+        <Route
+          path="/user-management"
+          element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <UserManagement />
+              </AdminRoute>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );
