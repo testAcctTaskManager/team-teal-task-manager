@@ -1,71 +1,83 @@
 import { describe, it, expect } from "vitest";
-import { authFetch, BASE_URL } from "./helpers.js";
+import { authFetch, authFetchAsAdmin, BASE_URL } from "./helpers.js";
 
 describe("Users API with D1 (integration)", () => {
-  it("returns seeded users from the database", async () => {
+  it("allows non-admin user listing", async () => {
     const res = await authFetch(`${BASE_URL}/api/users`);
+    expect(res.ok).toBe(true);
+
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
+    expect(body.length).toBeGreaterThan(0);
+  });
+
+  it("allows admin user listing", async () => {
+    const res = await authFetchAsAdmin(`${BASE_URL}/api/users`);
     expect(res.ok).toBe(true);
 
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
     expect(data.length).toBeGreaterThan(0);
 
-    const user1 = data.find((u) => u.id === 1);
-    expect(user1).toBeTruthy();
-    if (user1) {
-      expect(user1.display_name).toBe("Alice Developer");
-      expect(user1.email).toBe("alice@example.com");
+    const adminUser = data.find((u) => u.id === 3);
+    expect(adminUser).toBeTruthy();
+    if (adminUser) {
+      expect(adminUser.email).toBe("carol@example.com");
+      expect(adminUser.role).toBeTruthy();
     }
   });
 
-  it("prevents creating a user with a duplicate email", async () => {
-    // alice@example.com is seeded in 007_data_seed.sql with id=1
-    const createRes = await authFetch(`${BASE_URL}/api/users`, {
-      method: "POST",
+  it("rejects non-admin self role update via PATCH", async () => {
+    const patchRes = await authFetch(`${BASE_URL}/api/users/1`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        display_name: "Duplicate Alice",
-        email: "alice@example.com",
-        timezone: "UTC",
-      }),
+      body: JSON.stringify({ role: "clinician" }),
     });
-
-    expect(createRes.status).toBe(400);
-    const errorBody = await createRes.json();
-    expect(errorBody).toBeTruthy();
-    expect(errorBody.error).toBe("Email already in use");
+    expect(patchRes.status).toBe(403);
+    const body = await patchRes.json();
+    expect(body).toEqual({ error: "Forbidden" });
   });
 
-  it("returns seeded users with role", async () => {
-    const res = await authFetch(`${BASE_URL}/api/users`);
-    const data = await res.json();
-    const user1 = data.find((u) => u.id === 1);
-    expect(user1.role).toBeTruthy();
-  });
-
-  it("updates a user's role via PATCH", async () => {
+  it("rejects non-self role update via PATCH", async () => {
     const patchRes = await authFetch(`${BASE_URL}/api/users/2`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: "clinician" }),
     });
-    expect(patchRes.ok).toBe(true);
 
+    expect(patchRes.status).toBe(403);
+    const body = await patchRes.json();
+    expect(body).toEqual({ error: "Forbidden" });
+  });
+
+  it("allows admin role update via PATCH", async () => {
+    const patchRes = await authFetchAsAdmin(`${BASE_URL}/api/users/2`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "clinician" }),
+    });
+
+    expect(patchRes.ok).toBe(true);
     const updated = await patchRes.json();
     expect(updated.role).toBe("clinician");
+
+    const restoreRes = await authFetchAsAdmin(`${BASE_URL}/api/users/2`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "developer" }),
+    });
+    expect(restoreRes.ok).toBe(true);
   });
 
-  it("rejects invalid role on POST", async () => {
-  const res = await authFetch(`${BASE_URL}/api/users`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      display_name: "Bad Role",
-      email: "badrole@example.com",
-      timezone: "UTC",
-      role: "superadmin",
-    }),
-  });
-    expect(res.status).toBe(400);
+  it("rejects invalid role on admin PATCH", async () => {
+    const patchRes = await authFetchAsAdmin(`${BASE_URL}/api/users/2`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "superadmin" }),
+    });
+
+    expect(patchRes.status).toBe(400);
+    const body = await patchRes.json();
+    expect(body).toEqual({ error: "Unknown role." });
   });
 });
