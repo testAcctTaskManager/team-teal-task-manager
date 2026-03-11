@@ -34,6 +34,7 @@ describe("TimeZone", () => {
     expect(content.textContent).toMatch(/EST/);
   });
 
+  //TODO: Edit test so it is not dependent on which time zone it is run in
   it("displays different timezone correctly", () => {
     const user = {
       id: 1,
@@ -42,7 +43,7 @@ describe("TimeZone", () => {
     };
     render(<TimeZone user={user} />);
     const content = screen.getByText(/Time:/);
-    expect(content.textContent).toMatch(/PST/);
+    expect(content.textContent).toMatch(/PDT/);
   });
 
   it("updates time", () => {

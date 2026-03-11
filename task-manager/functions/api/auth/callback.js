@@ -112,7 +112,11 @@ export async function onRequest({ request, env }) {
     });
   }
 
-  const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
+  const callbackOrigin =
+    url.hostname.endsWith(PAGES_DEV_SUFFIX) && url.hostname !== COOKIE_DOMAIN
+      ? `https://${COOKIE_DOMAIN}`
+      : origin;
+  const redirectUri = env.GOOGLE_REDIRECT_URI || `${callbackOrigin}/api/auth/callback`;
   const db = env.cf_db;
 
   try {

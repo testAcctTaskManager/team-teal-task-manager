@@ -26,8 +26,8 @@ export async function onRequestGet({ request, env }) {
     });
 
     const db = env.cf_db;
-    const user = await queryOne(db, "SELECT * FROM Users WHERE id = ?", [
-      payload.sub,
+    const user = await queryOne(db, "SELECT * FROM Users WHERE email = ?", [
+      payload.email,
     ]);
 
     if (!user) {
@@ -38,7 +38,10 @@ export async function onRequestGet({ request, env }) {
     }
 
     return new Response(JSON.stringify(user), {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+      },
     });
   } catch {
     return new Response(JSON.stringify({ error: "Invalid session" }), {
