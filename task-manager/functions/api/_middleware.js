@@ -19,7 +19,10 @@ export async function onRequest(context) {
   }
 
   if (url.pathname.startsWith(PUBLIC_PREFIX)) {
-    return next();
+    const response = await next();
+    const newResponse = new Response(response.body, response);
+    newResponse.headers.set("Cache-Control", "private, no-store");
+    return newResponse;
   }
 
   const cookies = parseCookies(request.headers.get("Cookie"));
@@ -171,5 +174,8 @@ export async function onRequest(context) {
     });
   }
 
-  return next();
+  const response = await next();
+  const newResponse = new Response(response.body, response);
+  newResponse.headers.set("Cache-Control", "private, no-store");
+  return newResponse;
 }
