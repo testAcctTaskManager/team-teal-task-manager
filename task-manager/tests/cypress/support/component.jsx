@@ -11,6 +11,7 @@ import TaskDetail from "../../../src/pages/TaskDetail.jsx";
 import TaskForm from "../../../src/components/TaskForm.jsx";
 import { UsersContext } from "../../../src/contexts/UsersContext.jsx";
 import KanbanColumn from "../../../src/components/KanbanColumn";
+import ProjectSelector from "../../../src/components/ProjectSelector.jsx";
 import { DragDropContext } from "@hello-pangea/dnd";
 
 import Kanban from "../../../src/components/Kanban.jsx";
@@ -81,6 +82,18 @@ export function mountKanbanColumn(tasks = []) {
     </MemoryRouter>
   )
 }
+
+// Helper to mount ProjectSelector with default props
+export function mountProjectSelector(projects = [], selectedProjectId = null, onSelectProject = () => {}) {
+  return cy.mount(
+    <MemoryRouter>
+      <MockUsersProvider>
+        <ProjectSelector projects={projects} selectedProjectId={selectedProjectId} onSelectProject={onSelectProject} />
+      </MockUsersProvider>
+    </MemoryRouter>
+  );
+}
+
 // Helper to mount Kanban with test columns and tasks
 export function mountKanban() {
   const columns = [

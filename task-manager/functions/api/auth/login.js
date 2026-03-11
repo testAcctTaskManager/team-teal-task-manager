@@ -19,10 +19,19 @@ async function generatePKCE() {
   return { codeVerifier, codeChallenge };
 }
 
+const PAGES_DEV_DOMAIN = "team-teal-task-manager.pages.dev";
+
+function canonicalOrigin(origin, hostname) {
+  if (hostname.endsWith(`.${PAGES_DEV_DOMAIN}`) && hostname !== PAGES_DEV_DOMAIN) {
+    return `https://${PAGES_DEV_DOMAIN}`;
+  }
+  return origin;
+}
+
 export async function onRequestGet({ request, env }) {
   const { origin, hostname } = new URL(request.url);
   const redirectUri =
-    env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
+    env.GOOGLE_REDIRECT_URI || `${canonicalOrigin(origin, hostname)}/api/auth/callback`;
 
   const state = crypto.randomUUID();
   const { codeVerifier, codeChallenge } = await generatePKCE();
@@ -42,8 +51,12 @@ export async function onRequestGet({ request, env }) {
   const payload = btoa(JSON.stringify({ s: state, o: origin, v: codeVerifier }));
   const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
   const secure = isLocal ? "" : " Secure;";
+  const domain =
+    hostname === PAGES_DEV_DOMAIN || hostname.endsWith(`.${PAGES_DEV_DOMAIN}`)
+      ? `; Domain=${PAGES_DEV_DOMAIN}`
+      : "";
   const cookie =
-    `oauth_state=${payload}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=600`;
+    `oauth_state=${payload}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=600${domain}`;
 
   return new Response(null, {
     status: 302,

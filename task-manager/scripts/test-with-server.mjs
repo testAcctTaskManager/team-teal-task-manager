@@ -54,7 +54,9 @@ async function waitForServer(url, timeoutMs = 30000, intervalMs = 500) {
     await delay(intervalMs);
   }
 
-  throw new Error(`Server at ${url} did not become ready within ${timeoutMs}ms`);
+  throw new Error(
+    `Server at ${url} did not become ready within ${timeoutMs}ms`,
+  );
 }
 
 // Convenience wrapper around spawnProcess that resolves/rejects
@@ -65,7 +67,10 @@ function run(command, args, options = {}) {
 
     child.on("exit", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
+      else
+        reject(
+          new Error(`${command} ${args.join(" ")} exited with code ${code}`),
+        );
     });
   });
 }
@@ -76,27 +81,38 @@ async function main() {
 
   try {
     await fs.rm(PERSIST_DIR_ABS, { recursive: true, force: true });
-    console.log(`[test-with-server] Removed ${PERSIST_DIR_ABS} (if it existed).`);
+    console.log(
+      `[test-with-server] Removed ${PERSIST_DIR_ABS} (if it existed).`,
+    );
   } catch (err) {
-    console.error("[test-with-server] Error while wiping test DB directory:", err);
+    console.error(
+      "[test-with-server] Error while wiping test DB directory:",
+      err,
+    );
     throw new Error("Wiping local test DB failed");
   }
 
   // 2) Apply all D1 migrations into the fresh local DB.
-  console.log("Applying D1 migrations for local test database (default env)...");
+  console.log(
+    "Applying D1 migrations for local test database (default env)...",
+  );
   // Run migrations non-interactively by piping "y" to Wrangler's prompt.
-  const migrate = spawn("wrangler", [
-    "d1",
-    "migrations",
-    "apply",
-    "cf_db",
-    "--local",
-    "--persist-to",
-    PERSIST_DIR,
-  ], {
-    stdio: ["pipe", "inherit", "inherit"],
-    shell: process.platform === "win32",
-  });
+  const migrate = spawn(
+    "wrangler",
+    [
+      "d1",
+      "migrations",
+      "apply",
+      "cf_db",
+      "--local",
+      "--persist-to",
+      PERSIST_DIR,
+    ],
+    {
+      stdio: ["pipe", "inherit", "inherit"],
+      shell: process.platform === "win32",
+    },
+  );
 
   // Auto-confirm "yes" to apply migrations when prompted
   migrate.stdin.write("y\n");
@@ -110,7 +126,9 @@ async function main() {
   });
 
   // 3) Start Wrangler Pages dev server backed by this DB.
-  console.log("Starting Wrangler Pages dev server for tests (local default env)...");
+  console.log(
+    "Starting Wrangler Pages dev server for tests (local default env)...",
+  );
 
   const wranglerArgs = [
     "pages",
@@ -162,17 +180,40 @@ async function main() {
     const match = devVarsContent.match(/^JWT_SECRET=(.+)$/m);
     if (match) jwtSecret = match[1].trim();
   } catch {
-    console.warn("[test-with-server] Could not read .dev.vars; using default test JWT secret");
+    console.warn(
+      "[test-with-server] Could not read .dev.vars; using default test JWT secret",
+    );
   }
 
   const secret = new TextEncoder().encode(jwtSecret);
+  // Developer Test Token
   const testToken = await new SignJWT({ sub: "1", email: "alice@example.com" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(secret);
+  // Admin Test Token
+  const adminTestToken = await new SignJWT({
+    sub: "3",
+    email: "carol@example.com",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(secret);
+  // Mutable-role Test Token (reserved for tests that intentionally change role/state)
+  const mutableTestToken = await new SignJWT({
+    sub: "2",
+    email: "bob@example.com",
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("1h")
     .sign(secret);
 
   process.env.TEST_SESSION_TOKEN = testToken;
+  process.env.TEST_ADMIN_SESSION_TOKEN = adminTestToken;
+  process.env.TEST_MUTABLE_SESSION_TOKEN = mutableTestToken;
 
   try {
     // 5) Run only the integration tests that rely on Wrangler + D1.
