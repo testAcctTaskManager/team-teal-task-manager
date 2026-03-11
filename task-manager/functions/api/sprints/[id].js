@@ -45,6 +45,7 @@ const updateSprintTimestamps = async (context) => {
       "created_by",
       "start_date",
       "end_date",
+      "status"
     ];
     const updatesObj = {};
 

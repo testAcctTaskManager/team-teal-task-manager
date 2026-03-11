@@ -37,7 +37,7 @@ function Sprints({
                     setButtonText("In progress");
                     setButtonDisabled(false);
                     break;
-                case 'completed':
+                case 'complete':
                     setButtonText("Completed");
                     setButtonDisabled(true);
                     break;
