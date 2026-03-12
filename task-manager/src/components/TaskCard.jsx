@@ -76,6 +76,7 @@ export default function TaskCard({ task, index, fullWidth }) {
           data-testid="task-card"
           onClick={() => navigate(`/task/${id}`)}
           role="button"
+          type="task-card"
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
