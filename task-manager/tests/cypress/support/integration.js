@@ -1,181 +1,165 @@
 // Cypress integration testing support file
-// Contains custom commands and utilities for integration tests
-
-import { mockUsers, mockProjects, mockColumns, mockTasks, mockComments } from './mockData.js';
-
-// Re-export mock data for tests that import directly from this file
-export { mockUsers, mockProjects, mockColumns, mockTasks, mockComments } from './mockData.js';
-
-// Track mutable task state for tests that need to simulate updates
-let taskStateByProject = {};
+// Uses real API calls against Wrangler + D1 backend
 
 /**
- * Reset task state to original mock data
- * Call this in beforeEach to ensure clean state
+ * Reference data from the database seed (migrations/007_data_seed.sql)
+ * Used for assertions in tests
  */
-Cypress.Commands.add('resetTaskState', () => {
-  taskStateByProject = JSON.parse(JSON.stringify(mockTasks));
-});
+export const seedData = {
+  users: {
+    alice: { id: 1, display_name: 'Alice Developer', email: 'alice@example.com', role: 'developer' },
+    bob: { id: 2, display_name: 'Bob Tester', email: 'bob@example.com', role: 'developer' },
+    carol: { id: 3, display_name: 'Carol Manager', email: 'carol@example.com', role: 'admin' },
+  },
+  projects: {
+    demo1: { id: 1, name: 'Demo Project 1' },
+    demo2: { id: 2, name: 'Demo Project 2' },
+    demo3: { id: 3, name: 'Demo Project 3' },
+  },
+  columns: {
+    project1: ['To Do', 'Blocked', 'In Progress', 'In Review', 'Complete'],
+    project2: ['To Do', 'Blocked', 'In Progress', 'In Review', 'Complete'],
+  },
+  tasks: {
+    project1: {
+      task1: { id: 1, title: 'Set up project', column: 'To Do', description: 'Initialize repo, CI and migrations' },
+      task2: { id: 2, title: 'Create tasks endpoint', column: 'To Do', description: 'Implement CRUD handlers for Tasks' },
+      task3: { id: 3, title: 'Write docs', column: 'Blocked', description: 'Add README notes for local dev' },
+    },
+    project2: {
+      task4: { id: 4, title: 'Design UI', column: 'To Do' },
+      task5: { id: 5, title: 'Review PR', column: 'Blocked' },
+      task6: { id: 6, title: 'Fix login bug', column: 'In Progress' },
+    },
+  },
+  comments: {
+    task1: [
+      { content: 'This task has no AC.' },
+      { content: 'Added AC.' },
+    ],
+  },
+};
 
 /**
- * Get current task state for a project (mutable copy)
+ * Login as a user by setting the session cookie with a test JWT
+ * Uses environment variable TEST_SESSION_TOKEN set by test-with-server.mjs
+ * 
+ * @param {'developer' | 'admin' | 'mutable'} userType - Type of test user
  */
-Cypress.Commands.add('getTaskState', (projectId) => {
-  if (!taskStateByProject[projectId]) {
-    taskStateByProject[projectId] = JSON.parse(JSON.stringify(mockTasks[projectId] || []));
-  }
-  return cy.wrap(taskStateByProject[projectId]);
-});
+Cypress.Commands.add('loginAs', (userType = 'developer') => {
+  const tokens = {
+    developer: Cypress.env('TEST_SESSION_TOKEN'),
+    admin: Cypress.env('TEST_ADMIN_SESSION_TOKEN'),
+    mutable: Cypress.env('TEST_MUTABLE_SESSION_TOKEN'),
+  };
 
-/**
- * Update task state (for simulating task updates in tests)
- */
-Cypress.Commands.add('updateTaskState', (projectId, taskId, updates) => {
-  if (!taskStateByProject[projectId]) {
-    taskStateByProject[projectId] = JSON.parse(JSON.stringify(mockTasks[projectId] || []));
-  }
-  taskStateByProject[projectId] = taskStateByProject[projectId].map(t =>
-    t.id === taskId ? { ...t, ...updates } : t
-  );
-});
-
-/**
- * Custom command to login as a mock user
- * Sets up the auth intercept to return the specified user
- */
-Cypress.Commands.add('login', (user = mockUsers[0]) => {
-  cy.intercept('GET', '/api/auth/me', {
-    statusCode: 200,
-    body: user,
-  }).as('authMe');
-
-  cy.intercept('GET', '/api/users', {
-    statusCode: 200,
-    body: mockUsers,
-  }).as('getUsers');
-
-  cy.intercept('GET', '/api/projects', {
-    statusCode: 200,
-    body: mockProjects,
-  }).as('getProjects');
-});
-
-/**
- * Custom command to set up API intercepts for a specific project
- * Uses dynamic alias names (e.g., getColumnsProject1) to allow multiple projects
- */
-Cypress.Commands.add('setupProjectIntercepts', (projectId = 1, options = {}) => {
-  const { useDynamicTasks = false } = options;
-  const columns = mockColumns[projectId] || [];
-
-  cy.intercept('GET', `/api/columns?project_id=${projectId}`, {
-    statusCode: 200,
-    body: columns,
-  }).as(`getColumnsProject${projectId}`);
-
-  // Use dynamic task state if enabled (for tests that modify tasks)
-  if (useDynamicTasks) {
-    cy.intercept('GET', `/api/tasks?project_id=${projectId}`, (req) => {
-      if (!taskStateByProject[projectId]) {
-        taskStateByProject[projectId] = JSON.parse(JSON.stringify(mockTasks[projectId] || []));
-      }
-      req.reply({
-        statusCode: 200,
-        body: taskStateByProject[projectId],
-      });
-    }).as(`getTasksProject${projectId}`);
-  } else {
-    cy.intercept('GET', `/api/tasks?project_id=${projectId}`, {
-      statusCode: 200,
-      body: mockTasks[projectId] || [],
-    }).as(`getTasksProject${projectId}`);
+  const token = tokens[userType];
+  if (!token) {
+    throw new Error(`No test token found for user type "${userType}". Make sure to run tests via npm run test:integration`);
   }
 
-  cy.intercept('GET', `/api/projects/${projectId}`, {
-    statusCode: 200,
-    body: mockProjects.find(p => p.id === projectId) || mockProjects[0],
-  }).as(`getProject${projectId}`);
+  cy.setCookie('session', token, {
+    path: '/',
+    httpOnly: false,
+  });
 });
 
 /**
- * Custom command to set up task detail intercepts
+ * Logout by clearing the session cookie and clicking sign out
  */
-Cypress.Commands.add('setupTaskDetailIntercepts', (taskId) => {
-  // Find the task from all projects
-  let task = null;
-  for (const tasks of Object.values(mockTasks)) {
-    task = tasks.find(t => t.id === taskId);
-    if (task) break;
-  }
-
-  if (!task) {
-    task = { id: taskId, title: `Task ${taskId}`, project_id: 1 };
-  }
-
-  cy.intercept('GET', `/api/tasks/${taskId}`, {
-    statusCode: 200,
-    body: task,
-  }).as('getTaskDetail');
-
-  cy.intercept('GET', `/api/comments?task_id=${taskId}`, {
-    statusCode: 200,
-    body: mockComments[taskId] || [],
-  }).as('getComments');
-
-  // Set up columns for the task's project
-  const columns = mockColumns[task.project_id] || mockColumns[1];
-  cy.intercept('GET', `/api/columns?project_id=${task.project_id}`, {
-    statusCode: 200,
-    body: columns,
-  }).as('getColumnsForTask');
+Cypress.Commands.add('performLogout', () => {
+  cy.contains('Sign out').click();
+  cy.url().should('include', '/login');
 });
 
 /**
- * Custom command to set up comment post intercept
+ * Wait for the page to finish loading data
+ * Useful after navigation or actions that trigger API calls
  */
-Cypress.Commands.add('setupPostCommentIntercept', (taskId) => {
-  let commentIdCounter = 100;
-  cy.intercept('POST', '/api/comments', (req) => {
-    const newComment = {
-      id: commentIdCounter++,
-      task_id: Number(taskId),
-      content: req.body.content,
-      created_by: req.body.created_by,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    req.reply({
-      statusCode: 200,
-      body: newComment,
+Cypress.Commands.add('waitForBoardLoad', () => {
+  // Wait for at least one column to render (indicates board is loaded)
+  cy.contains('To Do', { timeout: 10000 }).should('be.visible');
+});
+
+/**
+ * Wait for task detail page to load
+ */
+Cypress.Commands.add('waitForTaskDetailLoad', () => {
+  cy.get('h1', { timeout: 10000 }).should('be.visible');
+});
+
+/**
+ * Navigate to home and wait for board to load
+ */
+Cypress.Commands.add('goToBoard', () => {
+  cy.visit('/');
+  cy.waitForBoardLoad();
+});
+
+/**
+ * Select a project from the project selector
+ */
+Cypress.Commands.add('selectProject', (projectName) => {
+  // Click the current project button to open dropdown (use force for hidden elements)
+  cy.get('button').contains(/Demo Project|Select Project/).click({ force: true });
+  // Wait for dropdown to open
+  cy.wait(300);
+  // Select the desired project (use force in case it's partially hidden)
+  cy.contains(projectName).click({ force: true });
+  // Wait for board to reload
+  cy.waitForBoardLoad();
+});
+
+/**
+ * Open a task by clicking on it
+ */
+Cypress.Commands.add('openTask', (taskTitle) => {
+  cy.contains('[data-testid="task-card"]', taskTitle).click({ force: true });
+  cy.waitForTaskDetailLoad();
+});
+
+/**
+ * Add a comment to the currently open task
+ * Note: Using placeholder selector since the textarea uses non-standard `testid` attribute 
+ * instead of `data-testid` which doesn't pass through to the DOM in React
+ */
+Cypress.Commands.add('addComment', (commentText) => {
+  cy.get('textarea[placeholder="Write a comment..."]').type(commentText);
+  cy.contains('button', 'Add Comment').click();
+  // Wait for comment to appear
+  cy.contains(commentText, { timeout: 10000 }).should('be.visible');
+});
+
+/**
+ * Go back to the board from task detail
+ */
+Cypress.Commands.add('backToBoard', () => {
+  cy.go('back');
+  cy.waitForBoardLoad();
+});
+
+/**
+ * Verify a task is in a specific column
+ * Uses data-testid on task cards and column header text
+ */
+Cypress.Commands.add('verifyTaskInColumn', (taskTitle, columnName) => {
+  // Find the column section by looking for the header text, then check within that section
+  cy.contains('div', columnName)
+    .parents('section')
+    .first()
+    .within(() => {
+      cy.contains('[data-testid="task-card"]', taskTitle).should('exist');
     });
-  }).as('postComment');
 });
 
 /**
- * Custom command to set up task update intercept (for moving tasks)
+ * Verify a task is NOT in a specific column
  */
-Cypress.Commands.add('setupTaskUpdateIntercept', () => {
-  cy.intercept('PUT', '/api/tasks/*', (req) => {
-    const taskId = req.url.split('/').pop();
-    req.reply({
-      statusCode: 200,
-      body: { id: Number(taskId), ...req.body },
+Cypress.Commands.add('verifyTaskNotInColumn', (taskTitle, columnName) => {
+  cy.contains('div', columnName)
+    .parents('section')
+    .first()
+    .within(() => {
+      cy.contains('[data-testid="task-card"]', taskTitle).should('not.exist');
     });
-  }).as('updateTask');
-});
-
-/**
- * Custom command to set up logout intercept
- */
-Cypress.Commands.add('setupLogoutIntercept', () => {
-  cy.intercept('POST', '/api/auth/logout', {
-    statusCode: 200,
-    body: { success: true },
-  }).as('logout');
-
-  // After logout, auth/me should return 401
-  cy.intercept('GET', '/api/auth/me', {
-    statusCode: 401,
-    body: { error: 'Unauthorized' },
-  }).as('authMeUnauthorized');
 });
