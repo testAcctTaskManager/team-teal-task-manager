@@ -12,7 +12,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/components/**/*.{js,jsx}", "src/pages/**/*.{js,jsx}", "src/contexts/**/*.{js,jsx}"],
-      exclude: ["*ProjectSidebar", "*Board", "*T"],
+      exclude: ["*ProjectSidebar", "*Board"],
     },
   },
 });
+
