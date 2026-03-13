@@ -13,6 +13,7 @@ const sprintHandlers = makeCrudHandlers({
     "created_by",
     "created_at",
     "updated_at",
+    "status"
   ],
   dbEnvVar: "cf_db",
   orderBy: "id ASC",
@@ -44,6 +45,7 @@ const updateSprintTimestamps = async (context) => {
       "created_by",
       "start_date",
       "end_date",
+      "status"
     ];
     const updatesObj = {};
 

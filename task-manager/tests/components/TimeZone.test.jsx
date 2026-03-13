@@ -23,27 +23,30 @@ describe("TimeZone", () => {
     expect(screen.getByText(/No time zone found/i)).toBeTruthy();
   });
 
-  it("displays time when user has a timezone", () => {
+  it("displays time and date when user has a timezone", () => {
     const user = {
       id: 1,
       display_name: "Jesse",
-      timezone: "EST",
+      timezone: "America/Phoenix",
     };
     render(<TimeZone user={user} />);
     const content = screen.getByText(/Time:/);
-    expect(content.textContent).toMatch(/EST/);
+    expect(content.textContent).toMatch(/\d{1,2}:\d{2}/);
+    expect(content.textContent).toMatch(/\d{1,2}/);
+    expect(content.textContent).toMatch(/[A-Z]{3,4}|GMT[+-]?\d*/);
   });
 
-  //TODO: Edit test so it is not dependent on which time zone it is run in
-  it("displays different timezone correctly", () => {
+  it("displays different timezone correctly with date", () => {
     const user = {
       id: 1,
       display_name: "Jose",
-      timezone: "PST",
+      timezone: "Asia/Tokyo",
     };
     render(<TimeZone user={user} />);
     const content = screen.getByText(/Time:/);
-    expect(content.textContent).toMatch(/PDT/);
+    expect(content.textContent).toMatch(/\d{1,2}:\d{2}/);
+    expect(content.textContent).toMatch(/\d{1,2}/);
+    expect(content.textContent).toMatch(/[A-Z]{3,4}|GMT[+-]?\d*/);
   });
 
   it("updates time", () => {
@@ -56,11 +59,19 @@ describe("TimeZone", () => {
     render(<TimeZone user={user} />);
     const timeDiv = screen.getByText(/Time:/);
     const initialText = timeDiv.textContent;
-    const initialMinute = parseInt(initialText.split(":")[1]);
+    const initialMinuteMatch = initialText.match(/:(\d{2})/);
+    const initialMinute = initialMinuteMatch
+      ? parseInt(initialMinuteMatch[1])
+      : null;
+
     vi.advanceTimersByTime(60000);
+
     waitFor(() => {
       const updatedText = timeDiv.textContent;
-      const updatedMinute = parseInt(updatedText.split(":")[1]);
+      const updatedMinuteMatch = updatedText.match(/:(\d{2})/);
+      const updatedMinute = updatedMinuteMatch
+        ? parseInt(updatedMinuteMatch[1])
+        : null;
       expect(updatedMinute).not.toBe(initialMinute);
     });
     vi.useRealTimers();

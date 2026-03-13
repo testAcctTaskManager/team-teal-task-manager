@@ -13,6 +13,7 @@ const sprintHandlers = makeCrudHandlers({
     "created_by",
     "created_at",
     "updated_at",
+    "status"
   ],
   dbEnvVar: "cf_db",
   orderBy: "id ASC",
