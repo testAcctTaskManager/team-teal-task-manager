@@ -16,6 +16,8 @@ export default function TimeZone({ user }) {
   // Format the date
   const formatDateAndTime = (date, timeZone) => {
     const options = {
+      month: "short",
+      day: "numeric",
       hour: "numeric",
       minute: "2-digit",
       timeZoneName: "short",

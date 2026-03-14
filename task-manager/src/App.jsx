@@ -73,7 +73,7 @@ export default function App() {
       <Routes>
         <Route path="/clinician" element={<ProtectedRoute><Clinician /></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<ProtectedRoute><Home projectId={1} /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><Home projectId={1} sprintId={1} /></ProtectedRoute>} />
         <Route path="/task/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
         <Route path="/project-sidebar" element={<ProtectedRoute><ProjectSidebar /></ProtectedRoute>} />
         <Route path="/task-demo" element={<ProtectedRoute><Navigate to="/task/1" replace /></ProtectedRoute>} />

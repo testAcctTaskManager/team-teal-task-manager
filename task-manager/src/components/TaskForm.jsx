@@ -265,6 +265,7 @@ export default function TaskForm({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
+      type="task-form"
       aria-modal="true"
     >
       <div

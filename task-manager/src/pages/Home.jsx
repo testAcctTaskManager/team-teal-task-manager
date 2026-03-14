@@ -6,14 +6,19 @@ import { Link } from "react-router-dom";
 import ProjectSelector from "../components/ProjectSelector.jsx";
 import Scrum from "../components/Scrum.jsx";
 import Backlog from "../components/Backlog.jsx";
+import Sprints from "../components/Sprints.jsx";
 
-export default function Home({ projectId: initialProjectId }) {
+export default function Home({ projectId: initialProjectId, sprintId: initialSprintId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
   const [backlogColumns, setBacklogColumns] = useState([]);
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectTab, setProjectTab] = useState("Board");
+  const [sprints, setSprints] = useState([]);
+  const [sprintStatus, setSprintStatus] = useState("not_started");
+  const [sprintColumns, setSprintColumns] = useState([]);
+  const [sprintId, setSprintId] = useState(initialSprintId)
 
   /* Adding states for task filtering */
   const [selectedAssignee, setSelectedAssignee] = useState("all");
@@ -23,9 +28,10 @@ export default function Home({ projectId: initialProjectId }) {
   // Load the columns and tasks for the provided project ID
   async function loadColumns(projectId) {
     try {
-      const [colRes, taskRes] = await Promise.all([
+      const [colRes, taskRes, sprintRes] = await Promise.all([
         fetch(`/api/columns?project_id=${projectId}`),
         fetch(`/api/tasks?project_id=${projectId}`),
+        fetch(`/api/sprints?project_id=${projectId}`),
       ]);
 
       const cols = await colRes.json().catch(() => null);
@@ -40,6 +46,20 @@ export default function Home({ projectId: initialProjectId }) {
         console.error("API error loading tasks", taskList);
         setColumns([]);
         return;
+      }
+
+      const sprintList = await sprintRes.json().catch(() => null);
+      if (!Array.isArray(sprintList) || sprintList.error) {
+        console.error("API error loading sprints", sprintList);
+        setSprints([]);
+        setSprintColumns([]);
+        return;
+      }
+      setSprints(sprintList);
+
+      // If current sprint is not in current project default to first sprint in project.
+      if (sprintList.length > 0 && !sprintList.some((s) => s.id == sprintId)) {
+        setSprintId(sprintList[0].id);
       }
 
       const columnsWithTasks = cols.map((col) => {
@@ -64,6 +84,21 @@ export default function Home({ projectId: initialProjectId }) {
       }];
       setBacklogColumns(backlogTaskCollection);
       console.log(backlogTaskCollection);
+
+      // Get sprint matching current sprint id
+      const currentSprint = sprintList.find((s) => s.id == sprintId);
+      if (currentSprint){
+        setSprintStatus(currentSprint.status);
+        const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
+        const sprintTaskCollection = [{
+          id: sprintId,
+          title: currentSprint.name,
+          tasks: sprintTasks
+        }];
+        setSprintColumns(sprintTaskCollection);
+      }
+
+
     } catch (err) {
       console.error("Fetch error", err);
       setColumns([]);
@@ -112,13 +147,15 @@ export default function Home({ projectId: initialProjectId }) {
     loadProjects();
   }, []);
 
+  /* Eslint creates a warning about not having loadcolumns in the dependancy array
+   however adding it will cause the application to rerender constantly */
   useEffect(() => {
     if (!projectId) return;
     setColumns([]);
     loadColumns(projectId);
     // Added to trigger task filtering metadata load
     loadFilterMetadata();
-  }, [projectId]);
+  }, [projectId, sprintId]); // eslint-disable-line
 
   const activeProjectColumns = useMemo(() => {
     return columns.filter(
@@ -166,6 +203,23 @@ export default function Home({ projectId: initialProjectId }) {
     setProjectTab("Board");
   }
 
+  // Update sprint status in the database.
+  async function updateSprintStatus(newStatus) {
+    try {
+      const statusRes = await fetch(`/api/sprints/${sprintId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({status: newStatus}),
+      });
+      const bodyRes = await statusRes.json().catch(() => null);
+        if (!statusRes.ok) {
+          console.error("Error updating sprint status", bodyRes);
+        }
+    } catch (err) {
+      console.error("Error updating sprint status", err);
+    }
+  }
+
   const projectTabs = {
     Board: 
       <BoardComponent
@@ -174,10 +228,22 @@ export default function Home({ projectId: initialProjectId }) {
         setColumns={setColumns}
       />,
     Backlog:
-      <Backlog
-        key={projectId}
-        backlog={backlogColumns}
-      />,
+      <div>
+        <Sprints
+        columns={sprintColumns}
+        sprintStatus={sprintStatus}
+        sprintId={sprintId}
+        sprints={sprints}
+        setSprintColumns={setSprintColumns}
+        setSprintStatus={setSprintStatus}
+        updateSprintStatus={updateSprintStatus}
+        setSprintId={setSprintId}
+        boardTitle="Sprints"/>
+        <Backlog
+          key={projectId}
+          backlog={backlogColumns}
+        />
+      </div>
   }
 
   function openModal() {

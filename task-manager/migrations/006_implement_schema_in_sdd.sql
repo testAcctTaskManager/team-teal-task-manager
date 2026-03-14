@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS Sprints (
     created_by INTEGER NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL DEFAULT 'not_started'
+        CHECK (status IN ('not_started', 'in_progress', 'complete')),
     FOREIGN KEY (project_id) REFERENCES Projects(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES Users(id) ON DELETE RESTRICT
 );
