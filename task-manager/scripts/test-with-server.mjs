@@ -83,6 +83,10 @@ function run(command, args, options = {}) {
 }
 
 // Kill orphaned wrangler/vite processes that may be holding file locks.
+// Windows-only: On Unix/macOS, the OS automatically cleans up child processes
+// when the parent exits. Windows doesn't reliably do this, so processes from
+// a previous crashed/interrupted test run may still be holding file locks on
+// the test database directory, causing EBUSY errors.
 async function killOrphanedProcesses() {
   if (process.platform === "win32") {
     // Kill any lingering wrangler processes
@@ -93,12 +97,16 @@ async function killOrphanedProcesses() {
       });
       kill.on("exit", resolve);
     });
+    // Kill any lingering node processes running vite (harder to target precisely,
+    // but vite uses a specific port so it will fail to start if orphaned)
     // Small delay to let OS release file locks
     await delay(500);
   }
 }
 
 // Retry fs.rm with delays for Windows file lock issues.
+// Windows doesn't immediately release file handles when processes exit,
+// so we may need to wait for the OS to catch up.
 async function rmWithRetry(dirPath, maxRetries = 5, delayMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
