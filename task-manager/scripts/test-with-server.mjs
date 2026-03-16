@@ -29,9 +29,12 @@ const VITE_PORT = process.env.VITE_DEV_PORT ?? "5173";
 const VITE_URL = `http://127.0.0.1:${VITE_PORT}`;
 
 function spawnProcess(command, args, options = {}) {
+  const isWindows = process.platform === "win32";
   const child = spawn(command, args, {
     stdio: "inherit",
-    shell: process.platform === "win32",
+    shell: isWindows,
+    // On Unix, start process in its own process group so we can kill the entire tree
+    detached: !isWindows,
     ...options,
   });
   return child;
@@ -192,7 +195,7 @@ async function main() {
   let cleanedUp = false;
 
   // Ensure both Wrangler and Vite dev processes are cleaned up on exit/signals.
-  const cleanup = () => {
+  const cleanup = (exitAfter = false) => {
     if (cleanedUp) return;
     cleanedUp = true;
 
@@ -212,18 +215,32 @@ async function main() {
         });
       }
     } else {
-      if (wrangler && !wrangler.killed) {
-        wrangler.kill("SIGINT");
+      // On Unix, kill the entire process group (negative PID) to terminate child processes
+      if (wrangler && wrangler.pid && !wrangler.killed) {
+        try {
+          process.kill(-wrangler.pid, "SIGTERM");
+        } catch {
+          // Process may already be dead
+        }
       }
-      if (vite && !vite.killed) {
-        vite.kill("SIGINT");
+      if (vite && vite.pid && !vite.killed) {
+        try {
+          process.kill(-vite.pid, "SIGTERM");
+        } catch {
+          // Process may already be dead
+        }
       }
+    }
+
+    if (exitAfter) {
+      // Give cleanup a moment to terminate processes, then force exit
+      setTimeout(() => process.exit(process.exitCode ?? 1), 500);
     }
   };
 
-  process.on("SIGINT", cleanup);
-  process.on("SIGTERM", cleanup);
-  process.on("exit", cleanup);
+  // Handle interruption signals (Ctrl+C, kill)
+  process.on("SIGINT", () => cleanup(true));
+  process.on("SIGTERM", () => cleanup(true));
 
   // 4) Wait until both dev servers are reachable before testing.
   await waitForServer(DEV_URL);
@@ -297,7 +314,7 @@ async function main() {
     console.error(err.message ?? err);
     process.exitCode = 1;
   } finally {
-    cleanup();
+    cleanup(true);
   }
 }
 
