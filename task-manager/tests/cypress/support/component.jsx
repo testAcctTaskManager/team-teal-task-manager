@@ -15,6 +15,7 @@ import ProjectSelector from "../../../src/components/ProjectSelector.jsx";
 import { DragDropContext } from "@hello-pangea/dnd";
 
 import Kanban from "../../../src/components/Kanban.jsx";
+import Sprints from "../../../src/components/Sprints.jsx";
 
 const defaultMockUsersValue = {
   users: [],
@@ -174,6 +175,33 @@ export function mountKanban() {
     <MockUsersProvider>
       <MemoryRouter>
         <Kanban columns={columns}/>
+      </MemoryRouter>
+    </MockUsersProvider>
+  );
+}
+
+export function mountSprints() {
+  const sprintColumns = {}
+  const sprintStatus = {}
+  const sprintId = {}
+  const sprints = {}
+  const setSprintColumns = {}
+  const setSprintStatus = {}
+  const updateSprintStatus = {}
+  const setSprintId = {}
+  return mount(
+    <MockUsersProvider>
+      <MemoryRouter>
+        <Sprints
+        columns={sprintColumns}
+        sprintStatus={sprintStatus}
+        sprintId={sprintId}
+        sprints={sprints}
+        setSprintColumns={setSprintColumns}
+        setSprintStatus={setSprintStatus}
+        updateSprintStatus={updateSprintStatus}
+        setSprintId={setSprintId}
+        boardTitle="Sprints"/>
       </MemoryRouter>
     </MockUsersProvider>
   );
