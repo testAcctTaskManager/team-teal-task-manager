@@ -9,18 +9,37 @@ function getTimezoneOptions() {
 }
 
 /**
+ * Get the UTC offset string for a timezone (e.g., "GMT-7", "GMT+5:30")
+ */
+function getTimezoneOffset(tz) {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "shortOffset",
+    });
+    const parts = formatter.formatToParts(new Date());
+    const offsetPart = parts.find((p) => p.type === "timeZoneName");
+    return offsetPart?.value || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Format an IANA timezone for display.
- * e.g., "America/Los_Angeles" → "Los Angeles (America)"
+ * e.g., "America/Los_Angeles" → "Los Angeles (America) GMT-7"
  */
 function formatTimezoneLabel(tz) {
   const parts = tz.split("/");
+  const offset = getTimezoneOffset(tz);
+
   if (parts.length === 1) {
     // Handle timezones like "UTC"
-    return tz;
+    return offset ? `${tz} ${offset}` : tz;
   }
   const region = parts[0];
   const city = parts[parts.length - 1].replace(/_/g, " ");
-  return `${city} (${region})`;
+  return offset ? `${city} (${region}) ${offset}` : `${city} (${region})`;
 }
 
 const TIMEZONE_OPTIONS = getTimezoneOptions();
