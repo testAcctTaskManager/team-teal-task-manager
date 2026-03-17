@@ -8,7 +8,7 @@ import {
 
 const PUBLIC_PREFIX = "/api/auth/";
 // take property DENY from AUTHZ_DECISIONS and create const DENY with that value
-const { DENY } = AUTHZ_DECISIONS; 
+const { DENY } = AUTHZ_DECISIONS;
 
 export async function onRequest(context) {
   const { request, env, next } = context;
@@ -48,21 +48,13 @@ export async function onRequest(context) {
       algorithms: ["HS256"],
     });
 
-    const userId = Number(payload.sub);
-    if (Number.isNaN(userId)) {
-      return new Response(JSON.stringify({ error: "Invalid session" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     if (typeof payload.email !== "string") {
       return new Response(JSON.stringify({ error: "Invalid session" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
-  
+
     // Look for database
     const db = env.cf_db;
     if (!db) {
@@ -72,9 +64,11 @@ export async function onRequest(context) {
       });
     }
 
-    // Query DB for userID and find their role  
-    const user = await queryOne(db, "SELECT id, email, role FROM Users WHERE id = ?", [
-      userId,
+    // Query DB by email to handle dev/prod database differences.
+    // Since auth redirects through the main domain, JWT user IDs may not match
+    // the current branch's database. Email is the stable identifier.
+    const user = await queryOne(db, "SELECT id, email, role FROM Users WHERE email = ?", [
+      payload.email,
     ]);
     if (!user) {
       return new Response(JSON.stringify({ error: "Invalid session" }), {

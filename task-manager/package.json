@@ -8,6 +8,7 @@
 		"test": "npm run test:vitest && npm run test:ct",
 		"test:integration": "node ./scripts/test-with-server.mjs",
 		"test:integration:vitest": "vitest run tests/integration",
+		"test:e2e": "cypress run --e2e --config-file cypress.config.mjs",
 		"test:vitest": "vitest run tests/components --coverage",
 		"test:ct": "cypress run --component --config-file cypress.config.mjs",
 		"build": "vite build",
