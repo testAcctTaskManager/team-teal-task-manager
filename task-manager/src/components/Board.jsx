@@ -46,6 +46,27 @@ function Board({
     );
     setColumns(newColumns);
 
+    // Helper function to revert to original state on failure
+    const revertToOriginal = () => {
+      setColumns((prevColumns) => {
+        // Collect all tasks from current columns
+        const allTasks = prevColumns.flatMap((col) => col.tasks || []);
+
+        // Rebuild columns with tasks in their original positions
+        return prevColumns.map((col) => {
+          const tasksForColumn = allTasks
+            .filter((task) => originalColumnIds[task.id] === col.id)
+            .map((task) => ({
+              ...task,
+              position: originalPositions[task.id] ?? 0,
+            }))
+            .sort((a, b) => a.position - b.position);
+
+          return { ...col, tasks: tasksForColumn };
+        });
+      });
+    };
+
     // Update task position and column changes in the database
     (async () => {
       try {
@@ -78,9 +99,18 @@ function Board({
           });
         });
 
-        if (updates.length > 0) await Promise.all(updates);
+        if (updates.length > 0) {
+          const responses = await Promise.all(updates);
+          const failedResponse = responses.find((res) => !res.ok);
+
+          if (failedResponse) {
+            throw new Error(`Server returned ${failedResponse.status}`);
+          }
+        }
       } catch (err) {
         console.error("Error saving task positions", err);
+        revertToOriginal();
+        alert("Failed to move task. You may not have permission to make this change.");
       }
     })();
   };

@@ -2,7 +2,6 @@ import { Routes, Route, Navigate, Link } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Clinician from "./pages/Clinician.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
-import ProjectSidebar from "./pages/ProjectSidebar.jsx";
 import Profile from "./pages/Profile.jsx";
 import LoginButton from "./components/login/LoginButton.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
@@ -71,13 +70,47 @@ export default function App() {
         <LoginButton />
       </div>
       <Routes>
-        <Route path="/clinician" element={<ProtectedRoute><Clinician /></ProtectedRoute>} />
+        <Route
+          path="/clinician"
+          element={
+            <ProtectedRoute>
+              <Clinician />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<ProtectedRoute><Home projectId={1} sprintId={1} /></ProtectedRoute>} />
-        <Route path="/task/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
-        <Route path="/project-sidebar" element={<ProtectedRoute><ProjectSidebar /></ProtectedRoute>} />
-        <Route path="/task-demo" element={<ProtectedRoute><Navigate to="/task/1" replace /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home projectId={1} sprintId={1} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/task/:id"
+          element={
+            <ProtectedRoute>
+              <TaskDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/task-demo"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/task/1" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/user-management"
           element={
