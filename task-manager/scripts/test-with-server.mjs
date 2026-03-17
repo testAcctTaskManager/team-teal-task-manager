@@ -24,10 +24,17 @@ const PERSIST_DIR_ABS = path.join(projectRoot, PERSIST_DIR);
 const DEV_PORT = process.env.WRANGLER_DEV_PORT ?? "8788";
 const DEV_URL = `http://127.0.0.1:${DEV_PORT}`;
 
+// Port and URL for Vite dev server (needed for Cypress e2e tests).
+const VITE_PORT = process.env.VITE_DEV_PORT ?? "5173";
+const VITE_URL = `http://127.0.0.1:${VITE_PORT}`;
+
 function spawnProcess(command, args, options = {}) {
+  const isWindows = process.platform === "win32";
   const child = spawn(command, args, {
     stdio: "inherit",
-    shell: process.platform === "win32",
+    shell: isWindows,
+    // On Unix, start process in its own process group so we can kill the entire tree
+    detached: !isWindows,
     ...options,
   });
   return child;
@@ -75,12 +82,59 @@ function run(command, args, options = {}) {
   });
 }
 
+// Kill orphaned wrangler/vite processes that may be holding file locks.
+// Windows-only: On Unix/macOS, the OS automatically cleans up child processes
+// when the parent exits. Windows doesn't reliably do this, so processes from
+// a previous crashed/interrupted test run may still be holding file locks on
+// the test database directory, causing EBUSY errors.
+async function killOrphanedProcesses() {
+  if (process.platform === "win32") {
+    // Kill any lingering wrangler processes
+    await new Promise((resolve) => {
+      const kill = spawn("taskkill", ["/IM", "wrangler.exe", "/F"], {
+        stdio: "ignore",
+        shell: true,
+      });
+      kill.on("exit", resolve);
+    });
+    // Kill any lingering node processes running vite (harder to target precisely,
+    // but vite uses a specific port so it will fail to start if orphaned)
+    // Small delay to let OS release file locks
+    await delay(500);
+  }
+}
+
+// Retry fs.rm with delays for Windows file lock issues.
+// Windows doesn't immediately release file handles when processes exit,
+// so we may need to wait for the OS to catch up.
+async function rmWithRetry(dirPath, maxRetries = 5, delayMs = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await fs.rm(dirPath, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      if (err.code === "EBUSY" && attempt < maxRetries) {
+        console.log(
+          `[test-with-server] Directory busy, retrying in ${delayMs}ms (attempt ${attempt}/${maxRetries})...`,
+        );
+        await delay(delayMs);
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
 async function main() {
+  // 0) Kill any orphaned processes from previous runs.
+  console.log("Cleaning up any orphaned processes...");
+  await killOrphanedProcesses();
+
   // 1) Start from a clean local D1 database.
   console.log("Wiping local D1 test database files (if any)...");
 
   try {
-    await fs.rm(PERSIST_DIR_ABS, { recursive: true, force: true });
+    await rmWithRetry(PERSIST_DIR_ABS);
     console.log(
       `[test-with-server] Removed ${PERSIST_DIR_ABS} (if it existed).`,
     );
@@ -141,35 +195,69 @@ async function main() {
   ];
   const wrangler = spawnProcess("wrangler", wranglerArgs);
 
+  // 3b) Start Vite dev server for Cypress e2e tests.
+  console.log("Starting Vite dev server for Cypress e2e tests...");
+  const viteArgs = ["--port", VITE_PORT, "--strictPort", "--host", "127.0.0.1"];
+  const vite = spawnProcess("npx", ["vite", ...viteArgs]);
+
   let cleanedUp = false;
 
-  // Ensure the Wrangler dev process is cleaned up on exit/signals.
-  const cleanup = () => {
+  // Ensure both Wrangler and Vite dev processes are cleaned up on exit/signals.
+  const cleanup = (exitAfter = false) => {
     if (cleanedUp) return;
     cleanedUp = true;
 
-    if (wrangler && !wrangler.killed) {
-      if (process.platform === "win32") {
-        // Kill wrangler and its process tree
+    if (process.platform === "win32") {
+      // Kill wrangler and its process tree
+      if (wrangler && !wrangler.killed) {
         spawn("taskkill", ["/PID", String(wrangler.pid), "/T", "/F"], {
           stdio: "inherit",
           shell: true,
         });
-      } else {
-        wrangler.kill("SIGINT");
       }
+      // Kill vite and its process tree
+      if (vite && !vite.killed) {
+        spawn("taskkill", ["/PID", String(vite.pid), "/T", "/F"], {
+          stdio: "inherit",
+          shell: true,
+        });
+      }
+    } else {
+      // On Unix, kill the entire process group (negative PID) to terminate child processes
+      if (wrangler && wrangler.pid && !wrangler.killed) {
+        try {
+          process.kill(-wrangler.pid, "SIGTERM");
+        } catch {
+          // Process may already be dead
+        }
+      }
+      if (vite && vite.pid && !vite.killed) {
+        try {
+          process.kill(-vite.pid, "SIGTERM");
+        } catch {
+          // Process may already be dead
+        }
+      }
+    }
+
+    if (exitAfter) {
+      // Give cleanup a moment to terminate processes, then force exit
+      setTimeout(() => process.exit(process.exitCode ?? 1), 500);
     }
   };
 
-  process.on("SIGINT", cleanup);
-  process.on("SIGTERM", cleanup);
-  process.on("exit", cleanup);
+  // Handle interruption signals (Ctrl+C, kill)
+  process.on("SIGINT", () => cleanup(true));
+  process.on("SIGTERM", () => cleanup(true));
 
-  // 4) Wait until the dev server is reachable before testing.
+  // 4) Wait until both dev servers are reachable before testing.
   await waitForServer(DEV_URL);
-  console.log(
-    `Wrangler dev server (test env) is ready at ${DEV_URL}, running all tests...`,
-  );
+  console.log(`Wrangler dev server (test env) is ready at ${DEV_URL}`);
+
+  await waitForServer(VITE_URL);
+  console.log(`Vite dev server is ready at ${VITE_URL}`);
+
+  console.log("All servers ready, running tests...");
 
   // 4b) Generate a signed JWT so integration tests can authenticate.
   //     Read JWT_SECRET from .dev.vars (same file Wrangler reads for local secrets).
@@ -215,16 +303,26 @@ async function main() {
   process.env.TEST_ADMIN_SESSION_TOKEN = adminTestToken;
   process.env.TEST_MUTABLE_SESSION_TOKEN = mutableTestToken;
 
+  // Also set CYPRESS_ prefixed vars for Cypress to pick up automatically
+  process.env.CYPRESS_TEST_SESSION_TOKEN = testToken;
+  process.env.CYPRESS_TEST_ADMIN_SESSION_TOKEN = adminTestToken;
+  process.env.CYPRESS_TEST_MUTABLE_SESSION_TOKEN = mutableTestToken;
+
   try {
-    // 5) Run only the integration tests that rely on Wrangler + D1.
+    // 5) Run the Vitest integration tests that rely on Wrangler + D1.
+    console.log("\n--- Running Vitest API integration tests ---");
     await run("npm", ["run", "test:integration:vitest"], { env: process.env });
+
+    // 6) Run Cypress e2e tests that use the full browser + Vite + Wrangler.
+    console.log("\n--- Running Cypress e2e integration tests ---");
+    await run("npm", ["run", "test:e2e"], { env: process.env });
 
     process.exitCode = 0;
   } catch (err) {
     console.error(err.message ?? err);
     process.exitCode = 1;
   } finally {
-    cleanup();
+    cleanup(true);
   }
 }
 
