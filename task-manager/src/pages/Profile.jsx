@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useUsers } from "../contexts/UsersContext.jsx";
 
 /**
  * Get the numeric UTC offset in minutes for a timezone.
@@ -63,6 +64,7 @@ function formatTimezoneLabel(tz) {
 const TIMEZONE_OPTIONS = getTimezoneOptions();
 
 function Profile() {
+  const { updateCurrentUser } = useUsers();
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [isEditingTimezone, setIsEditingTimezone] = useState(false);
@@ -138,6 +140,7 @@ function Profile() {
 
       const updatedUser = await res.json();
       setUser(updatedUser);
+      updateCurrentUser(updatedUser);
       setIsEditingTimezone(false);
       setSaveMessage({ type: "success", text: "Timezone saved successfully!" });
     } catch (err) {
