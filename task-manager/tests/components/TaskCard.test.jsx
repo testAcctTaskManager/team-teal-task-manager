@@ -1,4 +1,4 @@
-import React from "react";
+import React, { act } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import TaskCard from "../../src/components/TaskCard.jsx";
 import { renderWithRoot, click } from "../test-utils/reactTestUtils.jsx";
@@ -127,6 +127,61 @@ describe("TaskCard", () => {
     if (dueEl) {
       expect(dueEl.className).not.toContain("text-[#ff6b6b]");
     }
+  });
+
+  // ── Lines 24-25: onMouseEnter/onMouseLeave toggle TimeZone tooltip ─────────
+  it("shows TimeZone tooltip on mouseenter and hides it on mouseleave", async () => {
+    const task = {
+      id: 1,
+      title: "Hover Task",
+      reporter_id: 1,
+      assignee_id: 2,
+      start_date: null,
+      due_date: null,
+    };
+
+    const { container } = renderTaskCard(task);
+    const card = container.querySelector('[data-testid="task-card"]');
+    const userSpan = card.querySelector("span");
+    expect(userSpan).not.toBeNull();
+
+    // TimeZone tooltip not shown initially
+    expect(card.textContent).not.toContain("Time:");
+
+    await act(async () => {
+      userSpan.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    });
+    expect(card.textContent).toContain("Time:");
+
+    await act(async () => {
+      userSpan.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
+    });
+    expect(card.textContent).not.toContain("Time:");
+  });
+
+  // ── Lines 82-84: onKeyDown Enter/Space navigates to task ──────────────────
+  it("navigates to task when Enter key is pressed on the card", async () => {
+    const task = { id: 55, title: "Keyboard Task", start_date: null, due_date: null };
+    const { container } = renderTaskCard(task);
+    const card = container.querySelector('[data-testid="task-card"]');
+
+    await act(async () => {
+      card.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/task/55");
+  });
+
+  it("navigates to task when Space key is pressed on the card", async () => {
+    const task = { id: 55, title: "Keyboard Task", start_date: null, due_date: null };
+    const { container } = renderTaskCard(task);
+    const card = container.querySelector('[data-testid="task-card"]');
+
+    await act(async () => {
+      card.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/task/55");
   });
 
   it("navigates to task details when card is clicked", async () => {
