@@ -62,9 +62,19 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         setSprintId(sprintList[0].id);
       }
 
+      const activeSprintIds = new Set(
+        sprintList
+          .filter((s) => s.status === "in_progress")
+          .map((s) => Number(s.id)),
+      );
+
       const columnsWithTasks = cols.map((col) => {
         const colTasks = taskList
           .filter((t) => Number(t.column_id) === Number(col.id))
+          .filter((t) => {
+            if (t.sprint_id == null) return true;
+            return activeSprintIds.has(Number(t.sprint_id));
+          })
           .sort(
             (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
           );
@@ -155,7 +165,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
     loadColumns(projectId);
     // Added to trigger task filtering metadata load
     loadFilterMetadata();
-  }, [projectId, sprintId]); // eslint-disable-line
+  }, [projectId, sprintId, sprintStatus]); // eslint-disable-line
 
   const activeProjectColumns = useMemo(() => {
     return columns.filter(
