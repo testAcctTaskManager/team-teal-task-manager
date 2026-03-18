@@ -20,8 +20,17 @@ function TestConsumer() {
       <span data-testid="error">{ctx.error ?? ""}</span>
       <span data-testid="users-count">{ctx.users.length}</span>
       <span data-testid="current-user">{ctx.currentUser ? "yes" : "no"}</span>
+      <span data-testid="current-user-timezone">{ctx.currentUser?.timezone ?? ""}</span>
       <button data-testid="logout-btn" onClick={ctx.logout}>
         Logout
+      </button>
+      <button
+        data-testid="update-user-btn"
+        onClick={() =>
+          ctx.updateCurrentUser({ ...ctx.currentUser, timezone: "Europe/London" })
+        }
+      >
+        Update
       </button>
     </div>
   );
@@ -234,5 +243,57 @@ describe("UsersContext", () => {
     expect(
       container.querySelector("[data-testid='users-count']").textContent,
     ).toBe("0");
+  });
+
+  it("updates currentUser and users array when updateCurrentUser is called", async () => {
+    global.fetch = vi.fn(async (url) => {
+      if (String(url).includes("/api/auth/me")) {
+        return {
+          ok: true,
+          json: async () => ({ id: 1, display_name: "Alice", timezone: "America/New_York" }),
+        };
+      }
+      if (String(url).includes("/api/users")) {
+        return {
+          ok: true,
+          json: async () => [{ id: 1, display_name: "Alice", timezone: "America/New_York" }],
+        };
+      }
+      return { ok: true, json: async () => [] };
+    });
+
+    const container = renderProvider();
+
+    await act(async () => {
+      await flushPromises();
+    });
+
+    // Verify initial timezone
+    expect(
+      container.querySelector("[data-testid='current-user-timezone']").textContent,
+    ).toBe("America/New_York");
+
+    // Click the update button which calls updateCurrentUser with timezone: "Europe/London"
+    await act(async () => {
+      container
+        .querySelector("[data-testid='update-user-btn']")
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flushPromises();
+    });
+
+    // Verify timezone was updated in context
+    expect(
+      container.querySelector("[data-testid='current-user-timezone']").textContent,
+    ).toBe("Europe/London");
+
+    // Verify user is still present
+    expect(
+      container.querySelector("[data-testid='current-user']").textContent,
+    ).toBe("yes");
+
+    // Verify users array count is unchanged
+    expect(
+      container.querySelector("[data-testid='users-count']").textContent,
+    ).toBe("1");
   });
 });
