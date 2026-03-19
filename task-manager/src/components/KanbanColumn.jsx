@@ -27,7 +27,7 @@ export default function KanbanColumn({ title, tasks = [], colIndex, fullWidth = 
   return (
     <Droppable droppableId={String(colIndex)}>
       {(provided) => (
-        <section className={`flex flex-col rounded-lg h-auto min-h-96 bg-white/5 shadow-lg ${fullWidth ? "w-full" : "w-64 flex-shrink-0"}`}>
+        <section data-column={title} className={`flex flex-col rounded-lg h-auto min-h-96 bg-white/5 shadow-lg ${fullWidth ? "w-full" : "w-64 flex-shrink-0"}`}>
           <div className="bg-gradient-to-r from-slate-700 to-slate-600 text-white text-left px-5 py-3 rounded-t-lg font-medium shadow-sm">
             {title}
           </div>
