@@ -22,6 +22,11 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN_TEST }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run cf:migrate:test
+      - name: Seed test-db with sample data
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN_TEST }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run cf:seed:test
 
   migrate-prod:
     if: github.ref == 'refs/heads/main'
