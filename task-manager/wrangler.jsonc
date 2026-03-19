@@ -18,7 +18,7 @@
 		{
 			"binding": "cf_db",
 			"database_name": "test-db",
-			"database_id": "fe5f8703-e307-4850-987b-9d9fb62bfdda",
+			"database_id": "a49540cc-3347-4b1c-a31e-6b8960819425",
 			"migrations_dir": "migrations"
 		}
 	],
