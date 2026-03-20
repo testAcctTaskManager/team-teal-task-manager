@@ -13,8 +13,8 @@ function renderHome(props = {}) {
 }
 
 const mockProjects = [
-  { id: 1, name: "Project One", type: "kanban" },
-  { id: 2, name: "Project Two", type: "scrum" },
+  { id: 1, name: "Project One" },
+  { id: 2, name: "Project Two" },
 ];
 
 const mockColumns = [
@@ -77,7 +77,7 @@ describe("Home", () => {
   });
 
   it("switches to Backlog tab when Backlog button is clicked", async () => {
-    const { container } = renderHome({ projectId: 2 });
+    const { container } = renderHome({ projectId: 1 });
     await waitFor(() => {
       const buttons = Array.from(container.querySelectorAll("button"));
       const backlogBtn = buttons.find((b) => b.textContent.includes("Backlog"));

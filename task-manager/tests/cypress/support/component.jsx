@@ -13,7 +13,7 @@ import { UsersContext } from "../../../src/contexts/UsersContext.jsx";
 import KanbanColumn from "../../../src/components/KanbanColumn";
 import ProjectSelector from "../../../src/components/ProjectSelector.jsx";
 import { DragDropContext } from "@hello-pangea/dnd";
-import Kanban from "../../../src/components/Kanban.jsx";
+import Board from "../../../src/components/Board.jsx";
 import Sprints from "../../../src/components/Sprints.jsx";
 
 import { getColumnsWithTasks } from "./mockData.js";
@@ -96,13 +96,13 @@ export function mountProjectSelector(projects = [], selectedProjectId = null, on
   );
 }
 
-// Helper to mount Kanban with test columns and tasks
+// Helper to mount Board with test columns and tasks
 export function mountKanban(projectId = 1) {
   const columns = getColumnsWithTasks(projectId);
   return mount(
     <MockUsersProvider>
       <MemoryRouter>
-        <Kanban columns={columns}/>
+        <Board columns={columns} boardTitle="Board" emptyColumnsText="No Columns" />
       </MemoryRouter>
     </MockUsersProvider>
   );

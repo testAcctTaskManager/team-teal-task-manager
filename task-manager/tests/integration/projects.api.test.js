@@ -19,7 +19,6 @@ describe("Projects API with D1 (integration)", () => {
             expect(project1.status).toBeDefined();
             expect(["not_started", "in_progress", "complete"]).toContain(project1.status);
             expect(project1.type).toBeDefined();
-            expect(["kanban", "scrum"]).toContain(project1.type);
         }
     });
 
@@ -39,7 +38,6 @@ describe("Projects API with D1 (integration)", () => {
         expect(created.name).toBe("Integration Test Project"); 
         expect(created.created_by).toBe(1); 
         expect(created.status).toBe("not_started"); 
-        expect(created.type).toBe("kanban");
         // default from schema 
         expect(created.created_at).toBeDefined();
         expect(created.updated_at).toBeDefined();

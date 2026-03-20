@@ -1,12 +1,12 @@
-import Kanban from "../../../src/components/Kanban";
+import Board from "../../../src/components/Board";
 import { mountKanban } from "../support/component";
 
-describe("Kanban component", () => {
+describe("Board component", () => {
     
     
     it("renders empty when there are no columns", () => {
         const columns = [];
-        cy.mount(<Kanban columns={columns}/>);
+        cy.mount(<Board columns={columns} boardTitle="Board" emptyColumnsText="No Columns" />);
         cy.get("p").contains("No Columns").should("exist");
     });
 
