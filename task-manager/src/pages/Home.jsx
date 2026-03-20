@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import TaskForm from "../components/TaskForm.jsx";
-import Kanban from "../components/Kanban.jsx";
 import NewTaskButton from "../components/NewTaskButton.jsx";
 import { Link } from "react-router-dom";
 import ProjectSelector from "../components/ProjectSelector.jsx";
@@ -179,21 +178,6 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
     }));
   }, [activeProjectColumns, selectedAssignee, selectedReporter]);
  
-  /* Gets the correct board type based on the current project. Defaults to Kanban */
-  const selectedProjectType = useMemo(() => {
-    const currentProject = projects.find((p) => Number(p.id) === Number(projectId));
-    const type = (currentProject?.type || "kanban").toLowerCase();
-    return type;
-  }, [projects, projectId])
-
-  const BoardComponent = useMemo(() => {
-    const boardByType = {
-      kanban: Kanban,
-      scrum: Scrum,
-    };
-    return boardByType[selectedProjectType] || Kanban;
-  }, [selectedProjectType]);
-
   function handleProjectTabSwitch(e) {
     setProjectTab(e.target.value)
   }
@@ -222,7 +206,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
 
   const projectTabs = {
     Board: 
-      <BoardComponent
+      <Scrum
         key={projectId}
         columns={filteredColumns}
         setColumns={setColumns}
@@ -278,15 +262,13 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         >
           Board
         </button>
-        {selectedProjectType === "scrum" ? (
-          <button
-            type="button"
-            value="Backlog"
-            onClick={handleProjectTabSwitch}
-          >
-            Backlog
-          </button>
-        ) : (null)}
+        <button
+          type="button"
+          value="Backlog"
+          onClick={handleProjectTabSwitch}
+        >
+          Backlog
+        </button>
       </div>
 
       <div className="flex items-center gap-4 mb-6">
@@ -296,11 +278,9 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
           onSelectProject={handleProjectChange}
         />
 
-        {selectedProjectType === "scrum" && projectTab === "Board" ? (null) : (
-          <NewTaskButton 
-            openModal={openModal}
-          />
-        )}
+        <NewTaskButton 
+          openModal={openModal}
+        />
 
         <div className="flex items-center gap-3 flex-1">
           <span className="font-semibold text-white text-sm whitespace-nowrap">
