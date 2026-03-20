@@ -1,10 +1,10 @@
 import { makeCrudHandlers, selectOneFrom, updateTable } from "../helpers.js";
 
-// Generic CRUD handlers 
+// Generic CRUD handlers
 const projectHandlers = makeCrudHandlers({
   table: "projects",
   primaryKey: "id",
-  allowedColumns: ["name", "created_by", "status", "type", "created_at", "updated_at"],
+  allowedColumns: ["name", "created_by", "status", "created_at", "updated_at"],
   dbEnvVar: "cf_db",
   orderBy: "id ASC",
 });
@@ -19,18 +19,18 @@ const updateProjectTimestamps = async (context) => {
 
   // Checking validity
   if (!id || isNaN(Number(id))) {
-    return new Response(JSON.stringify({ error: "Invalid Project ID"}), { 
+    return new Response(JSON.stringify({ error: "Invalid Project ID"}), {
         status: 400,
         headers: { "Content-Type:": "application/json" },
     });
   }
- 
+
   try {
     // Parse JSON
      const incomingData = await request.json();
 
     // Prepare update object
-    const allowed = ["name", "created_by", "status", "type"];
+    const allowed = ["name", "created_by", "status"];
     const updatesObj = {};
 
     for (const key of allowed) {
@@ -39,7 +39,7 @@ const updateProjectTimestamps = async (context) => {
         }
     }
 
-    // Force the timestamp update because cloudflare D1 doesn't do this automatically 
+    // Force the timestamp update because cloudflare D1 doesn't do this automatically
     updatesObj.updated_at = new Date().toISOString();
 
     // Update using the helper updateTable() from helpers.js
