@@ -68,7 +68,7 @@ export async function onRequestPatch(context) {
     });
   }
 
-  return updateHandlers.item(context);
+  return updateHandlers.item({ ...context, request: request.clone() });
 }
 
 // DELETE a row/user

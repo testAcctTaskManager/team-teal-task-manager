@@ -10,6 +10,7 @@ export const UsersContext = createContext({
   isAuthenticated: false,
   authLoading: true,
   logout: () => {},
+  updateCurrentUser: () => {},
 });
 
 export function UsersProvider({ children }) {
@@ -60,6 +61,13 @@ export function UsersProvider({ children }) {
     checkAuth();
   }, [loadUsers]);
 
+  function updateCurrentUser(updatedUser) {
+    setCurrentUser(updatedUser);
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
+    );
+  }
+
   async function logout() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -79,6 +87,7 @@ export function UsersProvider({ children }) {
     isAuthenticated: !!currentUser,
     authLoading,
     logout,
+    updateCurrentUser,
   };
 
   return <UsersContext.Provider value={value}>{children}</UsersContext.Provider>;

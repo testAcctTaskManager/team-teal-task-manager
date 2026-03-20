@@ -6,9 +6,10 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     reporters: "default",
-    // Allow both component/unit tests and integration tests to be discovered.
-    // Scripts choose which folders to run (tests/components vs tests/integration).
-    include: ["tests/**/*.test.{js,ts,jsx,tsx}"],
+    // Only discover component/unit tests by default.
+    // Integration tests require a running server + JWT tokens and are run
+    // separately via `npm run test:integration` (see scripts/test-with-server.mjs).
+    include: ["tests/components/**/*.test.{js,ts,jsx,tsx}"],
     coverage: {
       provider: "v8",
       include: ["src/components/**/*.{js,jsx}", "src/pages/**/*.{js,jsx}", "src/contexts/**/*.{js,jsx}"],

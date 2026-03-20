@@ -29,11 +29,34 @@ export function buildCorsHeaders(env, req, methods = "GET,POST,OPTIONS") {
   const allowCredentials = env.ALLOW_CREDENTIALS === "true";
   const serverOrigin = new URL(req.url).origin;
 
-  if (allowed.length === 0) {
-    if (origin !== serverOrigin) return null;
-  } else {
-    if (!allowed.includes(origin)) return null;
+  // Check if origin is allowed
+  let isAllowed = false;
+  
+  if (origin === serverOrigin) {
+    // Same origin always allowed
+    isAllowed = true;
+  } else if (allowed.length > 0 && allowed.includes(origin)) {
+    // Explicitly allowed origin
+    isAllowed = true;
+  } else if (allowed.length === 0) {
+    // No explicit allowlist: permit same-site Cloudflare Pages preview deployments
+    // e.g., *.team-teal-task-manager.pages.dev
+    const originUrl = new URL(origin);
+    const serverUrl = new URL(serverOrigin);
+    const originParts = originUrl.hostname.split(".");
+    const serverParts = serverUrl.hostname.split(".");
+    
+    // Check if both are subdomains of the same pages.dev project
+    if (originParts.length >= 3 && serverParts.length >= 3) {
+      const originBase = originParts.slice(-3).join(".");
+      const serverBase = serverParts.slice(-3).join(".");
+      if (originBase === serverBase && originBase.endsWith(".pages.dev")) {
+        isAllowed = true;
+      }
+    }
   }
+
+  if (!isAllowed) return null;
 
   const headers = {
     "Content-Type": "application/json",

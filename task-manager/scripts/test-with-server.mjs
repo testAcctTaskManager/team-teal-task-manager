@@ -179,6 +179,37 @@ async function main() {
     });
   });
 
+  // 2b) Apply seed data (dev/test only — not run in production).
+  console.log("Applying seed data to local test database...");
+  const seedFile = path.join(projectRoot, "seed", "seed.sql");
+  const seed = spawn(
+    "wrangler",
+    [
+      "d1",
+      "execute",
+      "cf_db",
+      "--local",
+      "--persist-to",
+      PERSIST_DIR,
+      "--file",
+      seedFile,
+    ],
+    {
+      stdio: ["pipe", "inherit", "inherit"],
+      shell: process.platform === "win32",
+    },
+  );
+
+  seed.stdin.write("y\n");
+  seed.stdin.end();
+
+  await new Promise((resolve, reject) => {
+    seed.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error("D1 seed data failed"));
+    });
+  });
+
   // 3) Start Wrangler Pages dev server backed by this DB.
   console.log(
     "Starting Wrangler Pages dev server for tests (local default env)...",
@@ -307,7 +338,7 @@ async function main() {
   process.env.CYPRESS_TEST_SESSION_TOKEN = testToken;
   process.env.CYPRESS_TEST_ADMIN_SESSION_TOKEN = adminTestToken;
   process.env.CYPRESS_TEST_MUTABLE_SESSION_TOKEN = mutableTestToken;
-
+  
   try {
     // 5) Run the Vitest integration tests that rely on Wrangler + D1.
     console.log("\n--- Running Vitest API integration tests ---");

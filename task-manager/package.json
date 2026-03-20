@@ -7,7 +7,7 @@
 		"dev": "wrangler pages dev --local --ip localhost",
 		"test": "npm run test:vitest && npm run test:ct",
 		"test:integration": "node ./scripts/test-with-server.mjs",
-		"test:integration:vitest": "vitest run tests/integration",
+		"test:integration:vitest": "vitest run --config vitest.integration.config.mjs",
 		"test:e2e": "cypress run --e2e --config-file cypress.config.mjs",
 		"test:vitest": "vitest run tests/components --coverage",
 		"test:ct": "cypress run --component --config-file cypress.config.mjs",
@@ -20,7 +20,9 @@
 		"cf:migrate:test": "npx wrangler d1 migrations apply cf_db --remote",
 		"cf:migrate:prod": "npx wrangler d1 migrations apply cf_db --remote --env production",
 		"cf:migrate:local": "wrangler d1 migrations apply cf_db --local",
-		"predev": "npm run cf:migrate:local",
+		"cf:seed:local": "wrangler d1 execute cf_db --local --file seed/seed.sql",
+		"cf:seed:test": "npx wrangler d1 execute cf_db --remote --file seed/seed.sql",
+		"predev": "npm run cf:migrate:local && npm run cf:seed:local",
 		"cypress:open:ct": "cypress open --component --config-file cypress.config.mjs"
 	},
 	"dependencies": {

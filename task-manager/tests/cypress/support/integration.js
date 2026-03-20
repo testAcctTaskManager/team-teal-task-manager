@@ -82,7 +82,7 @@ Cypress.Commands.add('performLogout', () => {
  */
 Cypress.Commands.add('waitForBoardLoad', () => {
   // Wait for at least one column to render (indicates board is loaded)
-  cy.contains('To Do', { timeout: 10000 }).should('be.visible');
+  cy.contains(/to do/i, { timeout: 10000 }).should('be.visible');
 });
 
 /**
@@ -145,23 +145,16 @@ Cypress.Commands.add('backToBoard', () => {
  * Uses data-testid on task cards and column header text
  */
 Cypress.Commands.add('verifyTaskInColumn', (taskTitle, columnName) => {
-  // Find the column section by looking for the header text, then check within that section
-  cy.contains('div', columnName)
-    .parents('section')
-    .first()
-    .within(() => {
-      cy.contains('[data-testid="task-card"]', taskTitle).should('exist');
-    });
+  cy.get(`section[data-column="${columnName}"]`).within(() => {
+    cy.contains('[data-testid="task-card"]', taskTitle).should('exist');
+  });
 });
 
 /**
  * Verify a task is NOT in a specific column
  */
 Cypress.Commands.add('verifyTaskNotInColumn', (taskTitle, columnName) => {
-  cy.contains('div', columnName)
-    .parents('section')
-    .first()
-    .within(() => {
-      cy.contains('[data-testid="task-card"]', taskTitle).should('not.exist');
-    });
+  cy.get(`section[data-column="${columnName}"]`).within(() => {
+    cy.contains('[data-testid="task-card"]', taskTitle).should('not.exist');
+  });
 });
