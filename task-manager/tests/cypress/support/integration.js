@@ -82,7 +82,7 @@ Cypress.Commands.add('performLogout', () => {
  */
 Cypress.Commands.add('waitForBoardLoad', () => {
   // Wait for at least one column to render (indicates board is loaded)
-  cy.contains('To Do', { timeout: 10000 }).should('be.visible');
+  cy.contains(/to do/i, { timeout: 10000 }).should('be.visible');
 });
 
 /**
