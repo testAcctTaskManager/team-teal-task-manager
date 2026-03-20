@@ -57,7 +57,7 @@ export default function ClinicianBoard() {
 
     return (
         <Board
-            columns={columns}
+            columns={filteredColumns}
             setColumns={() => {}}
             boardTitle="Kanban Board"
             emptyColumnsText="No Columns"
