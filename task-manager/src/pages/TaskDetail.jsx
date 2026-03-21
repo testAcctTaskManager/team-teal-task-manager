@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
+import { formatDate, formatDateTime, isDateOverdue } from "../utils/dateHelpers.js";
 import TaskForm from "../components/TaskForm.jsx";
 import TimeZone from "../components/TimeZone.jsx";
 import { useUsers } from "../contexts/UsersContext.jsx";
+
+function getUserLabel(id, users) {
+  if (id == null) return null;
+  const user = users.find((u) => u.id === Number(id));
+  if (!user) return `User ${id}`;
+  return user.display_name || user.email || `User ${user.id}`;
+}
 
 /**
  * UserWithTime
@@ -11,18 +18,12 @@ import { useUsers } from "../contexts/UsersContext.jsx";
  * Shows user label with time
  */
 function UserWithTime({ userId, users }) {
-  const getUserLabel = (id) => {
-    if (id == null) return null;
-    const user = users.find((u) => u.id === Number(id));
-    if (!user) return `User ${id}`;
-    return user.display_name || user.email || `User ${user.id}`;
-  };
 
   const user = users.find((u) => u.id === Number(userId));
 
   return (
     <dd>
-      {getUserLabel(userId)}
+      {getUserLabel(userId, users)}
       {user && (
         <div>
           <TimeZone user={user} />
@@ -353,9 +354,17 @@ export default function TaskDetail() {
               className="bg-white/5 rounded-lg p-4 border border-white/10"
             >
               <p className="text-white mb-2">{c.content}</p>
-              <small className="text-white/50 text-sm">
-                {c.created_by} • {formatDate(c.created_at)}
-              </small>
+              <div className="text-white/50 text-sm">
+                <span>{getUserLabel(c.created_by, users)} • {formatDateTime(c.created_at)}</span>
+                {(() => {
+                  const commenter = users.find((u) => u.id === Number(c.created_by));
+                  const commenterTz = commenter?.timezone ?? null;
+                  if (!commenterTz) return null;
+                  return (
+                    <div>Local time: {formatDateTime(c.created_at, commenterTz)}</div>
+                  );
+                })()}
+              </div>
             </li>
           ))}
         </ul>
