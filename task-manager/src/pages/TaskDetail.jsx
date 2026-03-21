@@ -73,6 +73,10 @@ export default function TaskDetail() {
 
   const { users, currentUser } = useUsers();
 
+  // Track which comment is being edited and the draft content
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentContent, setEditingCommentContent] = useState("");
+
   useEffect(() => {
     async function loadTask() {
       setLoading(true);
@@ -353,18 +357,76 @@ export default function TaskDetail() {
               key={c.id}
               className="bg-white/5 rounded-lg p-4 border border-white/10"
             >
-              <p className="text-white mb-2">{c.content}</p>
-              <div className="text-white/50 text-sm">
-                <span>{getUserLabel(c.created_by, users)} • {formatDateTime(c.created_at)}</span>
-                {(() => {
-                  const commenter = users.find((u) => u.id === Number(c.created_by));
-                  const commenterTz = commenter?.timezone ?? null;
-                  if (!commenterTz) return null;
-                  return (
-                    <div>Local time: {formatDateTime(c.created_at, commenterTz)}</div>
-                  );
-                })()}
-              </div>
+              {editingCommentId === c.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={editingCommentContent}
+                    onChange={(e) => setEditingCommentContent(e.target.value)}
+                    rows={3}
+                    className="bg-white/5 border border-white/20 rounded-lg p-3 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 resize-none w-full"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!editingCommentContent.trim()) return;
+                        try {
+                          const res = await fetch(`/api/comments/${c.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ content: editingCommentContent }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data?.error || "Failed to update comment");
+                          setComments((prev) =>
+                            prev.map((comment) => comment.id === c.id ? { ...comment, content: editingCommentContent } : comment)
+                          );
+                          setEditingCommentId(null);
+                        } catch (err) {
+                          console.error("Error updating comment:", err);
+                          setCommentsError(err.message);
+                        }
+                      }}
+                      className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-4 py-1 rounded-lg shadow-md transition-all duration-200 text-sm"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingCommentId(null)}
+                      className="text-white/50 hover:text-white text-sm px-4 py-1 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-white mb-2">{c.content}</p>
+                    <div className="text-white/50 text-sm">
+                      <span>{getUserLabel(c.created_by, users)} • {formatDateTime(c.created_at)}</span>
+                      {(() => {
+                        const commenter = users.find((u) => u.id === Number(c.created_by));
+                        const commenterTz = commenter?.timezone ?? null;
+                        if (!commenterTz) return null;
+                        return (
+                          <div>Local time: {formatDateTime(c.created_at, commenterTz)}</div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  {currentUser && Number(c.created_by) === currentUser.id && (
+                    <button
+                      onClick={() => {
+                        setEditingCommentId(c.id);
+                        setEditingCommentContent(c.content);
+                      }}
+                      className="text-white/40 hover:text-white text-sm shrink-0 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
