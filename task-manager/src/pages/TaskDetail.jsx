@@ -378,7 +378,7 @@ export default function TaskDetail() {
                           const data = await res.json();
                           if (!res.ok) throw new Error(data?.error || "Failed to update comment");
                           setComments((prev) =>
-                            prev.map((comment) => comment.id === c.id ? { ...comment, content: editingCommentContent } : comment)
+                            prev.map((comment) => comment.id === c.id ? data : comment)
                           );
                           setEditingCommentId(null);
                         } catch (err) {
@@ -403,7 +403,12 @@ export default function TaskDetail() {
                   <div className="flex-1">
                     <p className="text-white mb-2">{c.content}</p>
                     <div className="text-white/50 text-sm">
-                      <span>{getUserLabel(c.created_by, users)} • {formatDateTime(c.created_at)}</span>
+                      <span>
+                        {getUserLabel(c.created_by, users)} • {formatDateTime(c.created_at)}
+                        {c.updated_at && c.updated_at !== c.created_at && (
+                          <span className="italic text-white/30 ml-1">(edited)</span>
+                        )}
+                      </span>
                       {(() => {
                         const commenter = users.find((u) => u.id === Number(c.created_by));
                         const commenterTz = commenter?.timezone ?? null;
