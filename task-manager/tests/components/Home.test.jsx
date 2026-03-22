@@ -81,9 +81,8 @@ describe("Home", () => {
 
     let backlogBtn;
     await waitFor(() => {
-      const buttons = Array.from(container.querySelectorAll("button"));
-      backlogBtn = buttons.find((b) => b.textContent.includes("Backlog"));
-      expect(backlogBtn).toBeDefined();
+      backlogBtn = Array.from(container.querySelectorAll("button")).find((b) => b.textContent.includes("Backlog"));
+      expect(backlogBtn).toBeTruthy();
     });
 
     fireEvent.click(backlogBtn);
