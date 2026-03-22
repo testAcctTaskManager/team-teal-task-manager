@@ -8,9 +8,9 @@ export const mockUsers = [
 ];
 
 export const mockProjects = [
-  { id: 1, name: 'Demo Project 1', created_by: 1, type: 'kanban' },
-  { id: 2, name: 'Demo Project 2', created_by: 2, type: 'kanban' },
-  { id: 3, name: 'Demo Project 3', created_by: 3, type: 'scrum' },
+  { id: 1, name: 'Demo Project 1', created_by: 1 },
+  { id: 2, name: 'Demo Project 2', created_by: 2 },
+  { id: 3, name: 'Demo Project 3', created_by: 3 },
 ];
 
 export const mockColumns = {

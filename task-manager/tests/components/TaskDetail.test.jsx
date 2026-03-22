@@ -610,6 +610,49 @@ describe("TaskDetail (Vitest)", () => {
     expect(postCalls.length).toBe(0);
   });
 
+  // ── Local time line shown when commenter has a timezone ──────────────────
+  it("shows 'Local time' line for a comment when the commenter has a timezone", async () => {
+    const users = [{ id: 7, display_name: "Alice", timezone: "America/New_York" }];
+    fetchMock = vi.fn(async (url) => {
+      const urlStr = String(url);
+      if (urlStr.startsWith("/api/tasks/")) return { ok: true, json: async () => ({ id: 42, title: "Task" }) };
+      if (urlStr.startsWith("/api/comments")) return {
+        ok: true,
+        json: async () => [
+          { id: 1, content: "Hello", created_by: 7, created_at: "2025-06-15T14:00:00.000Z" },
+        ],
+      };
+      return { ok: true, json: async () => [] };
+    });
+    global.fetch = fetchMock;
+
+    const { container } = renderTaskDetail(`/task/${taskId}`, users);
+    await act(async () => { await flushPromises(); });
+
+    expect(container.textContent).toContain("Local time:");
+  });
+
+  it("does not show 'Local time' line when commenter has no timezone", async () => {
+    const users = [{ id: 7, display_name: "Alice" }];
+    fetchMock = vi.fn(async (url) => {
+      const urlStr = String(url);
+      if (urlStr.startsWith("/api/tasks/")) return { ok: true, json: async () => ({ id: 42, title: "Task" }) };
+      if (urlStr.startsWith("/api/comments")) return {
+        ok: true,
+        json: async () => [
+          { id: 1, content: "Hello", created_by: 7, created_at: "2025-06-15T14:00:00.000Z" },
+        ],
+      };
+      return { ok: true, json: async () => [] };
+    });
+    global.fetch = fetchMock;
+
+    const { container } = renderTaskDetail(`/task/${taskId}`, users);
+    await act(async () => { await flushPromises(); });
+
+    expect(container.textContent).not.toContain("Local time:");
+  });
+
   it("does not post comments that are only whitespace", async () => {
     const { container } = renderTaskDetail(`/task/${taskId}`);
 

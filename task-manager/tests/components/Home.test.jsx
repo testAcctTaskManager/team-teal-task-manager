@@ -13,8 +13,8 @@ function renderHome(props = {}) {
 }
 
 const mockProjects = [
-  { id: 1, name: "Project One", type: "kanban" },
-  { id: 2, name: "Project Two", type: "scrum" },
+  { id: 1, name: "Project One" },
+  { id: 2, name: "Project Two" },
 ];
 
 const mockColumns = [

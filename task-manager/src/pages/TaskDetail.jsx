@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { formatDate, isDateOverdue } from "../utils/dateHelpers.js";
+import { formatDate, formatDateTime, isDateOverdue } from "../utils/dateHelpers.js";
 import TaskForm from "../components/TaskForm.jsx";
 import TimeZone from "../components/TimeZone.jsx";
 import { useUsers } from "../contexts/UsersContext.jsx";
+
+function getUserLabel(id, users) {
+  if (id == null) return null;
+  const user = users.find((u) => u.id === Number(id));
+  if (!user) return `User ${id}`;
+  return user.display_name || user.email || `User ${user.id}`;
+}
 
 /**
  * UserWithTime
@@ -11,18 +18,12 @@ import { useUsers } from "../contexts/UsersContext.jsx";
  * Shows user label with time
  */
 function UserWithTime({ userId, users }) {
-  const getUserLabel = (id) => {
-    if (id == null) return null;
-    const user = users.find((u) => u.id === Number(id));
-    if (!user) return `User ${id}`;
-    return user.display_name || user.email || `User ${user.id}`;
-  };
 
   const user = users.find((u) => u.id === Number(userId));
 
   return (
     <dd>
-      {getUserLabel(userId)}
+      {getUserLabel(userId, users)}
       {user && (
         <div>
           <TimeZone user={user} />
@@ -71,6 +72,10 @@ export default function TaskDetail() {
   const [projectName, setProjectName] = useState(null);
 
   const { users, currentUser } = useUsers();
+
+  // Track which comment is being edited and the draft content
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentContent, setEditingCommentContent] = useState("");
 
   useEffect(() => {
     async function loadTask() {
@@ -352,10 +357,81 @@ export default function TaskDetail() {
               key={c.id}
               className="bg-white/5 rounded-lg p-4 border border-white/10"
             >
-              <p className="text-white mb-2">{c.content}</p>
-              <small className="text-white/50 text-sm">
-                {c.created_by} • {formatDate(c.created_at)}
-              </small>
+              {editingCommentId === c.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={editingCommentContent}
+                    onChange={(e) => setEditingCommentContent(e.target.value)}
+                    rows={3}
+                    className="bg-white/5 border border-white/20 rounded-lg p-3 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 resize-none w-full"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!editingCommentContent.trim()) return;
+                        try {
+                          const res = await fetch(`/api/comments/${c.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ content: editingCommentContent }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data?.error || "Failed to update comment");
+                          setComments((prev) =>
+                            prev.map((comment) => comment.id === c.id ? data : comment)
+                          );
+                          setEditingCommentId(null);
+                        } catch (err) {
+                          console.error("Error updating comment:", err);
+                          setCommentsError(err.message);
+                        }
+                      }}
+                      className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-4 py-1 rounded-lg shadow-md transition-all duration-200 text-sm"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingCommentId(null)}
+                      className="text-white/50 hover:text-white text-sm px-4 py-1 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-white mb-2">{c.content}</p>
+                    <div className="text-white/50 text-sm">
+                      <span>
+                        {getUserLabel(c.created_by, users)} • {formatDateTime(c.created_at)}
+                        {c.updated_at && c.updated_at !== c.created_at && (
+                          <span className="italic text-white/30 ml-1">(edited)</span>
+                        )}
+                      </span>
+                      {(() => {
+                        const commenter = users.find((u) => u.id === Number(c.created_by));
+                        const commenterTz = commenter?.timezone ?? null;
+                        if (!commenterTz) return null;
+                        return (
+                          <div>Local time: {formatDateTime(c.created_at, commenterTz)}</div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  {currentUser && Number(c.created_by) === currentUser.id && (
+                    <button
+                      onClick={() => {
+                        setEditingCommentId(c.id);
+                        setEditingCommentContent(c.content);
+                      }}
+                      className="text-white/40 hover:text-white text-sm shrink-0 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>

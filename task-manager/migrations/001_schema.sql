@@ -36,8 +36,6 @@ CREATE TABLE IF NOT EXISTS Projects (
     created_by INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'not_started'
         CHECK (status IN ('not_started', 'in_progress', 'complete')),
-    type TEXT NOT NULL DEFAULT 'kanban'
-        CHECK (type IN ('kanban', 'scrum')),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES Users(id) ON DELETE RESTRICT
