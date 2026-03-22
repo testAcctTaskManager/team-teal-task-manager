@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react"; 
-import Kanban from "../components/Kanban"; 
+import { useEffect, useState, useMemo } from "react";
+import Board from "../components/Board";
 
 //made by borrowing code from Home.jsx
 export default function ClinicianBoard({ selectedAssignee, selectedReporter, selectedStatus }) {
@@ -11,7 +11,7 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
             const [colRes, taskRes] = await Promise.all([
                 //fetching the columns used in project 1 for now
                 fetch(`/api/columns?project_id=1`),
-                //fetching tasks by reporter 1 for now 
+                //fetching tasks by reporter 1 for now
                 fetch(`/api/tasks?reporter_id=1`)
             ]);
 
@@ -42,9 +42,9 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
                 tasks: colTasks,
                 };
             });
-            
+
             setColumns(columnsWithTasks);
-    
+
         } catch (err) {
             console.error("Fetch error", err);
             setColumns([]);
@@ -60,24 +60,26 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
        return columns.map((col) => ({
         ...col,
         tasks: col.tasks.filter((t) => {
-                const mAssignee = 
+                const mAssignee =
                     selectedAssignee === "all" ||
                     Number(t.assignee_id) === Number(selectedAssignee);
                 const mReporter =
                     selectedReporter === "all" ||
                     Number(t.reporter_id) === Number(selectedReporter);
-                const mStatus = 
+                const mStatus =
                     selectedStatus === "all" ||
                     Number(t.column_id) === Number(selectedStatus);
                 return mAssignee && mReporter && mStatus;
             }),
-        })); 
+        }));
     }, [columns, selectedAssignee, selectedReporter, selectedStatus]);
 
     return (
-        <Kanban
+        <Board
             columns={filteredColumns}
             setColumns={() => {}}
+            boardTitle="Kanban Board"
+            emptyColumnsText="No Columns"
         />
     );
 

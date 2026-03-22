@@ -13,8 +13,8 @@ function renderHome(props = {}) {
 }
 
 const mockProjects = [
-  { id: 1, name: "Project One", type: "kanban" },
-  { id: 2, name: "Project Two", type: "scrum" },
+  { id: 1, name: "Project One" },
+  { id: 2, name: "Project Two" },
 ];
 
 const mockColumns = [
@@ -81,9 +81,8 @@ describe("Home", () => {
 
     let backlogBtn;
     await waitFor(() => {
-      const buttons = Array.from(container.querySelectorAll("button"));
-      backlogBtn = buttons.find((b) => b.textContent.includes("Backlog"));
-      expect(backlogBtn).toBeDefined();
+      backlogBtn = Array.from(container.querySelectorAll("button")).find((b) => b.textContent.includes("Backlog"));
+      expect(backlogBtn).toBeTruthy();
     });
 
     fireEvent.click(backlogBtn);
