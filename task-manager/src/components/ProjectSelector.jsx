@@ -1,12 +1,15 @@
 import ProjectCard from "./ProjectCard";
+import ProjectForm from "./ProjectForm";
 import { useState } from "react";
 
 export default function ProjectSelector({
   projects = [],
   selectedProjectId,
   onSelectProject,
+  onProjectCreated,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   if (projects.length === 0) {
     return <p className="text-white/60 text-sm">No Projects Available</p>;
@@ -39,7 +42,28 @@ export default function ProjectSelector({
               />
             ))}
           </div>
+          <div className="border-t border-white/10 p-2">
+            <button
+              onClick={() => {
+                setIsExpanded(false);
+                setShowCreateForm(true);
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
+            >
+              <span className="text-lg leading-none">+</span> New Project
+            </button>
+          </div>
         </div>
+      )}
+
+      {showCreateForm && (
+        <ProjectForm
+          onSuccess={(created) => {
+            setShowCreateForm(false);
+            if (onProjectCreated) onProjectCreated(created);
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
       )}
     </div>
   );
