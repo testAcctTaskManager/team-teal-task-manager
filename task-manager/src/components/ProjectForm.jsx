@@ -27,14 +27,18 @@ export default function ProjectForm({ onSuccess, onCancel }) {
 
     setSubmitting(true);
     setError(null);
-
+if (!currentUser?.id) {
+  setError("Unable to create project: no user session found.");
+  setSubmitting(false);
+  return;
+}
     try {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: trimmed,
-          created_by: currentUser?.id ?? 1,
+created_by: currentUser?.id,
         }),
       });
 
