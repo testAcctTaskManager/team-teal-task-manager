@@ -207,6 +207,12 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
     setProjectTab("Board");
   }
 
+  async function handleProjectCreated(newProject) {
+    await loadProjects();
+    setProjectId(newProject.id);
+    setProjectTab("Board");
+  }
+
   // Update sprint status in the database.
   async function updateSprintStatus(newStatus) {
     try {
@@ -298,6 +304,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
           projects={projects}
           selectedProjectId={projectId}
           onSelectProject={handleProjectChange}
+          onProjectCreated={handleProjectCreated}
         />
 
         {selectedProjectType === "scrum" && projectTab === "Board" ? (null) : (
