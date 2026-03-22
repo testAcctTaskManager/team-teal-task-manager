@@ -77,14 +77,15 @@ describe("Home", () => {
   });
 
   it("switches to Backlog tab when Backlog button is clicked", async () => {
-    const { container } = renderHome({ projectId: 1 });
+    const { container } = renderHome({ projectId: 2 });
+
+    let backlogBtn;
     await waitFor(() => {
       const buttons = Array.from(container.querySelectorAll("button"));
-      const backlogBtn = buttons.find((b) => b.textContent.includes("Backlog"));
-      expect(backlogBtn).not.toBeNull();
+      backlogBtn = buttons.find((b) => b.textContent.includes("Backlog"));
+      expect(backlogBtn).toBeDefined();
     });
 
-    const backlogBtn = Array.from(container.querySelectorAll("button")).find((b) => b.textContent.includes("Backlog"));
     fireEvent.click(backlogBtn);
 
     await waitFor(() => {
