@@ -63,7 +63,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
 
       const columnsWithTasks = cols.map((col) => {
         const colTasks = taskList
-          .filter((t) => Number(t.column_id) === Number(col.id))
+          .filter((t) => Number(t.column_id) === Number(col.id) && t.sprint_id == sprintId)
           .sort(
             (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
           );
@@ -88,13 +88,15 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       const currentSprint = sprintList.find((s) => s.id == sprintId);
       if (currentSprint){
         setSprintStatus(currentSprint.status);
-        const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
+        const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId && Number(t.project_id) === Number(projectId));
         const sprintTaskCollection = [{
           id: sprintId,
           title: currentSprint.name,
           tasks: sprintTasks
         }];
         setSprintColumns(sprintTaskCollection);
+      } else {
+        setSprintColumns([]);
       }
 
 
@@ -342,6 +344,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
             createdBy={1}
             modifiedBy={1}
             columnsForStatus={columns}
+            sprints={sprints}
             onSuccess={handleCreated}
             onCancel={closeModal}
           />
