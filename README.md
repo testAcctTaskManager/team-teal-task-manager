@@ -82,6 +82,28 @@ To run a local copy of the DB and test your changes on a local host:
     ```http://localhost:8788/api/tasks```
 
 
+## Creating an Admin User
+
+New users default to the `developer` role. To promote a user to `admin`, update their role directly in the database.
+
+**Locally:**
+
+```bash
+npx wrangler d1 execute cf_db --local --command "UPDATE Users SET role = 'admin' WHERE email = 'your@email.com';"
+```
+
+**On the test or prod database:**
+
+```bash
+# Test DB
+npx wrangler d1 execute cf_db --command "UPDATE Users SET role = 'admin' WHERE email = 'your@email.com';"
+
+# Prod DB (use the prod database name/binding if different)
+npx wrangler d1 execute cf_db --env production --command "UPDATE Users SET role = 'admin' WHERE email = 'your@email.com';"
+```
+
+The user must have already logged in at least once before running this command (so their account exists in the DB). After updating, they will have access to the User Management page and can assign roles to other users from there.
+
 ## Reseeding the DB
 
 To set DB back to only what is in the seed:

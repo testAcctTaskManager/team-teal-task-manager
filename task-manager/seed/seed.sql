@@ -72,8 +72,8 @@ VALUES
 ---------------------------------------------------------------------
 -- SCRUM SAMPLE PROJECT (from 014, supersedes 013)
 ---------------------------------------------------------------------
-INSERT OR IGNORE INTO Projects (id, name, created_by, type)
-VALUES (4, 'Scrum Sample Project', 1, 'scrum');
+INSERT OR IGNORE INTO Projects (id, name, created_by)
+VALUES (4, 'Scrum Sample Project', 1);
 
 -- Scrum sprints
 INSERT OR IGNORE INTO Sprints (id, project_id, name, start_date, end_date, created_by, status)

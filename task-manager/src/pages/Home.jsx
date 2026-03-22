@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import TaskForm from "../components/TaskForm.jsx";
-import Kanban from "../components/Kanban.jsx";
 import NewTaskButton from "../components/NewTaskButton.jsx";
 import { Link } from "react-router-dom";
 import ProjectSelector from "../components/ProjectSelector.jsx";
@@ -23,7 +22,6 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   /* Adding states for task filtering */
   const [selectedAssignee, setSelectedAssignee] = useState("all");
   const [selectedReporter, setSelectedReporter] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
   const [users, setUsers] = useState([]);
 
   // Load the columns and tasks for the provided project ID
@@ -76,7 +74,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         };
       });
       setColumns(columnsWithTasks);
-      
+
       const backlogTasks = taskList.filter((t) => t.column_id == null);
       const backlogTaskCollection = [{
         id: null,
@@ -175,28 +173,10 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         const mReporter =
           selectedReporter === "all" ||
           Number(t.reporter_id) === Number(selectedReporter);
-        const mStatus = 
-          selectedStatus === "all" ||
-          Number(t.column_id) === Number(selectedStatus);
-        return mAssignee && mReporter && mStatus;
+        return mAssignee && mReporter;
       }),
     }));
-  }, [activeProjectColumns, selectedAssignee, selectedReporter, selectedStatus]);
- 
-  /* Gets the correct board type based on the current project. Defaults to Kanban */
-  const selectedProjectType = useMemo(() => {
-    const currentProject = projects.find((p) => Number(p.id) === Number(projectId));
-    const type = (currentProject?.type || "kanban").toLowerCase();
-    return type;
-  }, [projects, projectId])
-
-  const BoardComponent = useMemo(() => {
-    const boardByType = {
-      kanban: Kanban,
-      scrum: Scrum,
-    };
-    return boardByType[selectedProjectType] || Kanban;
-  }, [selectedProjectType]);
+  }, [activeProjectColumns, selectedAssignee, selectedReporter]);
 
   function handleProjectTabSwitch(e) {
     setProjectTab(e.target.value)
@@ -231,8 +211,8 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   }
 
   const projectTabs = {
-    Board: 
-      <BoardComponent
+    Board:
+      <Scrum
         key={projectId}
         columns={filteredColumns}
         setColumns={setColumns}
@@ -288,15 +268,13 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         >
           Board
         </button>
-        {selectedProjectType === "scrum" ? (
-          <button
-            type="button"
-            value="Backlog"
-            onClick={handleProjectTabSwitch}
-          >
-            Backlog
-          </button>
-        ) : (null)}
+        <button
+          type="button"
+          value="Backlog"
+          onClick={handleProjectTabSwitch}
+        >
+          Backlog
+        </button>
       </div>
 
       <div className="flex items-center gap-4 mb-6">
@@ -307,11 +285,9 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
           onProjectCreated={handleProjectCreated}
         />
 
-        {selectedProjectType === "scrum" && projectTab === "Board" ? (null) : (
-          <NewTaskButton 
-            openModal={openModal}
-          />
-        )}
+        <NewTaskButton
+          openModal={openModal}
+        />
 
         <div className="flex items-center gap-3 flex-1">
           <span className="font-semibold text-white text-sm whitespace-nowrap">
@@ -361,27 +337,6 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
               {users.map((u) => (
                 <option key={u.id} value={u.id} className="bg-slate-800">
                   {u.display_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="status-filter"
-              className="text-white/70 text-sm whitespace-nowrap"
-            >
-              Status:
-            </label>
-            <select
-              id="status-filter"
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 cursor-pointer">
-              <option value="all" className="bg-slate-800">All Statuses</option>
-              {columns.map((col) => (
-                <option key={col.id} value={col.id} className="bg-slate-800">
-                  {col.title}
                 </option>
               ))}
             </select>
