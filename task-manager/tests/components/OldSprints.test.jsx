@@ -1,4 +1,4 @@
-import React, { act } from "react";
+import { act } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import OldSprints from "../../src/components/OldSprints.jsx";
 import { renderWithRoot, click } from "../test-utils/reactTestUtils.jsx";

@@ -1,4 +1,3 @@
-import React, { act } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Sprints from "../../src/components/Sprints.jsx";
 import { renderWithRoot, click } from "../test-utils/reactTestUtils.jsx";
