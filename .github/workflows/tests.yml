@@ -29,8 +29,46 @@ jobs:
       - name: Seed local D1 with sample data
         run: npm run cf:seed:local
 
-      - name: Vitest
+      - name: Vitest Components (with minimum 75% coverage required)
         run: npm run test:vitest
+
+      - name: Get Vitest Components coverage summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const p = "coverage/unit/coverage-summary.json";
+
+          if (!fs.existsSync(p)) {
+            console.error("Unit coverage summary not found.");
+            process.exit(1);
+          }
+
+          const t = JSON.parse(fs.readFileSync(p, "utf8")).total;
+          const lines = [
+            "Unit Coverage",
+            `Lines: ${t.lines.pct}%`,
+            `Statements: ${t.statements.pct}%`,
+            `Functions: ${t.functions.pct}%`,
+            `Branches: ${t.branches.pct}%`,
+          ];
+
+          const out = lines.join("\n");
+          console.log(out);
+
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, out + "\n");
+          }
+          NODE
+
+      - name: Upload Vitest Components unit coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit
+          path: task-manager/coverage/unit
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Cypress Component Tests
         uses: cypress-io/github-action@v6
