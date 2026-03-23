@@ -5,7 +5,7 @@ import { DEFAULT_COLUMNS } from "./constants/defaultColumns.js";
 const projectHandlers = makeCrudHandlers({
     table: "projects",
     primaryKey: "id",
-    allowedColumns: ["name", "created_by", "status", "created_at", "updated_at"],
+    allowedColumns: ["name", "created_by", "status"],
     dbEnvVar: "cf_db",
     orderBy: "id ASC",
 });
@@ -15,7 +15,7 @@ const projectHandlers = makeCrudHandlers({
  * in a single D1 batch (transaction) so both succeed or fail together.
  */
 const createProjectWithColumns = async (context) => {
-    const { request, env } = context;
+    const { request, env, data } = context;
     const db = env.cf_db;
     const CORS = buildCorsHeaders(env, request, "GET,POST,OPTIONS");
 
@@ -49,7 +49,13 @@ const createProjectWithColumns = async (context) => {
         }
 
         const status = body.status || "not_started";
-        const createdBy = body.created_by;
+        const createdBy = Number(data?.user?.id);
+        if (!Number.isFinite(createdBy)) {
+            return new Response(JSON.stringify({ error: "Not authenticated" }), {
+                status: 401,
+                headers: CORS,
+            });
+        }
 
         // Build the batch of statements: insert project, then insert default columns
         const insertProject = db

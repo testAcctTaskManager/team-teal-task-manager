@@ -3,6 +3,7 @@ import {
 	execute,
 	makeCrudHandlers,
 	parseJson,
+	queryAll,
 	queryOne,
 } from "./helpers.js";
 import { isValidUserRole } from "./constants/roles.js";
@@ -19,7 +20,38 @@ const config = {
 
 const handlers = makeCrudHandlers(config);
 
-export const onRequestGet = handlers.collection;
+export async function onRequestGet(context) {
+	const { request, env, data } = context;
+	const CORS = buildCorsHeaders(env, request, "GET,POST,OPTIONS");
+	if (request.headers.get("Origin") && !CORS) {
+		return new Response(JSON.stringify({ error: "Origin not allowed" }), {
+			status: 403,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	if (data?.user?.role === "admin") {
+		return handlers.collection(context);
+	}
+
+	const db = env.cf_db;
+	if (!db) {
+		return new Response(JSON.stringify({ error: "Database not found" }), {
+			status: 500,
+			headers: CORS || { "Content-Type": "application/json" },
+		});
+	}
+
+	const rows = await queryAll(
+		db,
+		"SELECT id, display_name, timezone FROM Users WHERE is_active = 1 ORDER BY display_name COLLATE NOCASE, id",
+	);
+
+	return new Response(JSON.stringify(rows || []), {
+		headers: CORS || { "Content-Type": "application/json" },
+	});
+}
+
 export async function onRequestPost(context) {
 	const { request, env, data } = context;
 	const CORS = buildCorsHeaders(env, request, "GET,POST,OPTIONS");

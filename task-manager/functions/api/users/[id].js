@@ -15,9 +15,7 @@ const createHandlers = makeCrudHandlers({
     "display_name",
     "email",
     "timezone",
-    "role",
-    "created_at",
-    "updated_at"
+    "role"
   ],
   dbEnvVar: "cf_db",
   orderBy: "id",
@@ -31,8 +29,7 @@ const updateHandlers = makeCrudHandlers({
     "display_name",
     "timezone",
     "role",
-    "is_active",
-    "updated_at"],
+    "is_active"],
   dbEnvVar: "cf_db",
   orderBy: "id",
 });

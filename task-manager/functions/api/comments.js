@@ -62,7 +62,7 @@ export async function onRequestGet(context) {
 
 // Add a new comment
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request, env, data } = context;
   const db = env.cf_db;
   const CORS = buildCorsHeaders(env, request, "GET,POST,OPTIONS");
   if (request.headers.get("Origin") && !CORS) {
@@ -81,13 +81,19 @@ export async function onRequestPost(context) {
     }
 
     const body = await parseJson(request);
-    const payloadCols = ["task_id", "created_by", "content"].filter(
-      (c) => body[c] !== undefined,
-    );
-    const values = payloadCols.map((c) => body[c]);
+    const callerId = Number(data?.user?.id);
+    if (!Number.isFinite(callerId)) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: CORS,
+      });
+    }
 
-    if (payloadCols.length === 0) {
-      return new Response(JSON.stringify({ error: "Nothing to create" }), {
+    const payloadCols = ["task_id", "created_by", "content"];
+    const values = [body.task_id, callerId, body.content];
+
+    if (body.task_id === undefined || body.content === undefined) {
+      return new Response(JSON.stringify({ error: "Missing task_id or content" }), {
         status: 400,
         headers: CORS,
       });
