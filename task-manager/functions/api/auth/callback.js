@@ -3,6 +3,7 @@ import { queryOne, execute } from "../helpers.js";
 
 const PAGES_DEV_SUFFIX = ".team-teal-task-manager.pages.dev";
 const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
+const TEST_SUBDOMAIN = "test.team-teal-task-manager.pages.dev";
 
 function isAllowedOrigin(origin) {
   try {
@@ -114,7 +115,7 @@ export async function onRequest({ request, env }) {
 
   const callbackOrigin =
     url.hostname.endsWith(PAGES_DEV_SUFFIX) && url.hostname !== COOKIE_DOMAIN
-      ? `https://${COOKIE_DOMAIN}`
+      ? `https://${TEST_SUBDOMAIN}`
       : origin;
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${callbackOrigin}/api/auth/callback`;
   const db = env.cf_db;
