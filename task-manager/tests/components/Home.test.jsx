@@ -540,6 +540,14 @@ describe("Home", () => {
       );
     });
 
+    await waitFor(() => {
+      const latestProps = spies.sprintsProps.mock.calls.at(-1)?.[0];
+      const sprintTasks = latestProps?.columns?.[0]?.tasks ?? [];
+      expect(
+        sprintTasks.some((task) => Number(task.id) === 3 && task.column_id == null),
+      ).toBe(true);
+    });
+
     fireEvent.click(screen.getByRole("button", { name: "Start Sprint" }));
 
     await waitFor(() => {
