@@ -16,6 +16,7 @@ function renderTaskForm(props = {}) {
         columnId={props.columnId ?? null}
         taskId={props.taskId ?? null}
         columnsForStatus={props.columnsForStatus ?? []}
+        activeSprint={props.activeSprint ?? null}
         onSuccess={onSuccess}
         onCancel={onCancel}
       />
@@ -247,11 +248,15 @@ describe("TaskForm (Vitest)", () => {
       return { ok: true, json: async () => ({}) };
     });
 
-    const { container } = renderTaskForm({ columnsForStatus: [{ id: 5, name: "In Progress", title: "In Progress" }] });
+    const { container } = renderTaskForm({
+      columnsForStatus: [{ id: 5, name: "In Progress", title: "In Progress" }],
+      activeSprint: { id: 1, name: "Sprint 1", status: "not_started" },
+    });
     await flushAsync();
 
     act(() => {
       fireEvent.change(container.querySelector("input[name='title']"), { target: { name: "title", value: "Task" } });
+      fireEvent.change(container.querySelector("select[name='sprint_id']"), { target: { name: "sprint_id", value: "1" } });
       fireEvent.change(container.querySelector("select[name='column_id']"), { target: { name: "column_id", value: "5" } });
     });
 
@@ -346,10 +351,14 @@ describe("TaskForm (Vitest)", () => {
     const { container, onSuccess } = renderTaskForm({
       columnId: 7,
       columnsForStatus: [{ id: 7, name: "Sprint Column", title: "Sprint Column" }],
+      activeSprint: { id: 1, name: "Sprint 1", status: "not_started" },
     });
     await flushAsync();
 
-    act(() => { fireEvent.change(container.querySelector("input[name='title']"), { target: { name: "title", value: "New Task" } }); });
+    act(() => {
+      fireEvent.change(container.querySelector("input[name='title']"), { target: { name: "title", value: "New Task" } });
+      fireEvent.change(container.querySelector("select[name='sprint_id']"), { target: { name: "sprint_id", value: "1" } });
+    });
 
     await click(container.querySelector("button[type='submit']"));
     await flushAsync();
@@ -357,7 +366,10 @@ describe("TaskForm (Vitest)", () => {
     expect(onSuccess).toHaveBeenCalledTimes(1);
     // Form title resets to empty
     expect(container.querySelector("input[name='title']").value).toBe("");
-    // column_id select resets to the provided columnId
+    // Re-select the sprint to reveal the status dropdown and verify column_id reset to the provided columnId
+    act(() => {
+      fireEvent.change(container.querySelector("select[name='sprint_id']"), { target: { name: "sprint_id", value: "1" } });
+    });
     expect(container.querySelector("select[name='column_id']").value).toBe("7");
   });
 
@@ -470,8 +482,13 @@ describe("TaskForm (Vitest)", () => {
   it("renders column option with 'Column X' fallback when col has no title or name", async () => {
     const { container } = renderTaskForm({
       columnsForStatus: [{ id: 9 }], // no title, no name
+      activeSprint: { id: 1, name: "Sprint 1", status: "not_started" },
     });
     await flushAsync();
+
+    act(() => {
+      fireEvent.change(container.querySelector("select[name='sprint_id']"), { target: { name: "sprint_id", value: "1" } });
+    });
 
     const columnSelect = container.querySelector("select[name='column_id']");
     expect(columnSelect.textContent).toContain("Column 9");

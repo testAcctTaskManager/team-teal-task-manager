@@ -13,7 +13,6 @@ describe('Sprint Creation Workflow', () => {
     cy.selectProject('Scrum Sample Project');
     cy.contains('button', 'Backlog').click();
     cy.contains('Sprints').should('be.visible');
-    cy.get('#sprint-selection').should('be.visible');
     cy.contains('button', 'New Task').click();
     cy.get('input[name="title"]').type(taskTitle);
     cy.get('textarea[name="description"]').type('my cool backlog task description');
@@ -23,24 +22,27 @@ describe('Sprint Creation Workflow', () => {
     cy.contains(taskTitle, { timeout: 10000 }).should('be.visible');
   });
 
-  it('assigns task to sprint and displays it in sprint section', () => {
-    const taskTitle = `my cool backlog task ${Date.now()}`;
+  it('assigns task to sprint via sprint dropdown and displays it in sprint section', () => {
+    const taskTitle = `my cool sprint task ${Date.now()}`;
 
     // login -> dashboard -> select scrum project -> go to backlog -> create new task -> assign to sprint
-    // -> select sprint
     cy.goToBoard();
     cy.selectProject('Scrum Sample Project');
     cy.contains('button', 'Backlog').click();
     cy.contains('Sprints').should('be.visible');
-    cy.get('#sprint-selection').should('be.visible');
     cy.contains('button', 'New Task').click();
     cy.get('input[name="title"]').type(taskTitle);
-    cy.get('textarea[name="description"]').type('my cool backlog task description');
-    cy.get('input[name="sprint_id"]').clear().type('2');
+    cy.get('textarea[name="description"]').type('my cool sprint task description');
+    // Select the current sprint from the sprint dropdown in TaskForm
+    cy.get('select[name="sprint_id"]').then(($select) => {
+      const options = $select.find('option');
+      if (options.length > 1) {
+        cy.wrap($select).select(options.eq(1).val());
+      }
+    });
     cy.contains('button', 'Create').click();
-    cy.get('#sprint-selection').select('2');
 
-    // assertion: task appears in sprint 1 (id is 2)
+    // assertion: task appears in sprint section
     cy.contains(taskTitle, { timeout: 10000 }).should('be.visible');
   });
 

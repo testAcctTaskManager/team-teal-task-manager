@@ -68,6 +68,7 @@ export default function TaskDetail() {
   const [showEditModal, setShowEditModal] = useState(false);
   // Columns used for the Status dropdown in the edit form
   const [columnsForStatus, setColumnsForStatus] = useState([]);
+  const [activeSprint, setActiveSprint] = useState(null);
   // Project name for display
   const [projectName, setProjectName] = useState(null);
 
@@ -155,10 +156,25 @@ export default function TaskDetail() {
       }
     }
 
+    async function loadActiveSprintForProject(projectId) {
+      try {
+        const res = await fetch(`/api/sprints?project_id=${projectId}`);
+        const data = await res.json().catch(() => null);
+        if (Array.isArray(data)) {
+          const sprint = data.find((s) => s.status === "in_progress" || s.status === "not_started") ?? null;
+          setActiveSprint(sprint);
+        }
+      } catch (err) {
+        console.error("Fetch error loading sprint for task detail", err);
+      }
+    }
+
     if (task && task.project_id != null) {
       loadColumnsForProject(task.project_id);
+      loadActiveSprintForProject(task.project_id);
     } else {
       setColumnsForStatus([]);
+      setActiveSprint(null);
     }
   }, [task]);
 
@@ -481,6 +497,7 @@ export default function TaskDetail() {
           taskId={id}
           projectId={project_id != null ? project_id : null}
           columnsForStatus={columnsForStatus}
+          activeSprint={activeSprint}
           onSuccess={(updatedTask) => {
             if (updatedTask) {
               setTask(updatedTask);

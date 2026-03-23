@@ -44,7 +44,7 @@ function UserWithTime({ userId, user, users }) {
  * - The parent column / list is responsible for loading tasks from the backend
  *   and passing the correct data into this component.
  */
-export default function TaskCard({ task, index, fullWidth }) {
+export default function TaskCard({ task, index, fullWidth, onAddToSprint = null }) {
   const navigate = useNavigate();
   const { users } = useUsers();
 
@@ -89,6 +89,14 @@ export default function TaskCard({ task, index, fullWidth }) {
             <h3 className="m-0 text-base" data-testid="task-card__title">
               {title}
             </h3>
+            {onAddToSprint && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onAddToSprint(id); }}
+                className="text-xs text-white/60 hover:text-white border border-white/20 hover:border-white/40 rounded px-2 py-0.5 transition-colors"
+              >
+                + Sprint
+              </button>
+            )}
           </div>
 
           <dl className="flex flex-wrap gap-x-[1.2rem] gap-y-[0.6rem] m-0 p-0 text-xs">

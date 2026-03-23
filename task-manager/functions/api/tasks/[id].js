@@ -107,7 +107,7 @@ export async function onRequestPut(context) {
       });
     }
 
-    if (updates.sprint_id !== undefined) {
+    if (updates.sprint_id !== undefined && updates.sprint_id !== null) {
       const sprint = await queryOne(db, `SELECT id FROM Sprints WHERE id = ?`, [
         updates.sprint_id,
       ]);
