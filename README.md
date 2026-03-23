@@ -58,6 +58,8 @@ To run a local copy of the DB and test your changes on a local host:
 
 1. Navigate to `task-manager` directory. (Directory with `package.json`)
 
+    ``` cd task-manager ```
+
 2. Migrate the database locally (creates a local D1 SQLite DB)
 
     ``` npm run predev ```
@@ -114,3 +116,46 @@ To set DB back to only what is in the seed:
 
 3. Re-run local migration
     ``` npm run predev ```
+
+## Auth and Admin Setup
+
+This app uses Google OAuth, but access is allowlist-based: a user must already exist in the `Users` table and be active (`is_active = 1`) to complete login.
+
+For adding the initial admins, someone with write access rights to the Cloudflare D1 database must follow these steps. Once there is an admin, that admin can add additional users and other admins.
+
+### Local Initial Admin Setup
+
+1. Apply migrations and seed baseline data:
+	- `npm run cf:migrate:local`
+	- `npm run cf:seed:local`
+2. Copy `seed/admins.example.sql` to `seed/admins.local.sql` and replace emails and display names.
+3. Apply admin users to local D1:
+	- `npx wrangler d1 execute test-db --local --file=seed/admins.local.sql`
+4. Start dev server:
+	- `npm run dev`
+
+### Test Database Initial Admin Setup
+
+1. Make sure test DB migrations are applied:
+	- `npm run cf:migrate:test`
+2. Optionally seed baseline test data:
+	- `npm run cf:seed:test`
+3. Copy `seed/admins.example.sql` to `seed/admins.test.sql` and replace emails and display names.
+4. Apply admin users to remote test D1:
+	- `npx wrangler d1 execute test-db --file=seed/admins.test.sql --remote`
+
+### Production Database Initial Admin Setup
+
+1. Apply production migrations:
+	- `npm run cf:migrate:prod`
+2. Copy `seed/admins.example.sql` to `seed/admins.prod.sql` and replace emails and display names.
+3. Apply admin users to production D1:
+	- `npx wrangler d1 execute prod-db --env production --file=seed/admins.prod.sql --remote`
+
+Use caution when applying production admin seed files. Keep production admin SQL files private, reviewed, and out of source control.
+
+### Managing users after bootstrap
+
+- Admins can add users from the User Management page.
+- Admins can update user roles and active/inactive status.
+- Deactivated users can no longer authenticate with existing or new sessions.
