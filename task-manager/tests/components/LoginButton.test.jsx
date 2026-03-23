@@ -37,7 +37,7 @@ describe("LoginButton", () => {
 
     const { container } = renderWithRoot(
       // MemoryRouter mocks routing context
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/"]}>
         <LoginButton />
       </MemoryRouter>,
     );
@@ -45,6 +45,24 @@ describe("LoginButton", () => {
     const link = container.querySelector('a[aria-label="Login"]');
     expect(link).not.toBeNull();
     expect(link.getAttribute("href")).toBe("/login");
+  });
+
+  it("does not render Login link when already on /login page", () => {
+    mockUseUsers.mockReturnValue({
+      isAuthenticated: false,
+      currentUser: null,
+      authLoading: false,
+      logout: mockLogout,
+    });
+
+    const { container } = renderWithRoot(
+      <MemoryRouter initialEntries={["/login"]}>
+        <LoginButton />
+      </MemoryRouter>,
+    );
+
+    const link = container.querySelector('a[aria-label="Login"]');
+    expect(link).toBeNull();
   });
 
   it("renders Sign Out button when user is authenticated", () => {
