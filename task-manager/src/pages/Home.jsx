@@ -18,8 +18,8 @@ export default function Home({ projectId: initialProjectId }) {
   const [sprints, setSprints] = useState([]);
   const [sprintStatus, setSprintStatus] = useState("not_started");
   const [sprintColumns, setSprintColumns] = useState([]);
-  const [sprintId, setSprintId] = useState(null)
-  const [allTasks, setAllTasks] = useState([])
+  const [sprintId, setSprintId] = useState(null);
+  const [allTasks, setAllTasks] = useState([]);
 
   /* Adding states for task filtering */
   const [selectedAssignee, setSelectedAssignee] = useState("all");
@@ -73,8 +73,14 @@ export default function Home({ projectId: initialProjectId }) {
       const columnsWithTasks = cols.map((col) => {
         const colTasks = isSprintActive
           ? taskList
-              .filter((t) => Number(t.column_id) === Number(col.id) && t.sprint_id == activeSprintId)
-              .sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0))
+              .filter(
+                (t) =>
+                  Number(t.column_id) === Number(col.id) &&
+                  t.sprint_id == activeSprintId,
+              )
+              .sort(
+                (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
+              )
           : [];
         return {
           ...col,
@@ -84,17 +90,23 @@ export default function Home({ projectId: initialProjectId }) {
       });
       setColumns(columnsWithTasks);
 
-      const backlogTasks = taskList.filter((t) => t.column_id == null && t.sprint_id == null);
+      const backlogTasks = taskList.filter(
+        (t) => t.column_id == null && t.sprint_id == null,
+      );
       setBacklogColumns([{ id: null, title: "Backlog", tasks: backlogTasks }]);
       if (activeSprint) {
         setSprintStatus(activeSprint.status);
-        const sprintTasks = taskList.filter((t) => t.sprint_id == activeSprintId && Number(t.project_id) === Number(projectId));
-        setSprintColumns([{ id: activeSprintId, title: activeSprint.name, tasks: sprintTasks }]);
+        const sprintTasks = taskList.filter(
+          (t) =>
+            t.sprint_id == activeSprintId &&
+            Number(t.project_id) === Number(projectId),
+        );
+        setSprintColumns([
+          { id: activeSprintId, title: activeSprint.name, tasks: sprintTasks },
+        ]);
       } else {
         setSprintColumns([]);
       }
-
-
     } catch (err) {
       console.error("Fetch error", err);
       setColumns([]);
@@ -176,7 +188,7 @@ export default function Home({ projectId: initialProjectId }) {
   }, [activeProjectColumns, selectedAssignee, selectedReporter]);
 
   function handleProjectTabSwitch(e) {
-    setProjectTab(e.target.value)
+    setProjectTab(e.target.value);
   }
 
   function handleProjectChange(nextProjectId) {
@@ -196,7 +208,7 @@ export default function Home({ projectId: initialProjectId }) {
       const statusRes = await fetch(`/api/sprints/${sprintId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({status: newStatus}),
+        body: JSON.stringify({ status: newStatus }),
       });
       const bodyRes = await statusRes.json().catch(() => null);
       if (!statusRes.ok) {
@@ -207,21 +219,24 @@ export default function Home({ projectId: initialProjectId }) {
       if (newStatus === "in_progress") {
         const todoColumn = columns.find((col) => col.key === "todo");
         if (todoColumn) {
-          const unplacedTasks = (sprintColumns[0]?.tasks ?? []).filter((t) => t.column_id == null);
+          const unplacedTasks = (sprintColumns[0]?.tasks ?? []).filter(
+            (t) => t.column_id == null,
+          );
           await Promise.all(
             unplacedTasks.map((task) =>
               fetch(`/api/tasks/${task.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ column_id: todoColumn.id }),
-              })
-            )
+              }),
+            ),
           );
         }
       }
 
       if (newStatus === "complete") {
-        const completeColumnId = columns.find((col) => col.key === "complete")?.id ?? null;
+        const completeColumnId =
+          columns.find((col) => col.key === "complete")?.id ?? null;
         const incompleteTasks = columns
           .filter((col) => Number(col.id) !== Number(completeColumnId))
           .flatMap((col) => col.tasks);
@@ -231,8 +246,8 @@ export default function Home({ projectId: initialProjectId }) {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ sprint_id: null, column_id: null }),
-            })
-          )
+            }),
+          ),
         );
       }
 
@@ -284,33 +299,34 @@ export default function Home({ projectId: initialProjectId }) {
   }
 
   const projectTabs = {
-    "Old Sprints": (
-      <OldSprints sprints={sprints} allTasks={allTasks} />
-    ),
-    Board:
+    "Old Sprints": <OldSprints sprints={sprints} allTasks={allTasks} />,
+    Board: (
       <Scrum
         key={projectId}
         columns={filteredColumns}
         setColumns={setColumns}
-      />,
-    Backlog:
+      />
+    ),
+    Backlog: (
       <div>
         <Sprints
-        columns={sprintColumns}
-        sprintStatus={sprintStatus}
-        sprintName={sprintColumns[0]?.title ?? null}
-        setSprintColumns={setSprintColumns}
-        setSprintStatus={setSprintStatus}
-        updateSprintStatus={updateSprintStatus}
-        createSprint={createSprint}
-        boardTitle="Sprints"/>
+          columns={sprintColumns}
+          sprintStatus={sprintStatus}
+          sprintName={sprintColumns[0]?.title ?? null}
+          setSprintColumns={setSprintColumns}
+          setSprintStatus={setSprintStatus}
+          updateSprintStatus={updateSprintStatus}
+          createSprint={createSprint}
+          boardTitle="Sprints"
+        />
         <Backlog
           key={projectId}
           backlog={backlogColumns}
           onAddToSprint={sprintId ? addTaskToSprint : null}
         />
       </div>
-  }
+    ),
+  };
 
   function openModal() {
     setShowCreateModal(true);
@@ -334,30 +350,28 @@ export default function Home({ projectId: initialProjectId }) {
   return (
     <div>
       <div className="bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg px-6 py-4 shadow-lg mb-6">
-        <h1 className="text-3xl font-bold text-white m-0">
+        <h1 className="text-3xl font-bold text-white m-0 mb-3">
           Project {projectId} {projectTab}
         </h1>
-        <button
-          type="button"
-          value="Board"
-          onClick={handleProjectTabSwitch}
-        >
-          Board
-        </button>
-        <button
-          type="button"
-          value="Backlog"
-          onClick={handleProjectTabSwitch}
-        >
-          Backlog
-        </button>
-        <button
-          type="button"
-          value="Old Sprints"
-          onClick={handleProjectTabSwitch}
-        >
-          Old Sprints
-        </button>
+        <div className="flex gap-2 justify-center">
+          <button type="button" value="Board" onClick={handleProjectTabSwitch}>
+            Board
+          </button>
+          <button
+            type="button"
+            value="Backlog"
+            onClick={handleProjectTabSwitch}
+          >
+            Backlog
+          </button>
+          <button
+            type="button"
+            value="Old Sprints"
+            onClick={handleProjectTabSwitch}
+          >
+            Old Sprints
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mb-6">
@@ -368,9 +382,7 @@ export default function Home({ projectId: initialProjectId }) {
           onProjectCreated={handleProjectCreated}
         />
 
-        <NewTaskButton
-          openModal={openModal}
-        />
+        <NewTaskButton openModal={openModal} />
 
         <div className="flex items-center gap-3 flex-1">
           <span className="font-semibold text-white text-sm whitespace-nowrap">
@@ -432,16 +444,18 @@ export default function Home({ projectId: initialProjectId }) {
             createdBy={1}
             modifiedBy={1}
             columnsForStatus={columns}
-            activeSprint={sprints.find((s) => s.status === "in_progress" || s.status === "not_started") ?? null}
+            activeSprint={
+              sprints.find(
+                (s) => s.status === "in_progress" || s.status === "not_started",
+              ) ?? null
+            }
             onSuccess={handleCreated}
             onCancel={closeModal}
           />
         )}
       </div>
 
-      <div>
-        {projectTabs[projectTab] ?? <div>unknown tab</div>}
-      </div>
+      <div>{projectTabs[projectTab] ?? <div>unknown tab</div>}</div>
     </div>
   );
 }
