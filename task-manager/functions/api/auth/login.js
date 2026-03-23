@@ -20,10 +20,11 @@ async function generatePKCE() {
 }
 
 const PAGES_DEV_DOMAIN = "team-teal-task-manager.pages.dev";
+const TEST_SUBDOMAIN = "test.team-teal-task-manager.pages.dev";
 
 function canonicalOrigin(origin, hostname) {
   if (hostname.endsWith(`.${PAGES_DEV_DOMAIN}`) && hostname !== PAGES_DEV_DOMAIN) {
-    return `https://${PAGES_DEV_DOMAIN}`;
+    return `https://${TEST_SUBDOMAIN}`;
   }
   return origin;
 }
