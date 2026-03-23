@@ -7,7 +7,7 @@ import Scrum from "../components/Scrum.jsx";
 import Backlog from "../components/Backlog.jsx";
 import Sprints from "../components/Sprints.jsx";
 
-export default function Home({ projectId: initialProjectId, sprintId: initialSprintId }) {
+export default function Home({ projectId: initialProjectId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
   const [backlogColumns, setBacklogColumns] = useState([]);
@@ -17,7 +17,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   const [sprints, setSprints] = useState([]);
   const [sprintStatus, setSprintStatus] = useState("not_started");
   const [sprintColumns, setSprintColumns] = useState([]);
-  const [sprintId, setSprintId] = useState(initialSprintId)
+  const [sprintId, setSprintId] = useState(null)
 
   /* Adding states for task filtering */
   const [selectedAssignee, setSelectedAssignee] = useState("all");
@@ -56,17 +56,23 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       }
       setSprints(sprintList);
 
-      // If current sprint is not in current project default to first sprint in project.
-      if (sprintList.length > 0 && !sprintList.some((s) => s.id == sprintId)) {
-        setSprintId(sprintList[0].id);
+      // Select the active (in_progress) sprint, fall back to first not_started sprint.
+      const activeSprint =
+        sprintList.find((s) => s.status === "in_progress") ||
+        sprintList.find((s) => s.status === "not_started");
+      const activeSprintId = activeSprint ? activeSprint.id : null;
+      if (activeSprintId != sprintId) {
+        setSprintId(activeSprintId);
       }
 
+      const isSprintActive = activeSprint?.status === "in_progress";
+
       const columnsWithTasks = cols.map((col) => {
-        const colTasks = taskList
-          .filter((t) => Number(t.column_id) === Number(col.id))
-          .sort(
-            (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
-          );
+        const colTasks = isSprintActive
+          ? taskList
+              .filter((t) => Number(t.column_id) === Number(col.id) && t.sprint_id == activeSprintId)
+              .sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0))
+          : [];
         return {
           ...col,
           title: col.name,
@@ -75,26 +81,14 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       });
       setColumns(columnsWithTasks);
 
-      const backlogTasks = taskList.filter((t) => t.column_id == null);
-      const backlogTaskCollection = [{
-        id: null,
-        title: "Backlog",
-        tasks: backlogTasks,
-      }];
-      setBacklogColumns(backlogTaskCollection);
-      console.log(backlogTaskCollection);
-
-      // Get sprint matching current sprint id
-      const currentSprint = sprintList.find((s) => s.id == sprintId);
-      if (currentSprint){
-        setSprintStatus(currentSprint.status);
-        const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
-        const sprintTaskCollection = [{
-          id: sprintId,
-          title: currentSprint.name,
-          tasks: sprintTasks
-        }];
-        setSprintColumns(sprintTaskCollection);
+      const backlogTasks = taskList.filter((t) => t.column_id == null && t.sprint_id == null);
+      setBacklogColumns([{ id: null, title: "Backlog", tasks: backlogTasks }]);
+      if (activeSprint) {
+        setSprintStatus(activeSprint.status);
+        const sprintTasks = taskList.filter((t) => t.sprint_id == activeSprintId && Number(t.project_id) === Number(projectId));
+        setSprintColumns([{ id: activeSprintId, title: activeSprint.name, tasks: sprintTasks }]);
+      } else {
+        setSprintColumns([]);
       }
 
 
@@ -187,6 +181,12 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
     setProjectTab("Board");
   }
 
+  async function handleProjectCreated(newProject) {
+    await loadProjects();
+    setProjectId(newProject.id);
+    setProjectTab("Board");
+  }
+
   // Update sprint status in the database.
   async function updateSprintStatus(newStatus) {
     try {
@@ -196,11 +196,87 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         body: JSON.stringify({status: newStatus}),
       });
       const bodyRes = await statusRes.json().catch(() => null);
-        if (!statusRes.ok) {
-          console.error("Error updating sprint status", bodyRes);
+      if (!statusRes.ok) {
+        console.error("Error updating sprint status", bodyRes);
+        return;
+      }
+
+      if (newStatus === "in_progress") {
+        const todoColumn = columns.find((col) => col.key === "todo");
+        if (todoColumn) {
+          const unplacedTasks = (sprintColumns[0]?.tasks ?? []).filter((t) => t.column_id == null);
+          await Promise.all(
+            unplacedTasks.map((task) =>
+              fetch(`/api/tasks/${task.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ column_id: todoColumn.id }),
+              })
+            )
+          );
         }
+      }
+
+      if (newStatus === "complete") {
+        const completeColumnId = columns.find((col) => col.key === "complete")?.id ?? null;
+        const incompleteTasks = columns
+          .filter((col) => Number(col.id) !== Number(completeColumnId))
+          .flatMap((col) => col.tasks);
+        await Promise.all(
+          incompleteTasks.map((task) =>
+            fetch(`/api/tasks/${task.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sprint_id: null, column_id: null }),
+            })
+          )
+        );
+      }
+
+      await loadColumns(projectId);
     } catch (err) {
       console.error("Error updating sprint status", err);
+    }
+  }
+
+  async function addTaskToSprint(taskId) {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sprint_id: sprintId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        console.error("Error adding task to sprint", data);
+        return;
+      }
+      await loadColumns(projectId);
+    } catch (err) {
+      console.error("Error adding task to sprint", err);
+    }
+  }
+
+  async function createSprint() {
+    try {
+      const nextNumber = sprints.length + 1;
+      const res = await fetch("/api/sprints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: projectId,
+          name: `Sprint ${nextNumber}`,
+          created_by: 1,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        console.error("Error creating sprint", data);
+        return;
+      }
+      await loadColumns(projectId);
+    } catch (err) {
+      console.error("Error creating sprint", err);
     }
   }
 
@@ -216,16 +292,16 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         <Sprints
         columns={sprintColumns}
         sprintStatus={sprintStatus}
-        sprintId={sprintId}
-        sprints={sprints}
+        sprintName={sprintColumns[0]?.title ?? null}
         setSprintColumns={setSprintColumns}
         setSprintStatus={setSprintStatus}
         updateSprintStatus={updateSprintStatus}
-        setSprintId={setSprintId}
+        createSprint={createSprint}
         boardTitle="Sprints"/>
         <Backlog
           key={projectId}
           backlog={backlogColumns}
+          onAddToSprint={sprintId ? addTaskToSprint : null}
         />
       </div>
   }
@@ -276,6 +352,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
           projects={projects}
           selectedProjectId={projectId}
           onSelectProject={handleProjectChange}
+          onProjectCreated={handleProjectCreated}
         />
 
         <NewTaskButton
@@ -342,6 +419,7 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
             createdBy={1}
             modifiedBy={1}
             columnsForStatus={columns}
+            activeSprint={sprints.find((s) => s.status === "in_progress" || s.status === "not_started") ?? null}
             onSuccess={handleCreated}
             onCancel={closeModal}
           />

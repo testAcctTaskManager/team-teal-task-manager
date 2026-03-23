@@ -92,7 +92,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Home projectId={1} sprintId={1} />
+              <Home projectId={1} />
             </ProtectedRoute>
           }
         />

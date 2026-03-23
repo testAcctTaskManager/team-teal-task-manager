@@ -12,18 +12,13 @@ describe("Sprint Component", () => {
         isAuthenticated: true,
     };
 
-    const testSprints = [
-        { id: "101", name: "Sprint 1", status: "not_started", project_id: 1},
-        { id: "102", name: "Sprint 2", status: "in_progress", project_id: 1 }
-    ];
-
     const testColumns = [
         {
             id: 1,
             title: "To Do",
             tasks: [{ id: 50, title: "API Integration", position: 0, column_id: 1 }]
         }
-    ]; 
+    ];
 
     const mountSprintsTestComponent = (props = {}) => {
         cy.intercept("PUT", "/api/tasks/*", { statusCode: 200, body: { success: true }
@@ -32,11 +27,10 @@ describe("Sprint Component", () => {
         cy.mount(
             <UsersContext.Provider value={testUserValue}>
                 <MemoryRouter>
-                    <Sprints 
-                        sprints={testSprints}
+                    <Sprints
                         columns={testColumns}
-                        sprintId="101"
                         sprintStatus="not_started"
+                        sprintName="Sprint 1"
                         {...props}
                     />
                 </MemoryRouter>
@@ -44,12 +38,9 @@ describe("Sprint Component", () => {
         );
     };
 
-    it("renders the sprint names from the API data in the dropdown", () => {
+    it("shows the sprint name when provided", () => {
         mountSprintsTestComponent();
-        cy.get("#sprint-selection").within(() => {
-            cy.contains("Sprint 1").should("exist");
-            cy.contains("Sprint 2").should("exist");
-        });
+        cy.contains("Sprint 1").should("exist");
     });
 
     it("shows the 'No Sprints' empty state when no columns exist", () => {
@@ -59,14 +50,14 @@ describe("Sprint Component", () => {
 
     it("handles the sprint status transition logic", () => {
         const updateSpy = cy.spy().as("updateSprintStatus");
-        
-        mountSprintsTestComponent({ 
-            sprintStatus: "not_started", 
-            updateSprintStatus: updateSpy 
+
+        mountSprintsTestComponent({
+            sprintStatus: "not_started",
+            updateSprintStatus: updateSpy
         });
 
         // Verify initial button state
-        cy.get("button").should("have.text", "Not started");
+        cy.get("button").should("have.text", "Start Sprint");
 
         // Click to trigger handleSprintState
         cy.get("button").click();
@@ -75,22 +66,24 @@ describe("Sprint Component", () => {
         cy.get("@updateSprintStatus").should("have.been.calledWith", "in_progress");
     });
 
-    it("disables the status button when the sprint status is 'complete'", () => {
-        mountSprintsTestComponent({ sprintStatus: "complete" });
-        
-        cy.get("button")
-            .should("have.text", "Completed")
-            .and("be.disabled");
+    it("shows 'Complete Sprint' button when sprint is in_progress", () => {
+        const updateSpy = cy.spy().as("updateSprintStatus");
+        mountSprintsTestComponent({ sprintStatus: "in_progress", updateSprintStatus: updateSpy });
+
+        cy.get("button").should("have.text", "Complete Sprint");
+
+        cy.get("button").click();
+        cy.get("@updateSprintStatus").should("have.been.calledWith", "complete");
     });
 
-    it("calls setSprintId when a different sprint is selected", () => {
-        const setSprintIdSpy = cy.spy().as("setSprintId");
-        
-        mountSprintsTestComponent({ setSprintId: setSprintIdSpy });
+    it("shows 'Create New Sprint' button when no sprint exists", () => {
+        const createSpy = cy.spy().as("createSprint");
+        mountSprintsTestComponent({ sprintName: null, sprintStatus: null, createSprint: createSpy });
 
-        cy.get("#sprint-selection").select("102");
-        
-        cy.get("@setSprintId").should("have.been.calledWith", "102");
+        cy.get("button").should("have.text", "Create New Sprint");
+
+        cy.get("button").click();
+        cy.get("@createSprint").should("have.been.called");
     });
 
     it("renders tasks for the sprint", () => {
@@ -101,16 +94,16 @@ describe("Sprint Component", () => {
         cy.contains("Create tasks endpoint").should("be.visible");
     });
 
-    it("renders button with sprint status", () => {
+    it("renders button with 'Start Sprint' for not_started sprint", () => {
         mountSprints();
 
-        cy.contains("Not started").should("be.visible");
+        cy.contains("Start Sprint").should("be.visible");
         cy.contains("Sprint 1").should("be.visible");
-    })
+    });
 
     it("renders empty when there are no columns", () => {
         cy.mount(<Sprints columns={[]} boardTitle="Sprints"/>);
-        
+
         cy.contains("No Sprints").should("be.visible");
     });
 
