@@ -27,6 +27,11 @@ const mockTasks = [
   { id: 2, title: "Task Two", column_id: null, project_id: 1, position: 0, assignee_id: 11, reporter_id: 20 },
 ];
 
+const mockSprints = [
+  { id: 1, name: "Sprint 1", status: "complete", project_id: 1 },
+  { id: 2, name: "Sprint 2", status: "in_progress", project_id: 1 },
+];
+
 const mockUsers = [
   { id: 10, display_name: "Alice" },
   { id: 11, display_name: "Bob" },
@@ -48,6 +53,9 @@ describe("Home", () => {
       }
       if (urlStr.includes("/api/tasks")) {
         return { ok: true, json: async () => mockTasks };
+      }
+      if (urlStr.includes("/api/sprints")) {
+        return { ok: true, json: async () => mockSprints };
       }
       if (urlStr.includes("/api/users")) {
         return { ok: true, json: async () => mockUsers };
@@ -89,6 +97,22 @@ describe("Home", () => {
 
     await waitFor(() => {
       expect(container.textContent).toContain("Backlog");
+    });
+  });
+
+  it("switches to Old Sprints tab when Old Sprints button is clicked", async () => {
+    const { container } = renderHome({ projectId: 1 });
+
+    let oldSprintsBtn;
+    await waitFor(() => {
+      oldSprintsBtn = Array.from(container.querySelectorAll("button")).find((b) => b.textContent.includes("Old Sprints"));
+      expect(oldSprintsBtn).toBeTruthy();
+    });
+
+    fireEvent.click(oldSprintsBtn);
+
+    await waitFor(() => {
+      expect(container.textContent).toContain("Old Sprints");
     });
   });
 
