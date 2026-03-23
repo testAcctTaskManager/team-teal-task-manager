@@ -1,4 +1,5 @@
 import {
+  queryOne,
   makeCrudHandlers,
   parseJson,
   buildCorsHeaders,
@@ -30,6 +31,7 @@ const updateHandlers = makeCrudHandlers({
     "display_name",
     "timezone",
     "role",
+    "is_active",
     "updated_at"],
   dbEnvVar: "cf_db",
   orderBy: "id",
@@ -41,7 +43,7 @@ export const onRequestGet = createHandlers.item;
 
 // UPDATE row/user
 export async function onRequestPatch(context) {
-  const { request, env, data } = context;
+  const { request, env, data, params } = context;
   const CORS = buildCorsHeaders(env, request, "GET,PUT,PATCH,DELETE,OPTIONS");
   if (request.headers.get("Origin") && !CORS) {
     return new Response(JSON.stringify({ error: "Origin not allowed" }), {
@@ -53,8 +55,11 @@ export async function onRequestPatch(context) {
   // Parse a clone so the original request body remains readable by updateHandlers.item().
   const body = await parseJson(request.clone());
 
-  // Allow only admins to change user roles
-  if (body.role !== undefined && data?.user?.role !== "admin") {
+  // Allow only admins to change user roles or activation status.
+  if (
+    (body.role !== undefined || body.is_active !== undefined) &&
+    data?.user?.role !== "admin"
+  ) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403,
       headers: CORS || { "Content-Type": "application/json" },
@@ -68,7 +73,65 @@ export async function onRequestPatch(context) {
     });
   }
 
-  return updateHandlers.item({ ...context, request: request.clone() });
+  if (body.is_active !== undefined) {
+    if (
+      body.is_active === true ||
+      body.is_active === 1 ||
+      body.is_active === "1"
+    ) {
+      body.is_active = 1;
+    } else if (
+      body.is_active === false ||
+      body.is_active === 0 ||
+      body.is_active === "0"
+    ) {
+      body.is_active = 0;
+    } else {
+      return new Response(JSON.stringify({ error: "Invalid is_active value." }), {
+        status: 400,
+        headers: CORS || { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  const pathTargetId = Number(
+    new URL(request.url).pathname.split("/").filter(Boolean).at(-1),
+  );
+  const targetId = Number.isFinite(Number(params?.id))
+    ? Number(params?.id)
+    : pathTargetId;
+  const isSelf = Number.isFinite(targetId) && targetId === Number(data?.user?.id);
+  const isAdminUser = data?.user?.role === "admin";
+  const deactivatingSelf = body.is_active === 0;
+  const demotingSelf = body.role !== undefined && body.role !== "admin";
+
+  if (isAdminUser && isSelf && (deactivatingSelf || demotingSelf)) {
+    const db = env.cf_db;
+    const adminCountRow = await queryOne(
+      db,
+      "SELECT COUNT(*) AS count FROM Users WHERE role = 'admin' AND is_active = 1",
+    );
+    const activeAdminCount = Number(adminCountRow?.count || 0);
+
+    if (activeAdminCount <= 1) {
+      return new Response(
+        JSON.stringify({
+          error: "Cannot remove the only active admin account.",
+        }),
+        {
+          status: 400,
+          headers: CORS || { "Content-Type": "application/json" },
+        },
+      );
+    }
+  }
+
+  const normalizedRequest = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: JSON.stringify(body),
+  });
+  return updateHandlers.item({ ...context, request: normalizedRequest });
 }
 
 // DELETE a row/user
