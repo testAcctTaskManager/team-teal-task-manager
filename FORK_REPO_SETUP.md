@@ -116,10 +116,36 @@
 
 53. Under Variables and Secrets, click Add, and repeat the process with `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `JWT_SECRET` variable names and values, with the type as Secret
 
-54. Back in GitHub, go to Actions, and rerun the workflow for any failed jobs
+54. In your IDE, edit the `task-manager/functions/api/auth/login.js` file, updating `team-teal-task-manager` to your CloudFlare URL for `PAGES_DEV_DOMAIN` and `TEST_SUBDOMAIN` values, (making sure to keep any leading prefixes before `team-teal-task-manager`):
 
-55. Keep in mind it can take 2-3 hours for the Google secrets to sync for login to work
+```
+const PAGES_DEV_DOMAIN = "cloudflare-url.pages.dev";
+const TEST_SUBDOMAIN = "test.cloudflare-url.pages.dev";
+```
 
-56. You should be able to access your main build through the `<value>.pages.dev` URL for your main branch, or for the preview URLs displayed for your preview branches
+Replacing cloudflare-url with the main branch url in between `https://` and `.pages.dev.`
 
-57. You can find these URL values on the main or development (preview) branches by clicking the green or yellow dot (or red x for any failed workflows) on GitHub when viewing the branch, and then clicking Details next to Cloudflare Pages -- this is where you will see the preview URL as well as whether the build was successful or not
+55. Repeat the process in the `task-manager/functions/api/auth/logout.js` file, updating the `PAGES_DEV_SUFFIX` and `COOKIE_DOMAIN` values to match your Cloudflare URL (making sure to keep any leading prefixes before `team-teal-task-manager`):
+
+```
+const PAGES_DEV_SUFFIX = ".team-teal-task-manager.pages.dev";
+const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
+```
+
+56. Repeat the process one last time for the `task-manager/functions/api/auth/callback.js` file, updating the values for `PAGES_DEV_SUFFIX`, `COOKIE_DOMAIN`, and `TEST_SUBDOMAIN` (making sure to keep any leading prefixes before `team-teal-task-manager`):
+
+```
+const PAGES_DEV_SUFFIX = ".team-teal-task-manager.pages.dev";
+const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
+const TEST_SUBDOMAIN = "test.team-teal-task-manager.pages.dev";
+```
+
+57. Commit your changes to your development branch, create a PR, and merge to main.
+
+58. Back in GitHub, go to Actions, and rerun the workflow for any failed jobs
+
+59. Keep in mind it can take 2-3 hours for the Google secrets to sync for login to work
+
+60. You should be able to access your main build through the `<value>.pages.dev` URL for your main branch, or for the preview URLs displayed for your preview branches
+
+61. You can find these URL values on the main or development (preview) branches by clicking the green or yellow dot (or red x for any failed workflows) on GitHub when viewing the branch, and then clicking Details next to Cloudflare Pages -- this is where you will see the preview URL as well as whether the build was successful or not
