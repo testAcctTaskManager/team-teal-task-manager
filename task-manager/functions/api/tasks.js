@@ -22,7 +22,6 @@ const config = {
     "description",
     "start_date",
     "due_date",
-    "updated_at",
     "position",
   ],
   dbEnvVar: "cf_db",
@@ -35,7 +34,7 @@ export const onRequestGet = handlers.collection;
 export const onRequestOptions = handlers.collection;
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request, env, data } = context;
 
   // Delegate non-POSTs to the default collection handler
   if (request.method !== "POST") return handlers.collection(context);
@@ -57,6 +56,22 @@ export async function onRequestPost(context) {
       });
 
     const body = await parseJson(request);
+    const callerId = Number(data?.user?.id);
+    if (!Number.isFinite(callerId)) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: CORS,
+      });
+    }
+
+    // Audit fields are always derived from the authenticated caller.
+    body.created_by = callerId;
+    body.modified_by = callerId;
+
+    // Keep reporter user-selectable, but default to caller when omitted.
+    if (body.reporter_id === undefined || body.reporter_id === null) {
+      body.reporter_id = callerId;
+    }
 
     // If no explicit position provided, and we have a column_id, compute next position
     if (body.position === undefined && body.column_id !== undefined) {
@@ -96,7 +111,7 @@ export async function onRequestPost(context) {
       config.allowedColumns && config.allowedColumns.length
         ? config.allowedColumns.filter((c) => body[c] !== undefined)
         : Object.keys(body || {}).filter((k) => body[k] !== undefined);
-    insertInto(
+    await insertInto(
       db,
       config.table,
       payloadCols,

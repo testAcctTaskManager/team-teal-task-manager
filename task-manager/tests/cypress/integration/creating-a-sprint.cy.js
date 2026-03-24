@@ -51,8 +51,8 @@ describe('Sprint Creation Workflow', () => {
     cy.goToBoard();
     cy.selectProject('Scrum Sample Project');
     cy.contains('Scrum Board').should('be.visible');
-    cy.contains('to do').should('be.visible');
-    cy.contains('in progress').should('be.visible');
+    cy.contains(/to do/i).should('be.visible');
+    cy.contains(/in progress/i).should('be.visible');
 
     // assertion: at least one task card exists on board
     cy.get('[data-testid="task-card"]').should('exist');

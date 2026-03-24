@@ -9,20 +9,17 @@ import {
 const config = {
   table: "Tasks",
   primaryKey: "id",
-  // these should maybe change -- a lot of these should be checked application-level
   allowedColumns: [
     "project_id",
     "column_id",
     "sprint_id",
     "reporter_id",
     "assignee_id",
-    "created_by",
     "modified_by",
     "title",
     "description",
     "start_date",
     "end_date",
-    "updated_at",
     "position",
   ],
   dbEnvVar: "cf_db",
@@ -32,16 +29,35 @@ const config = {
 const handlers = makeCrudHandlers(config);
 
 export const onRequestGet = handlers.item;
-export const onRequestPatch = handlers.item;
 export const onRequestDelete = handlers.item;
 export const onRequestOptions = handlers.item;
+
+export async function onRequestPatch(context) {
+  const { request, data } = context;
+  const callerId = Number(data?.user?.id);
+  const body = await parseJson(request.clone());
+
+  // created_by is immutable post-create; modified_by is always the caller.
+  delete body.created_by;
+  if (Number.isFinite(callerId)) {
+    body.modified_by = callerId;
+  }
+
+  const normalizedRequest = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: JSON.stringify(body),
+  });
+
+  return handlers.item({ ...context, request: normalizedRequest });
+}
 
 // Custom PUT handler so that when a task's column changes and no position
 // is provided, the task is automatically appended to the bottom of the
 // new column. When position is explicitly provided (e.g. from Kanban
 // drag-and-drop), that value is respected.
 export async function onRequestPut(context) {
-  const { request, env, params } = context;
+  const { request, env, params, data } = context;
 
   // Delegate any non-PUT methods to the generic item handler
   if (request.method !== "PUT") return handlers.item(context);
@@ -73,6 +89,10 @@ export async function onRequestPut(context) {
     }
 
     const body = await parseJson(request);
+    const callerId = Number(data?.user?.id);
+
+    // created_by is immutable post-create.
+    delete body.created_by;
 
     // Load the existing task so we can detect column changes
     const existing = await queryOne(
@@ -105,6 +125,10 @@ export async function onRequestPut(context) {
         status: 400,
         headers: CORS,
       });
+    }
+
+    if (Number.isFinite(callerId)) {
+      updates.modified_by = callerId;
     }
 
     if (updates.sprint_id !== undefined && updates.sprint_id !== null) {

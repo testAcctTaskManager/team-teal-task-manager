@@ -87,10 +87,11 @@ VALUES
 -- Scrum columns
 INSERT OR IGNORE INTO Columns (id, project_id, name, key, position)
 VALUES
-  (100, 4, 'to do', 'to_do', 1),
-  (101, 4, 'in progress', 'in_progress', 2),
-  (102, 4, 'done', 'done', 3),
-  (103, 4, 'blocked', 'blocked', 4);
+  (100, 4, 'To Do', 'todo', 1),
+  (101, 4, 'Blocked', 'blocked', 2),
+  (102, 4, 'In Progress', 'in_progress', 3),
+  (103, 4, 'In Review', 'in_review', 4),
+  (104, 4, 'Complete', 'complete', 5);
 
 -- Scrum tasks (some intentionally have NULL column_id for backlog testing)
 INSERT OR IGNORE INTO Tasks (
