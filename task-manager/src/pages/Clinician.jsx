@@ -6,6 +6,7 @@ import { UsersContext } from "../contexts/UsersContext.jsx";
 
 export default function ClinicianPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   /* Adding states for task filtering */
   const { users } = useContext(UsersContext);
@@ -32,6 +33,7 @@ export default function ClinicianPage() {
 
   function handleCreated() {
     closeModal();
+    setReloadKey((k) => k + 1);
   }
 
   return (
@@ -130,6 +132,7 @@ export default function ClinicianPage() {
         selectedAssignee={selectedAssignee}
         selectedReporter={selectedReporter}
         selectedStatus={selectedStatus}
+        reloadKey={reloadKey}
       />
     </PageLayout>
   );

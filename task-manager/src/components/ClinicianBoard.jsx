@@ -1,21 +1,20 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import Board from "../components/Board";
+import { UsersContext } from "../contexts/UsersContext.jsx";
 
-//made by borrowing code from Home.jsx
-export default function ClinicianBoard({ selectedAssignee, selectedReporter, selectedStatus }) {
+export default function ClinicianBoard({ selectedAssignee, selectedReporter, selectedStatus, reloadKey }) {
 
+    const { currentUser } = useContext(UsersContext);
     const [columns, setColumns] = useState([]);
 
-    async function loadClinitianBoard() {
+    async function loadClinicianBoard() {
+        if (!currentUser) return;
         try {
             const [colRes, taskRes] = await Promise.all([
-                //fetching the columns used in project 1 for now
-                fetch(`/api/columns?project_id=1`),
-                //fetching tasks by reporter 1 for now
-                fetch(`/api/tasks?reporter_id=1`)
+                fetch(`/api/columns`),
+                fetch(`/api/tasks?created_by=${currentUser.id}`)
             ]);
 
-            //Borrowed from Home.jsx
             const cols = await colRes.json().catch(() => null);
             if (!Array.isArray(cols) || cols.error) {
                 console.error("API error loading columns", cols);
@@ -30,6 +29,9 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
                 return;
             }
 
+            // tasks with no column id are in the backlog
+            const backlogTasks = taskList.filter((t) => !t.column_id);
+
             const columnsWithTasks = cols.map((col) => {
                 const colTasks = taskList
                 .filter((t) => Number(t.column_id) === Number(col.id))
@@ -43,7 +45,18 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
                 };
             });
 
-            setColumns(columnsWithTasks);
+            // add (to start) backlog column for tasks not yet in any column
+            if (backlogTasks.length > 0) {
+                columnsWithTasks.unshift({
+                    id: "backlog",
+                    name: "Backlog",
+                    title: "Backlog",
+                    tasks: backlogTasks,
+                });
+            }
+
+            // only show columns that have tasks belonging to current user
+            setColumns(columnsWithTasks.filter((col) => col.tasks.length > 0));
 
         } catch (err) {
             console.error("Fetch error", err);
@@ -52,8 +65,8 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
     }
 
     useEffect(() => {
-        loadClinitianBoard();
-    }, []);
+        loadClinicianBoard();
+    }, [currentUser, reloadKey]);
 
     /* Task filtering engine - this calculate a 'view' without changing columns state */
     const filteredColumns = useMemo(() => {
