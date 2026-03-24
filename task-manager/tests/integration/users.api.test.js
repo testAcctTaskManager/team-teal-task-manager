@@ -80,4 +80,32 @@ describe("Users API with D1 (integration)", () => {
     const body = await patchRes.json();
     expect(body).toEqual({ error: "Unknown role." });
   });
+
+  it("prevents the only active admin from deactivating themselves", async () => {
+    const patchRes = await authFetchAsAdmin(`${BASE_URL}/api/users/3`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: 0 }),
+    });
+
+    expect(patchRes.status).toBe(400);
+    const body = await patchRes.json();
+    expect(body).toEqual({
+      error: "Cannot remove the only active admin account.",
+    });
+  });
+
+  it("prevents the only active admin from demoting themselves", async () => {
+    const patchRes = await authFetchAsAdmin(`${BASE_URL}/api/users/3`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "developer" }),
+    });
+
+    expect(patchRes.status).toBe(400);
+    const body = await patchRes.json();
+    expect(body).toEqual({
+      error: "Cannot remove the only active admin account.",
+    });
+  });
 });

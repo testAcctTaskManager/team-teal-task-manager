@@ -1,6 +1,13 @@
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 export default function LoginPage() {
+  const search =
+    typeof window !== "undefined" && window.location
+      ? window.location.search
+      : "";
+  const authError = new URLSearchParams(search).get("auth_error");
+  const showLoginError = authError === "login_failed";
+
   return (
 
     <div className="min-h-screen flex items-center justify-center p-6">
@@ -11,6 +18,14 @@ export default function LoginPage() {
           </h2>
         </div>
         <div className="p-8">
+          {showLoginError && (
+            <div
+              className="mb-4 rounded-md border border-red-300/40 bg-red-950/40 px-4 py-3 text-sm text-red-100"
+              role="alert"
+            >
+              Unable to log in. Please try again or contact your admin.
+            </div>
+          )}
           <GoogleSignInButton />
         </div>
       </div>

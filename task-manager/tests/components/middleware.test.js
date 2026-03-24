@@ -69,7 +69,7 @@ describe("api middleware authorization", () => {
   it("allows developer on /api/users route", async () => {
     const context = makeContext({
       path: "/api/users",
-      user: { id: 2, email: "user@example.com", role: "developer" },
+      user: { id: 2, email: "user@example.com", role: "developer", is_active: 1 },
     });
     context.request = new Request("https://example.test/api/users", {
       method: "GET",
@@ -84,7 +84,7 @@ describe("api middleware authorization", () => {
   it("allows admin on admin-only route", async () => {
     const context = makeContext({
       path: "/api/users",
-      user: { id: 2, email: "user@example.com", role: "admin" },
+      user: { id: 2, email: "user@example.com", role: "admin", is_active: 1 },
     });
     context.request = new Request("https://example.test/api/users", {
       method: "GET",
@@ -99,7 +99,7 @@ describe("api middleware authorization", () => {
   it("enforces SELF for /api/users/:id", async () => {
     const context = makeContext({
       path: "/api/users/3",
-      user: { id: 2, email: "user@example.com", role: "developer" },
+      user: { id: 2, email: "user@example.com", role: "developer", is_active: 1 },
     });
     context.request = new Request("https://example.test/api/users/3", {
       method: "PATCH",
@@ -118,7 +118,7 @@ describe("api middleware authorization", () => {
   it("allows SELF when :id matches current user", async () => {
     const context = makeContext({
       path: "/api/users/2",
-      user: { id: 2, email: "user@example.com", role: "developer" },
+      user: { id: 2, email: "user@example.com", role: "developer", is_active: 1 },
     });
     context.request = new Request("https://example.test/api/users/2", {
       method: "PATCH",
@@ -137,7 +137,7 @@ describe("api middleware authorization", () => {
   it("enforces OWN_COMMENT", async () => {
     const context = makeContext({
       path: "/api/comments/7",
-      user: { id: 2, email: "user@example.com", role: "clinician" },
+      user: { id: 2, email: "user@example.com", role: "clinician", is_active: 1 },
       comment: { created_by: 3 },
     });
     context.request = new Request("https://example.test/api/comments/7", {
@@ -157,7 +157,7 @@ describe("api middleware authorization", () => {
   it("defaults unknown route to forbidden", async () => {
     const context = makeContext({
       path: "/api/not-in-matrix",
-      user: { id: 2, email: "user@example.com", role: "admin" },
+      user: { id: 2, email: "user@example.com", role: "admin", is_active: 1 },
     });
     context.request = new Request("https://example.test/api/not-in-matrix", {
       method: "GET",
@@ -172,7 +172,7 @@ describe("api middleware authorization", () => {
   it("defaults unknown role to forbidden", async () => {
     const context = makeContext({
       path: "/api/projects",
-      user: { id: 2, email: "user@example.com", role: "superadmin" },
+      user: { id: 2, email: "user@example.com", role: "superadmin", is_active: 1 },
     });
     context.request = new Request("https://example.test/api/projects", {
       method: "GET",

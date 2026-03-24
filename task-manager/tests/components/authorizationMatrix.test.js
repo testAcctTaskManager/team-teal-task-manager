@@ -47,10 +47,26 @@ describe("authorizationMatrix", () => {
 
     const unknownMethod = getAuthorizationDecision({
       pathname: "/api/users",
-      method: "POST",
+      method: "PUT",
       role: "admin",
     });
     expect(unknownMethod).toBe(DEFAULT_AUTHORIZATION_DECISION);
+  });
+
+  it("allows admin-only POST /api/users", () => {
+    const adminDecision = getAuthorizationDecision({
+      pathname: "/api/users",
+      method: "POST",
+      role: "admin",
+    });
+    expect(adminDecision).toBe(AUTHZ_DECISIONS.ALLOW);
+
+    const developerDecision = getAuthorizationDecision({
+      pathname: "/api/users",
+      method: "POST",
+      role: "developer",
+    });
+    expect(developerDecision).toBe(AUTHZ_DECISIONS.DENY);
   });
 
   it("allows OPTIONS preflight on known routes", () => {
