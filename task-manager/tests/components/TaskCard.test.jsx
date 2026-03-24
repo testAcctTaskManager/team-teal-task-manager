@@ -184,6 +184,39 @@ describe("TaskCard", () => {
     expect(navigateMock).toHaveBeenCalledWith("/task/55");
   });
 
+  it("renders project name above the title when project_name is present", () => {
+    const task = {
+      id: 10,
+      title: "My Task",
+      project_name: "Project Alpha",
+      start_date: null,
+      due_date: null,
+    };
+
+    const { container } = renderTaskCard(task);
+    const card = container.querySelector('[data-testid="task-card"]');
+    const title = card.querySelector('[data-testid="task-card__title"]');
+    expect(card.textContent).toContain("Project Alpha");
+    // project label should appear before the title in the DOM
+    expect(card.innerHTML.indexOf("Project Alpha")).toBeLessThan(
+      card.innerHTML.indexOf("My Task"),
+    );
+    expect(title.textContent).toContain("My Task");
+  });
+
+  it("does not render a project label when project_name is absent", () => {
+    const task = {
+      id: 11,
+      title: "A simple task",
+      start_date: null,
+      due_date: null,
+    };
+
+    const { container } = renderTaskCard(task);
+    const card = container.querySelector('[data-testid="task-card"]');
+    expect(card.querySelector("p")).toBeNull();
+  });
+
   it("navigates to task details when card is clicked", async () => {
     const task = {
       id: 123,

@@ -35,8 +35,8 @@ describe("ClinicianBoard", () => {
         return {
           ok: true,
           json: async () => [
-            { id: 1, name: "To Do" },
-            { id: 2, name: "Done" },
+            { id: 1, name: "To Do", key: "todo" },
+            { id: 2, name: "Done", key: "done" },
           ],
         };
       }
@@ -44,9 +44,15 @@ describe("ClinicianBoard", () => {
         return {
           ok: true,
           json: async () => [
-            { id: 1, column_id: 1, position: 0, assignee_id: 10, reporter_id: 20 },
-            { id: 2, column_id: 2, position: 0, assignee_id: 11, reporter_id: 21 },
+            { id: 1, column_id: 1, position: 0, assignee_id: 10, reporter_id: 20, project_id: 1 },
+            { id: 2, column_id: 2, position: 0, assignee_id: 11, reporter_id: 21, project_id: 1 },
           ],
+        };
+      }
+      if (urlStr.includes("/api/projects")) {
+        return {
+          ok: true,
+          json: async () => [{ id: 1, name: "Project Alpha" }],
         };
       }
       return { ok: true, json: async () => [] };
@@ -98,15 +104,15 @@ describe("ClinicianBoard", () => {
       if (urlStr.includes("/api/columns")) {
         return {
           ok: true,
-          json: async () => [{ id: 1, name: "To Do" }],
+          json: async () => [{ id: 1, name: "To Do", key: "todo" }],
         };
       }
       if (urlStr.includes("/api/tasks")) {
         return {
           ok: true,
           json: async () => [
-            { id: 2, column_id: 1, position: 2, assignee_id: 10, reporter_id: 20 },
-            { id: 1, column_id: 1, position: 0, assignee_id: 10, reporter_id: 20 },
+            { id: 2, column_id: 1, position: 2, assignee_id: 10, reporter_id: 20, project_id: 1 },
+            { id: 1, column_id: 1, position: 0, assignee_id: 10, reporter_id: 20, project_id: 1 },
           ],
         };
       }
@@ -248,6 +254,93 @@ describe("ClinicianBoard", () => {
     await waitFor(() => {
       expect(screen.getByTestId("clinician-board").textContent).toContain("tasks:0");
       expect(consoleErrorSpy).toHaveBeenCalledWith("API error loading columns", null);
+    });
+  });
+
+  it("merges columns with the same key from different projects into one column", async () => {
+    global.fetch = vi.fn(async (url) => {
+      const urlStr = String(url);
+      if (urlStr.includes("/api/columns")) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: 1, name: "To Do", key: "todo", project_id: 1 },
+            { id: 2, name: "To Do", key: "todo", project_id: 2 },
+            { id: 3, name: "Done", key: "done", project_id: 1 },
+          ],
+        };
+      }
+      if (urlStr.includes("/api/tasks")) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: 1, column_id: 1, position: 0, project_id: 1 },
+            { id: 2, column_id: 2, position: 0, project_id: 2 },
+            { id: 3, column_id: 3, position: 0, project_id: 1 },
+          ],
+        };
+      }
+      return { ok: true, json: async () => [] };
+    });
+
+    render(
+      <ClinicianBoard
+        selectedAssignee="all"
+        selectedReporter="all"
+        selectedStatus="all"
+      />,
+    );
+
+    await waitFor(() => {
+      const calls = spies.boardProps.mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      const lastProps = calls[calls.length - 1][0];
+      // Two unique keys: "todo" and "done" — not three columns
+      expect(lastProps.columns).toHaveLength(2);
+      const todoCol = lastProps.columns.find((c) => c.key === "todo");
+      expect(todoCol.tasks).toHaveLength(2);
+    });
+  });
+
+  it("enriches tasks with project_name from projects API", async () => {
+    global.fetch = vi.fn(async (url) => {
+      const urlStr = String(url);
+      if (urlStr.includes("/api/columns")) {
+        return {
+          ok: true,
+          json: async () => [{ id: 1, name: "To Do", key: "todo" }],
+        };
+      }
+      if (urlStr.includes("/api/tasks")) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: 1, column_id: 1, position: 0, project_id: 5 },
+          ],
+        };
+      }
+      if (urlStr.includes("/api/projects")) {
+        return {
+          ok: true,
+          json: async () => [{ id: 5, name: "My Project" }],
+        };
+      }
+      return { ok: true, json: async () => [] };
+    });
+
+    render(
+      <ClinicianBoard
+        selectedAssignee="all"
+        selectedReporter="all"
+        selectedStatus="all"
+      />,
+    );
+
+    await waitFor(() => {
+      const calls = spies.boardProps.mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      const lastProps = calls[calls.length - 1][0];
+      expect(lastProps.columns[0].tasks[0].project_name).toBe("My Project");
     });
   });
 
