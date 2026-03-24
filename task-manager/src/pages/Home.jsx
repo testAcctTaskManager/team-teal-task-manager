@@ -260,10 +260,15 @@ export default function Home({ projectId: initialProjectId }) {
 
   async function addTaskToSprint(taskId) {
     try {
+      const body = { sprint_id: sprintId };
+      if (sprintStatus === "in_progress") {
+        const todoColumn = columns.find((col) => col.key === "todo");
+        if (todoColumn) body.column_id = todoColumn.id;
+      }
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sprint_id: sprintId }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
