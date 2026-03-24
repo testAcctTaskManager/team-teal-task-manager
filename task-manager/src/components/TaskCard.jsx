@@ -52,7 +52,7 @@ export default function TaskCard({ task, index, fullWidth, onAddToSprint = null 
     return null;
   }
 
-  const { id, title, reporter_id, assignee_id, start_date, due_date } = task;
+  const { id, title, reporter_id, assignee_id, start_date, due_date, project_name } = task;
 
   const isOverdue = isDateOverdue(due_date);
 
@@ -85,6 +85,9 @@ export default function TaskCard({ task, index, fullWidth, onAddToSprint = null 
             }
           }}
         >
+          {project_name && (
+            <p className="m-0 mb-1 text-[0.6rem] opacity-50">{project_name}</p>
+          )}
           <div className="flex justify-between items-center mb-[0.4rem]">
             <h3 className="m-0 text-base" data-testid="task-card__title">
               {title}

@@ -11,9 +11,10 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
         async function loadClinicianBoard() {
             if (!currentUser) return;
             try {
-                const [colRes, taskRes] = await Promise.all([
+                const [colRes, taskRes, projRes] = await Promise.all([
                     fetch(`/api/columns`),
-                    fetch(`/api/tasks?created_by=${currentUser.id}`)
+                    fetch(`/api/tasks?created_by=${currentUser.id}`),
+                    fetch(`/api/projects`)
                 ]);
 
                 const cols = await colRes.json().catch(() => null);
@@ -30,21 +31,35 @@ export default function ClinicianBoard({ selectedAssignee, selectedReporter, sel
                     return;
                 }
 
-                // tasks with no column id are in the backlog
-                const backlogTasks = taskList.filter((t) => !t.column_id);
+                const projects = await projRes.json().catch(() => null);
+                const projectMap = Array.isArray(projects)
+                    ? Object.fromEntries(projects.map((p) => [p.id, p.name]))
+                    : {};
 
-                const columnsWithTasks = cols.map((col) => {
-                    const colTasks = taskList
-                    .filter((t) => Number(t.column_id) === Number(col.id))
-                    .sort(
-                        (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
-                    );
-                    return {
-                    ...col,
-                    title: col.name,
-                    tasks: colTasks,
-                    };
-                });
+                // enrich tasks with project name
+                const enrichedTasks = taskList.map((t) => ({
+                    ...t,
+                    project_name: projectMap[t.project_id] ?? null,
+                }));
+
+                // tasks with no column id are in the backlog
+                const backlogTasks = enrichedTasks.filter((t) => !t.column_id);
+
+                // group columns by key, merging tasks from same-key columns across projects
+                const keyOrder = [];
+                const colsByKey = {};
+                for (const col of cols) {
+                    if (!colsByKey[col.key]) {
+                        keyOrder.push(col.key);
+                        colsByKey[col.key] = { ...col, title: col.name, tasks: [] };
+                    }
+                    const colTasks = enrichedTasks
+                        .filter((t) => Number(t.column_id) === Number(col.id))
+                        .sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0));
+                    colsByKey[col.key].tasks.push(...colTasks);
+                }
+
+                const columnsWithTasks = keyOrder.map((key) => colsByKey[key]);
 
                 // add (to start) backlog column for tasks not yet in any column
                 if (backlogTasks.length > 0) {
