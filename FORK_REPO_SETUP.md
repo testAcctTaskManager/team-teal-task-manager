@@ -88,7 +88,7 @@
 
 39. On the left hand side, click Clients, and then click Create client
 
-40. In the Application type drop down, select Web application, enter a name, and then under Authorized JavaScript origins, click Add URI, type in `http://localhost/`
+40. In the Application type drop down, select Web application, enter a name, and then under Authorized JavaScript origins, click Add URI, type in `http://localhost`
 
 41. Repeat the process, adding another URI and typing in `https://paste-cloudflare-url-here`, replacing paste-cloudflare-url-here with the Cloudflare Pages URL you previously copied
 
@@ -108,9 +108,9 @@
 
 49. Under Variables and Secrets, click Add again, this time using `GOOGLE_CLIENT_SECRET` for the variable name, and the `GOOGLE_CLIENT_SECRET` value from the JSON you saved previously
 
-50. Under Variables and Secrets, click Add again, this time using `GOOGLE_REDIRECT_URI` for the variable name, and the redirect_uri value from the JSON you saved previously
+50. Under Variables and Secrets, click Add again, this time using `GOOGLE_REDIRECT_URI` for the variable name, and https://paste-cloudflare-url-here/api/auth/callback as the value, replacing paste-cloudflare-url-here with the Cloudflare Pages URL you previously copied
 
-51. Under Variables and Secrets, click Add again, this time using `JWT_SECRET` for the variable name, and <TO DO> as the value
+51. Under Variables and Secrets, click Add again, this time using `JWT_SECRET` for the variable name, and use a generated JWT secret as the value (you can follow this guide: https://dev.to/tkirwa/generate-a-random-jwt-secret-key-39j4)
 
 52. At the top of the page, under Choose Environment, select Preview
 
