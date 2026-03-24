@@ -68,20 +68,22 @@ export default function Home({ projectId: initialProjectId }) {
         setSprintId(activeSprintId);
       }
 
-      const isSprintActive = activeSprint?.status === "in_progress";
+      const activeSprintIds = new Set(
+        sprintList
+          .filter((s) => s.status === "in_progress")
+          .map((s) => Number(s.id)),
+      );
 
       const columnsWithTasks = cols.map((col) => {
-        const colTasks = isSprintActive
-          ? taskList
-              .filter(
-                (t) =>
-                  Number(t.column_id) === Number(col.id) &&
-                  t.sprint_id == activeSprintId,
-              )
-              .sort(
-                (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
-              )
-          : [];
+        const colTasks = taskList
+          .filter((t) => Number(t.column_id) === Number(col.id))
+          .filter((t) => {
+            if (t.sprint_id == null) return true;
+            return activeSprintIds.has(Number(t.sprint_id));
+          })
+          .sort(
+            (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
+          );
         return {
           ...col,
           title: col.name,
@@ -163,7 +165,7 @@ export default function Home({ projectId: initialProjectId }) {
     loadColumns(projectId);
     // Added to trigger task filtering metadata load
     loadFilterMetadata();
-  }, [projectId, sprintId]); // eslint-disable-line
+  }, [projectId, sprintId, sprintStatus]); // eslint-disable-line
 
   const activeProjectColumns = useMemo(() => {
     return columns.filter(
