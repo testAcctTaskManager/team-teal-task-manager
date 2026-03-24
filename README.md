@@ -1,5 +1,57 @@
 # Team Teal Task Manager
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Team Members](#team-members)
+- [Steps to Migrate This Project to Your Own Infrastructure](#steps-to-migrate-this-project-to-your-own-infrastructure)
+- [Architecture](#architecture)
+    - [Front End: CloudFlare Pages](#front-end-cloudflare-pages)
+    - [Back End: CloudFlare D1 SQL Database](#back-end-cloudflare-d1-sql-database)
+- [GitHub Actions (Workflows)](#github-actions-workflows)
+    - [Linter](#linter)
+    - [Tests](#tests)
+    - [D1 Migrations](#d1-migrations)
+- [Testing Changes Locally](#testing-changes-locally)
+    - [Local Authentication Setup](#local-authentication-setup)
+    - [Building the Webapp Locally](#building-the-webapp-locally)
+    - [Local Initial Admin Setup](#local-initial-admin-setup)
+    - [Reseeding the DB](#reseeding-the-db)
+- [Auth and Admin Setup](#auth-and-admin-setup)
+    - [Initial Admin Setup for Test Database](#initial-admin-setup-for-test-database)
+    - [Initial Admin Setup for Production Database](#initial-admin-setup-for-production-database)
+    - [Managing Users after Initial Admin Is Created](#managing-users-after-initial-admin-is-created)
+- [Thank You](#thank-you)
+
+## Project Overview
+
+This is a Task Manager app for the final project for CSB430, created as a minimal viable project (MVP) for a Task Manager used for managing projects related to VR Phobia treatment.
+
+Features include:
+- Projects creation (each Project has a dedicated Kanban/Scrum) 
+- Kanban boards
+- Scrum capabilities (backlog and sprints)
+- Clinician Dashboard for clinicians to create new requests and see the status of their created requests
+- User Management features (admins only)
+
+The production (main branch) webapp is accessible via https://team-teal-task-manager.pages.dev/, for as long as the infrastructure is up as part of this class. Instructions below include how to set up the project as your own repo, access development branch builds (preview builds), and build locally.
+
+## Team Members
+
+- Alex Coover
+- Aune Mitchell
+- Henry Staiff
+- Jay Arends
+- Joel Yang
+- Kayla Rieck
+- Sandra Gran
+- Skye Hobbs
+- Tinisha Davis
+
+## Steps to Migrate This Project to Your Own Infrastructure
+
+If you want to set up this project for your own uses in your own account, you'll need to fork the repo, set up your infrastructure, and add necessary secrets and values specific to the infrastructure. Please follow the steps outlined in `FORK_REPO_SETUP.md` to setup the project in GitHub, Cloudflare, and the Google Console (for OAuth).
+
 ## Architecture
 
 ### Front End: CloudFlare Pages
@@ -8,7 +60,7 @@ This GitHub project uses Vite React and is integrated with CloudFlare Pages. If 
 
 You can also see the build link on the branch by clicking the green checkmark icon (if successful) or red x icon (if any check failed), and then clicking on Details next to CloudFlare Pages. This means that a draft PR is not required to see the CloudFlare build URL, but instead can be accessed via your branch itself on GitHub.
 
-Please note we are limited to 500 builds a month, so try to not push hundreds of changes while testing (local commits are fine). You can test locally as well using your localhost by running `npm run dev`.
+Please note that the free CloudFlare Pages plan is limited to 500 builds a month, so try to not push hundreds of changes while testing (local commits are fine). This guide includes instructions on local development setup.
 
 ### Back End: CloudFlare D1 SQL Database
 
@@ -16,7 +68,7 @@ The settings automatically use the test-db test database for non-main deployment
 
 Database SQL files are run under the `migrations` folder, using a GitHub Actions workflow. The SQL files are run in order of their starting numbers (i.e. 001, 002, etc.), with previously run files not running even if changes are made. Changes must be made with new file number names.
 
-Under functions/api, there are also helper functions in helpers.js to make it easier to create CRUD endpoints for tables. There are also example files, `functions/api/customers.js` for the example API customers endpoint and `functions/api/customers/[id].js` for the example API customers/:id endpoint. The sample Customers.jsx component demonstrates component use of those APIs.
+Under functions/api, there are also helper functions in helpers.js to make it easier to create CRUD endpoints for tables. 
 
 For adding a new table, add the schema to the migrations folder, following the sequential order discussed above. Next, add the API endpoints. Lastly, interact with those API endpoints in the component.
 
@@ -26,7 +78,11 @@ Workflows must succeed in order to merge a PR into the main branch. The workflow
 
 ### Linter
 
-The `.github/workflows/lint.yml` workflow runs ESLint, which is a JavaScript and TypeScript linter.
+The `.github/workflows/lint.yml` workflow runs ESLint, which is a JavaScript and TypeScript linter, and will fail upon any linting errors.
+
+### Tests
+
+The `.github/workflows/tests.yml` workflow runs component and integration tests. All tests must pass or the workflow will fail. Additionally, all components must have at least 75% coverage through Vitest component tests or the workflow will fail. Tests are run on every push and PR, so you can see the results of each test, including coverage reports.
 
 ### D1 Migrations
 
@@ -38,7 +94,9 @@ For adding a new table, you'll need to add the schema to the migrations folder.
 Then you'll want to add the API endpoints. Lastly, you'll want to interact with
 those API endpoints in the component.
 
-## Authentication Setup
+## Testing Changes Locally
+
+### Local Authentication Setup
 
 The app uses Google OAuth for authentication. To run locally, you need a `.dev.vars` file in the `task-manager/` directory with the required secrets.
 
@@ -46,13 +104,13 @@ The app uses Google OAuth for authentication. To run locally, you need a `.dev.v
 
     ```cp .dev.vars.example .dev.vars```
 
-2. Fill in `GOOGLE_CLIENT_SECRET` -- it should be on the Slack, or ask Kayla.
+2. Fill in the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` with the values that the person who created the OAuth Client in Google should have saved
 
 3. The other values in the example file can be used as-is for local development.
 
 For deployed environments, these values are set as Cloudflare Pages secrets.
 
-## Testing changes locally
+### Building the Webapp Locally
 
 To run a local copy of the DB and test your changes on a local host:
 
@@ -83,30 +141,18 @@ To run a local copy of the DB and test your changes on a local host:
 
     ```http://localhost:8788/api/tasks```
 
+### Local Initial Admin Setup
 
-## Creating an Admin User
+1. Apply migrations and seed baseline data:
+	- `npm run cf:migrate:local`
+	- `npm run cf:seed:local`
+2. Copy `seed/admins.example.sql` to `seed/admins.local.sql` and replace emails and display names.
+3. Apply admin users to local D1:
+	- `npx wrangler d1 execute test-db --local --file=seed/admins.local.sql`
+4. Start dev server:
+	- `npm run dev`
 
-New users default to the `developer` role. To promote a user to `admin`, update their role directly in the database.
-
-**Locally:**
-
-```bash
-npx wrangler d1 execute cf_db --local --command "UPDATE Users SET role = 'admin' WHERE email = 'your@email.com';"
-```
-
-**On the test or prod database:**
-
-```bash
-# Test DB
-npx wrangler d1 execute cf_db --command "UPDATE Users SET role = 'admin' WHERE email = 'your@email.com';"
-
-# Prod DB (use the prod database name/binding if different)
-npx wrangler d1 execute cf_db --env production --command "UPDATE Users SET role = 'admin' WHERE email = 'your@email.com';"
-```
-
-The user must have already logged in at least once before running this command (so their account exists in the DB). After updating, they will have access to the User Management page and can assign roles to other users from there.
-
-## Reseeding the DB
+### Reseeding the DB
 
 To set DB back to only what is in the seed:
 
@@ -123,18 +169,7 @@ This app uses Google OAuth, but access is allowlist-based: a user must already e
 
 For adding the initial admins, someone with write access rights to the Cloudflare D1 database must follow these steps. Once there is an admin, that admin can add additional users and other admins.
 
-### Local Initial Admin Setup
-
-1. Apply migrations and seed baseline data:
-	- `npm run cf:migrate:local`
-	- `npm run cf:seed:local`
-2. Copy `seed/admins.example.sql` to `seed/admins.local.sql` and replace emails and display names.
-3. Apply admin users to local D1:
-	- `npx wrangler d1 execute test-db --local --file=seed/admins.local.sql`
-4. Start dev server:
-	- `npm run dev`
-
-### Test Database Initial Admin Setup
+### Initial Admin Setup for Test Database
 
 1. Make sure test DB migrations are applied:
 	- `npm run cf:migrate:test`
@@ -144,7 +179,7 @@ For adding the initial admins, someone with write access rights to the Cloudflar
 4. Apply admin users to remote test D1:
 	- `npx wrangler d1 execute test-db --file=seed/admins.test.sql --remote`
 
-### Production Database Initial Admin Setup
+### Initial Admin Setup for Production Database
 
 1. Apply production migrations:
 	- `npm run cf:migrate:prod`
@@ -154,8 +189,12 @@ For adding the initial admins, someone with write access rights to the Cloudflar
 
 Use caution when applying production admin seed files. Keep production admin SQL files private, reviewed, and out of source control.
 
-### Managing users after bootstrap
+### Managing Users after Initial Admin Is Created
 
 - Admins can add users from the User Management page.
 - Admins can update user roles and active/inactive status.
 - Deactivated users can no longer authenticate with existing or new sessions.
+
+# Thank You
+
+Thank you to everyone in Team Teal for contributing to the project and for our Professor for your support!
