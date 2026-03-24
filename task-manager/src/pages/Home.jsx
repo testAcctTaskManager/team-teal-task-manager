@@ -193,7 +193,6 @@ export default function Home({ projectId: initialProjectId }) {
 
   function handleProjectChange(nextProjectId) {
     setProjectId(nextProjectId);
-    setProjectTab("Board");
   }
 
   async function handleProjectCreated(newProject) {
