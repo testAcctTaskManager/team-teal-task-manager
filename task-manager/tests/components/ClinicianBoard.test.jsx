@@ -13,6 +13,13 @@ vi.mock("../../src/components/Board.jsx", () => ({
   },
 }));
 
+vi.mock("../../src/contexts/UsersContext.jsx", async () => {
+  const React = await import("react");
+  return {
+    UsersContext: React.createContext({ currentUser: { id: 42 }, users: [] }),
+  };
+});
+
 import ClinicianBoard from "../../src/components/ClinicianBoard.jsx";
 
 describe("ClinicianBoard", () => {
@@ -64,8 +71,8 @@ describe("ClinicianBoard", () => {
     );
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/columns?project_id=1");
-      expect(global.fetch).toHaveBeenCalledWith("/api/tasks?reporter_id=1");
+      expect(global.fetch).toHaveBeenCalledWith("/api/columns");
+      expect(global.fetch).toHaveBeenCalledWith("/api/tasks?created_by=42");
       expect(screen.getByTestId("clinician-board").textContent).toContain("tasks:2");
     });
   });
