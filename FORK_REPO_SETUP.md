@@ -6,7 +6,7 @@
 
 3. Create a Cloudflare account if you do not already have one (https://dash.cloudflare.com/sign-up)
 
-4. In the Cloudflare dashboard, on the left hand slide, scroll down and click on Manage account, click Account API tokens, and then click Create Token
+4. In the Cloudflare dashboard, on the left hand side, scroll down and click on Manage account, click Account API tokens, and then click Create Token
 
 5. Under Custom token, next to Create Custom Token, click Get Started
 
