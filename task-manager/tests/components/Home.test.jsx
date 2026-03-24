@@ -405,15 +405,15 @@ describe("Home", () => {
     });
   });
 
-  it("changes project and resets tab to Board", async () => {
+  it("changes project and stays on current tab", async () => {
     renderHome({ projectId: 1 });
     await screen.findByTestId("scrum-view");
 
-    fireEvent.click(screen.getByRole("button", { name: "Backlog" }));
+    fireEvent.click(screen.getByRole("button", { name: "Old Sprints" }));
     fireEvent.click(screen.getByRole("button", { name: "Pick Project 2" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Project 2 Board/)).toBeTruthy();
+      expect(screen.getByText(/Project 2 Old Sprints/)).toBeTruthy();
       expect(fetchMock).toHaveBeenCalledWith("/api/columns?project_id=2");
     });
   });
