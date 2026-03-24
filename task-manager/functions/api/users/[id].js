@@ -102,10 +102,10 @@ export async function onRequestPatch(context) {
     : pathTargetId;
   const isSelf = Number.isFinite(targetId) && targetId === Number(data?.user?.id);
   const isAdminUser = data?.user?.role === "admin";
-  const deactivatingSelf = body.is_active === 0;
-  const demotingSelf = body.role !== undefined && body.role !== "admin";
+  const deactivatingAdmin = body.is_active === 0;
+  const demotingAdmin = body.role !== undefined && body.role !== "admin";
 
-  if (isAdminUser && isSelf && (deactivatingSelf || demotingSelf)) {
+  if (isAdminUser && (deactivatingAdmin || demotingAdmin)) {
     const db = env.cf_db;
     const targetUser = await queryOne(
       db,
