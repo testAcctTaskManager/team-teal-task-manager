@@ -19,8 +19,8 @@ async function generatePKCE() {
   return { codeVerifier, codeChallenge };
 }
 
-const PAGES_DEV_DOMAIN = "team-teal-task-manager.pages.dev";
-const TEST_SUBDOMAIN = "test.team-teal-task-manager.pages.dev";
+const PAGES_DEV_DOMAIN = "team-teal-task-manager-356.pages.dev";
+const TEST_SUBDOMAIN = "test.team-teal-task-manager-356.pages.dev";
 
 function canonicalOrigin(origin, hostname) {
   if (hostname.endsWith(`.${PAGES_DEV_DOMAIN}`) && hostname !== PAGES_DEV_DOMAIN) {
