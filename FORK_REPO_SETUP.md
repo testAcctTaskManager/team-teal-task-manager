@@ -104,17 +104,17 @@
 
 47. Scroll down to Variables and Secrets, and click Add
 
-48. For the variable name, use `GOOGLE_CLIENT_ID` and then for the value, enter the copied `GOOGLE_CLIENT_ID` value from the JSON you saved previously, and click Save
+48. For the variable name, use `GOOGLE_CLIENT_ID` and then for the value, enter the copied `GOOGLE_CLIENT_ID` value from the JSON you saved previously, make sure the type is Secret, and click Save
 
-49. Under Variables and Secrets, click Add again, this time using `GOOGLE_CLIENT_SECRET` for the variable name, and the `GOOGLE_CLIENT_SECRET` value from the JSON you saved previously
+49. Under Variables and Secrets, click Add again, this time using `GOOGLE_CLIENT_SECRET` for the variable name, the `GOOGLE_CLIENT_SECRET` value from the JSON you saved previously, and the type as Secret
 
-50. Under Variables and Secrets, click Add again, this time using `GOOGLE_REDIRECT_URI` for the variable name, and https://paste-cloudflare-url-here/api/auth/callback as the value, replacing paste-cloudflare-url-here with the Cloudflare Pages URL you previously copied
+50. Under Variables and Secrets, click Add again, this time using `GOOGLE_REDIRECT_URI` for the variable name, and https://paste-cloudflare-url-here/api/auth/callback as the value, replacing paste-cloudflare-url-here with the Cloudflare Pages URL you previously copied, and the type as Secret
 
-51. Under Variables and Secrets, click Add again, this time using `JWT_SECRET` for the variable name, and use a generated JWT secret as the value (you can follow this guide: https://dev.to/tkirwa/generate-a-random-jwt-secret-key-39j4)
+51. Under Variables and Secrets, click Add again, this time using `JWT_SECRET` for the variable name, and use a generated JWT secret as the value (you can follow this guide: https://dev.to/tkirwa/generate-a-random-jwt-secret-key-39j4), and the type as Secret
 
 52. At the top of the page, under Choose Environment, select Preview
 
-53. Under Variables and Secrets, click Add, and repeat the process with `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `JWT_SECRET` variable names and values
+53. Under Variables and Secrets, click Add, and repeat the process with `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `JWT_SECRET` variable names and values, with the type as Secret
 
 54. Back in GitHub, go to Actions, and rerun the workflow for any failed jobs
 
