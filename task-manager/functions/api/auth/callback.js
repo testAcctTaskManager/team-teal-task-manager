@@ -1,9 +1,9 @@
 import { SignJWT } from "jose";
 import { execute, queryOne } from "../helpers.js";
 
-const PAGES_DEV_SUFFIX = ".team-teal-task-manager.pages.dev";
-const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
-const TEST_SUBDOMAIN = "test.team-teal-task-manager.pages.dev";
+const PAGES_DEV_SUFFIX = ".team-teal-task-manager-356.pages.dev";
+const COOKIE_DOMAIN = "team-teal-task-manager-356.pages.dev";
+const TEST_SUBDOMAIN = "test.team-teal-task-manager-356.pages.dev";
 
 function isAllowedOrigin(origin) {
   try {
