@@ -557,7 +557,7 @@ export function makeCrudHandlers(options = {}) {
           });
         }
 
-        if (table === "Tasks" && updates.sprint_id !== undefined) {
+        if (table === "Tasks" && updates.sprint_id !== undefined && updates.sprint_id !== null) {
           const sprint = await queryOne(
             db,
             `SELECT id FROM Sprints WHERE id = ?`,

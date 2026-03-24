@@ -25,7 +25,9 @@ VALUES
 -- Kanban sprints
 INSERT OR IGNORE INTO Sprints (id, project_id, name, start_date, end_date, created_by)
 VALUES
-  (1, 1, 'Sprint 1', '2026-01-01', '2026-01-15', 3);
+  (1, 1, 'Sprint 1', '2026-01-01', '2026-01-15', 3),
+  (5, 2, 'Sprint 1', '2026-01-01', '2026-01-15', 3),
+  (6, 3, 'Sprint 1', '2026-01-01', '2026-01-15', 3);
 
 -- Kanban columns
 INSERT OR IGNORE INTO Columns (id, project_id, name, key, position)
@@ -55,12 +57,12 @@ VALUES
   (1, 1, 1, 1, 1, 2, 1, 2, 'Set up project', 'Initialize repo, CI and migrations', '2026-01-02', '2026-01-04', 0),
   (2, 1, 1, 1, 2, 2, 2, 2, 'Create tasks endpoint', 'Implement CRUD handlers for Tasks', '2026-01-03', '2026-01-07', 1),
   (3, 1, 2, 1, 1, 1, 1, 1, 'Write docs', 'Add README notes for local dev', NULL, NULL, 2),
-  (4, 2, 6, 1, 1, 1, 1, 2, 'Design UI', 'Mockup screens', '2023-02-02', '2023-02-05', 0),
-  (5, 2, 7, 1, 2, 1, 2, 2, 'Review PR', 'Check code quality', '2023-02-03', '2023-02-07', 1),
-  (6, 2, 8, 1, 1, 1, 1, 2, 'Fix login bug', 'Auth error', NULL, NULL, 2),
-  (7, 3, 11, 1, 2, 2, 1, 2, 'Update dependencies', 'Update packages', '2025-03-02', '2025-03-05', 0),
-  (8, 3, 14, 1, 2, 1, 2, 2, 'Deploy staging', 'Push to server', '2025-03-03', '2025-03-07', 1),
-  (9, 3, 15, 1, 1, 1, 2, 2, 'Gather feedback', 'User survey', NULL, NULL, 2);
+  (4, 2, 6, 5, 1, 1, 1, 2, 'Design UI', 'Mockup screens', '2023-02-02', '2023-02-05', 0),
+  (5, 2, 7, 5, 2, 1, 2, 2, 'Review PR', 'Check code quality', '2023-02-03', '2023-02-07', 1),
+  (6, 2, 8, 5, 1, 1, 1, 2, 'Fix login bug', 'Auth error', NULL, NULL, 2),
+  (7, 3, 11, 6, 2, 2, 1, 2, 'Update dependencies', 'Update packages', '2025-03-02', '2025-03-05', 0),
+  (8, 3, 14, 6, 2, 1, 2, 2, 'Deploy staging', 'Push to server', '2025-03-03', '2025-03-07', 1),
+  (9, 3, 15, 6, 1, 1, 2, 2, 'Gather feedback', 'User survey', NULL, NULL, 2);
 
 -- Kanban comments
 INSERT OR IGNORE INTO Comments (id, task_id, created_by, content, created_at, updated_at)
@@ -72,8 +74,8 @@ VALUES
 ---------------------------------------------------------------------
 -- SCRUM SAMPLE PROJECT (from 014, supersedes 013)
 ---------------------------------------------------------------------
-INSERT OR IGNORE INTO Projects (id, name, created_by, type)
-VALUES (4, 'Scrum Sample Project', 1, 'scrum');
+INSERT OR IGNORE INTO Projects (id, name, created_by)
+VALUES (4, 'Scrum Sample Project', 1);
 
 -- Scrum sprints
 INSERT OR IGNORE INTO Sprints (id, project_id, name, start_date, end_date, created_by, status)
@@ -85,10 +87,11 @@ VALUES
 -- Scrum columns
 INSERT OR IGNORE INTO Columns (id, project_id, name, key, position)
 VALUES
-  (100, 4, 'to do', 'to_do', 1),
-  (101, 4, 'in progress', 'in_progress', 2),
-  (102, 4, 'done', 'done', 3),
-  (103, 4, 'blocked', 'blocked', 4);
+  (100, 4, 'To Do', 'todo', 1),
+  (101, 4, 'Blocked', 'blocked', 2),
+  (102, 4, 'In Progress', 'in_progress', 3),
+  (103, 4, 'In Review', 'in_review', 4),
+  (104, 4, 'Complete', 'complete', 5);
 
 -- Scrum tasks (some intentionally have NULL column_id for backlog testing)
 INSERT OR IGNORE INTO Tasks (

@@ -23,7 +23,7 @@ import { Droppable } from "@hello-pangea/dnd";
  * TODO: Create KanbanColumn tests
  *
  */
-export default function KanbanColumn({ title, tasks = [], colIndex, fullWidth = false }) {
+export default function KanbanColumn({ title, tasks = [], colIndex, fullWidth = false, onAddToSprint = null }) {
   return (
     <Droppable droppableId={String(colIndex)}>
       {(provided) => (
@@ -39,7 +39,7 @@ export default function KanbanColumn({ title, tasks = [], colIndex, fullWidth = 
             {tasks.length > 0 ? (
               <>
                 {tasks.map((task, index) => (
-                  <TaskCard key={task.id} task={task} fullWidth={fullWidth} index={index} />
+                  <TaskCard key={task.id} task={task} fullWidth={fullWidth} index={index} onAddToSprint={onAddToSprint} />
                 ))}
                 {provided.placeholder}
               </>

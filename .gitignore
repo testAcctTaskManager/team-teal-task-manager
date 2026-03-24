@@ -144,3 +144,8 @@ vite.config.ts.timestamp-*
 
 # ignore local sqlite db
 dev.db
+
+# local admin sql files
+admins.local.sql
+admins.test.sql
+admins.prod.sql

@@ -78,7 +78,6 @@ describe("Tasks API with D1 (integration)", () => {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        task_id: 1,
         sprint_id: 2,
       }),
     });
@@ -88,5 +87,12 @@ describe("Tasks API with D1 (integration)", () => {
 
     expect(created).toBeTruthy();
     expect(created.sprint_id).toBe(2);
+
+    // Cleanup: restore task 1 to sprint 1 so subsequent tests (e.g. Cypress) see the expected state
+    await authFetch(`${BASE_URL}/api/tasks/1`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sprint_id: 1 }),
+    });
   });
 });

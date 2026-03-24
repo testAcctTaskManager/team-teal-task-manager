@@ -67,10 +67,19 @@ export async function onRequest(context) {
     // Query DB by email to handle dev/prod database differences.
     // Since auth redirects through the main domain, JWT user IDs may not match
     // the current branch's database. Email is the stable identifier.
-    const user = await queryOne(db, "SELECT id, email, role FROM Users WHERE email = ?", [
-      payload.email,
-    ]);
+    const user = await queryOne(
+      db,
+      "SELECT id, email, role, is_active FROM Users WHERE lower(email) = lower(?)",
+      [payload.email],
+    );
     if (!user) {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (Number(user.is_active) !== 1) {
       return new Response(JSON.stringify({ error: "Invalid session" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

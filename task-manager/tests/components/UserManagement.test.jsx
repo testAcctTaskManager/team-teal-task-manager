@@ -134,8 +134,8 @@ describe("UserManagement", () => {
       await flushPromises();
     });
 
-    const select = container.querySelector("select");
-    const saveButton = container.querySelector("button");
+    const select = container.querySelector("#user-list select");
+    const saveButton = container.querySelector("#user-list button");
 
     await act(async () => {
       select.value = "admin";
@@ -147,7 +147,7 @@ describe("UserManagement", () => {
       await flushPromises();
     });
 
-    expect(container.textContent).toContain("Could not update role.");
+    expect(container.textContent).toContain("Could not update user.");
   });
 
   it("updates a user's role when selecting a new role and clicking Save", async () => {
@@ -157,8 +157,8 @@ describe("UserManagement", () => {
       await flushPromises();
     });
 
-    const select = container.querySelector("select");
-    const saveButton = container.querySelector("button");
+    const select = container.querySelector("#user-list select");
+    const saveButton = container.querySelector("#user-list button");
 
     expect(select).not.toBeNull();
     expect(saveButton).not.toBeNull();
@@ -191,8 +191,8 @@ describe("UserManagement", () => {
       await flushPromises();
     });
 
-    const select = container.querySelector("select");
-    const saveButton = container.querySelector("button");
+    const select = container.querySelector("#user-list select");
+    const saveButton = container.querySelector("#user-list button");
 
     expect(select).not.toBeNull();
     expect(saveButton).not.toBeNull();
@@ -249,10 +249,10 @@ describe("UserManagement", () => {
       await flushPromises();
     });
 
-    const selects = container.querySelectorAll("select");
-    const saveButtons = container.querySelectorAll("button");
+    const selects = container.querySelectorAll("#user-list select");
+    const saveButtons = container.querySelectorAll("#user-list button");
 
-    expect(selects).toHaveLength(2);
+    expect(selects).toHaveLength(4);
     expect(saveButtons).toHaveLength(2);
 
     await act(async () => {

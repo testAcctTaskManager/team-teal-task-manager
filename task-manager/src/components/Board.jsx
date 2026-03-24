@@ -8,6 +8,7 @@ function Board({
   emptyColumnsText = "No Columns",
   layout = "horizontal",
   fullWidthColumns = false,
+  onAddToSprint = null,
 }) {
   // When the dragging ends
   const onDragEnd = (result) => {
@@ -131,6 +132,7 @@ function Board({
                   title={column.title}
                   tasks={column.tasks}
                   fullWidth={fullWidthColumns}
+                  onAddToSprint={onAddToSprint}
                 />
               ))}
             </>

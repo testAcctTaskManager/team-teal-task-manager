@@ -1,5 +1,6 @@
 import React, { act } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { waitFor, fireEvent } from "@testing-library/react";
 import ClinicianForm from "../../src/components/ClinicianForm.jsx";
 import { renderWithRoot, click, input } from "../test-utils/reactTestUtils.jsx";
 import { UsersProvider } from "../../src/contexts/UsersContext.jsx";
@@ -220,5 +221,165 @@ describe("ClinicianForm (Vitest)", () => {
     await flushAsync();
 
     expect(container.textContent).toContain("Unable to load projects");
+  });
+
+  // --- Lines 58-59, 88-98, 114-137 coverage ---
+
+  it("handleChange updates title field via onChange", async () => {
+    const { container } = renderClinicianForm();
+    await flushAsync();
+
+    const titleInput = container.querySelector("input[name='title']");
+    await act(async () => {
+      fireEvent.change(titleInput, { target: { value: "My Request" } });
+    });
+
+    expect(titleInput.value).toBe("My Request");
+  });
+
+  it("successfully submits form, calls POST /api/tasks, and invokes onSuccess", async () => {
+    const onSuccess = vi.fn();
+    const { container } = renderClinicianForm({ onSuccess });
+
+    await waitFor(() => {
+      const opts = container
+        .querySelector("select[name='project_id']")
+        ?.querySelectorAll("option");
+      expect(opts?.length).toBeGreaterThan(1);
+    });
+
+    await act(async () => {
+      fireEvent.change(container.querySelector("input[name='title']"), {
+        target: { value: "New Request" },
+      });
+      fireEvent.change(container.querySelector("select[name='project_id']"), {
+        target: { value: "1" },
+      });
+    });
+
+    await click(container.querySelector("button[type='submit']"));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/tasks",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+    });
+
+    expect(container.textContent).toContain("Request successfully created!");
+  });
+
+  it("resets form fields to empty after successful submission", async () => {
+    const { container } = renderClinicianForm();
+
+    await waitFor(() => {
+      const opts = container
+        .querySelector("select[name='project_id']")
+        ?.querySelectorAll("option");
+      expect(opts?.length).toBeGreaterThan(1);
+    });
+
+    await act(async () => {
+      fireEvent.change(container.querySelector("input[name='title']"), {
+        target: { value: "Reset Me" },
+      });
+      fireEvent.change(container.querySelector("select[name='project_id']"), {
+        target: { value: "1" },
+      });
+    });
+
+    await click(container.querySelector("button[type='submit']"));
+
+    await waitFor(() => {
+      expect(container.querySelector("input[name='title']").value).toBe("");
+    });
+  });
+
+  it("shows API error message when task creation returns !resp.ok", async () => {
+    fetchMock.mockImplementation(async (url) => {
+      if (url === "/api/users") {
+        return { ok: true, json: async () => [] };
+      }
+      if (url === "/api/projects") {
+        return {
+          ok: true,
+          json: async () => [{ id: 1, name: "Project One" }],
+        };
+      }
+      if (url === "/api/tasks") {
+        return {
+          ok: false,
+          json: async () => ({ error: "Server error" }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const { container } = renderClinicianForm();
+
+    await waitFor(() => {
+      const opts = container
+        .querySelector("select[name='project_id']")
+        ?.querySelectorAll("option");
+      expect(opts?.length).toBeGreaterThan(1);
+    });
+
+    await act(async () => {
+      fireEvent.change(container.querySelector("input[name='title']"), {
+        target: { value: "Request" },
+      });
+      fireEvent.change(container.querySelector("select[name='project_id']"), {
+        target: { value: "1" },
+      });
+    });
+
+    await click(container.querySelector("button[type='submit']"));
+
+    await waitFor(() => {
+      expect(container.textContent).toContain("Server error");
+    });
+  });
+
+  it("shows generic error message when task creation fetch throws", async () => {
+    fetchMock.mockImplementation(async (url) => {
+      if (url === "/api/users") {
+        return { ok: true, json: async () => [] };
+      }
+      if (url === "/api/projects") {
+        return {
+          ok: true,
+          json: async () => [{ id: 1, name: "Project One" }],
+        };
+      }
+      if (url === "/api/tasks") {
+        throw new Error("Network failure");
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const { container } = renderClinicianForm();
+
+    await waitFor(() => {
+      const opts = container
+        .querySelector("select[name='project_id']")
+        ?.querySelectorAll("option");
+      expect(opts?.length).toBeGreaterThan(1);
+    });
+
+    await act(async () => {
+      fireEvent.change(container.querySelector("input[name='title']"), {
+        target: { value: "Request" },
+      });
+      fireEvent.change(container.querySelector("select[name='project_id']"), {
+        target: { value: "1" },
+      });
+    });
+
+    await click(container.querySelector("button[type='submit']"));
+
+    await waitFor(() => {
+      expect(container.textContent).toContain("Unable to save the request.");
+    });
   });
 });

@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import TaskForm from "../components/TaskForm.jsx";
-import Kanban from "../components/Kanban.jsx";
 import NewTaskButton from "../components/NewTaskButton.jsx";
 import { Link } from "react-router-dom";
 import ProjectSelector from "../components/ProjectSelector.jsx";
 import Scrum from "../components/Scrum.jsx";
 import Backlog from "../components/Backlog.jsx";
 import Sprints from "../components/Sprints.jsx";
+import OldSprints from "../components/OldSprints.jsx";
 
-export default function Home({ projectId: initialProjectId, sprintId: initialSprintId }) {
+export default function Home({ projectId: initialProjectId }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [columns, setColumns] = useState([]);
   const [backlogColumns, setBacklogColumns] = useState([]);
@@ -18,7 +18,8 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   const [sprints, setSprints] = useState([]);
   const [sprintStatus, setSprintStatus] = useState("not_started");
   const [sprintColumns, setSprintColumns] = useState([]);
-  const [sprintId, setSprintId] = useState(initialSprintId)
+  const [sprintId, setSprintId] = useState(null);
+  const [allTasks, setAllTasks] = useState([]);
 
   /* Adding states for task filtering */
   const [selectedAssignee, setSelectedAssignee] = useState("all");
@@ -56,10 +57,15 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         return;
       }
       setSprints(sprintList);
+      setAllTasks(taskList);
 
-      // If current sprint is not in current project default to first sprint in project.
-      if (sprintList.length > 0 && !sprintList.some((s) => s.id == sprintId)) {
-        setSprintId(sprintList[0].id);
+      // Select the active (in_progress) sprint, fall back to first not_started sprint.
+      const activeSprint =
+        sprintList.find((s) => s.status === "in_progress") ||
+        sprintList.find((s) => s.status === "not_started");
+      const activeSprintId = activeSprint ? activeSprint.id : null;
+      if (activeSprintId != sprintId) {
+        setSprintId(activeSprintId);
       }
 
       const activeSprintIds = new Set(
@@ -85,30 +91,24 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
         };
       });
       setColumns(columnsWithTasks);
-      
-      const backlogTasks = taskList.filter((t) => t.column_id == null);
-      const backlogTaskCollection = [{
-        id: null,
-        title: "Backlog",
-        tasks: backlogTasks,
-      }];
-      setBacklogColumns(backlogTaskCollection);
-      console.log(backlogTaskCollection);
 
-      // Get sprint matching current sprint id
-      const currentSprint = sprintList.find((s) => s.id == sprintId);
-      if (currentSprint){
-        setSprintStatus(currentSprint.status);
-        const sprintTasks = taskList.filter((t) => t.sprint_id == sprintId);
-        const sprintTaskCollection = [{
-          id: sprintId,
-          title: currentSprint.name,
-          tasks: sprintTasks
-        }];
-        setSprintColumns(sprintTaskCollection);
+      const backlogTasks = taskList.filter(
+        (t) => t.column_id == null && t.sprint_id == null,
+      );
+      setBacklogColumns([{ id: null, title: "Backlog", tasks: backlogTasks }]);
+      if (activeSprint) {
+        setSprintStatus(activeSprint.status);
+        const sprintTasks = taskList.filter(
+          (t) =>
+            t.sprint_id == activeSprintId &&
+            Number(t.project_id) === Number(projectId),
+        );
+        setSprintColumns([
+          { id: activeSprintId, title: activeSprint.name, tasks: sprintTasks },
+        ]);
+      } else {
+        setSprintColumns([]);
       }
-
-
     } catch (err) {
       console.error("Fetch error", err);
       setColumns([]);
@@ -188,28 +188,18 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       }),
     }));
   }, [activeProjectColumns, selectedAssignee, selectedReporter]);
- 
-  /* Gets the correct board type based on the current project. Defaults to Kanban */
-  const selectedProjectType = useMemo(() => {
-    const currentProject = projects.find((p) => Number(p.id) === Number(projectId));
-    const type = (currentProject?.type || "kanban").toLowerCase();
-    return type;
-  }, [projects, projectId])
-
-  const BoardComponent = useMemo(() => {
-    const boardByType = {
-      kanban: Kanban,
-      scrum: Scrum,
-    };
-    return boardByType[selectedProjectType] || Kanban;
-  }, [selectedProjectType]);
 
   function handleProjectTabSwitch(e) {
-    setProjectTab(e.target.value)
+    setProjectTab(e.target.value);
   }
 
   function handleProjectChange(nextProjectId) {
     setProjectId(nextProjectId);
+  }
+
+  async function handleProjectCreated(newProject) {
+    await loadProjects();
+    setProjectId(newProject.id);
     setProjectTab("Board");
   }
 
@@ -219,42 +209,125 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
       const statusRes = await fetch(`/api/sprints/${sprintId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({status: newStatus}),
+        body: JSON.stringify({ status: newStatus }),
       });
       const bodyRes = await statusRes.json().catch(() => null);
-        if (!statusRes.ok) {
-          console.error("Error updating sprint status", bodyRes);
+      if (!statusRes.ok) {
+        console.error("Error updating sprint status", bodyRes);
+        return;
+      }
+
+      if (newStatus === "in_progress") {
+        const todoColumn = columns.find((col) => col.key === "todo");
+        if (todoColumn) {
+          const unplacedTasks = (sprintColumns[0]?.tasks ?? []).filter(
+            (t) => t.column_id == null,
+          );
+          await Promise.all(
+            unplacedTasks.map((task) =>
+              fetch(`/api/tasks/${task.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ column_id: todoColumn.id }),
+              }),
+            ),
+          );
         }
+      }
+
+      if (newStatus === "complete") {
+        const completeColumnId =
+          columns.find((col) => col.key === "complete")?.id ?? null;
+        const incompleteTasks = columns
+          .filter((col) => Number(col.id) !== Number(completeColumnId))
+          .flatMap((col) => col.tasks);
+        await Promise.all(
+          incompleteTasks.map((task) =>
+            fetch(`/api/tasks/${task.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sprint_id: null, column_id: null }),
+            }),
+          ),
+        );
+      }
+
+      await loadColumns(projectId);
     } catch (err) {
       console.error("Error updating sprint status", err);
     }
   }
 
+  async function addTaskToSprint(taskId) {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sprint_id: sprintId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        console.error("Error adding task to sprint", data);
+        return;
+      }
+      await loadColumns(projectId);
+    } catch (err) {
+      console.error("Error adding task to sprint", err);
+    }
+  }
+
+  async function createSprint() {
+    try {
+      const nextNumber = sprints.length + 1;
+      const res = await fetch("/api/sprints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: projectId,
+          name: `Sprint ${nextNumber}`,
+          created_by: 1,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        console.error("Error creating sprint", data);
+        return;
+      }
+      await loadColumns(projectId);
+    } catch (err) {
+      console.error("Error creating sprint", err);
+    }
+  }
+
   const projectTabs = {
-    Board: 
-      <BoardComponent
+    "Old Sprints": <OldSprints sprints={sprints} allTasks={allTasks} />,
+    Board: (
+      <Scrum
         key={projectId}
         columns={filteredColumns}
         setColumns={setColumns}
-      />,
-    Backlog:
+      />
+    ),
+    Backlog: (
       <div>
         <Sprints
-        columns={sprintColumns}
-        sprintStatus={sprintStatus}
-        sprintId={sprintId}
-        sprints={sprints}
-        setSprintColumns={setSprintColumns}
-        setSprintStatus={setSprintStatus}
-        updateSprintStatus={updateSprintStatus}
-        setSprintId={setSprintId}
-        boardTitle="Sprints"/>
+          columns={sprintColumns}
+          sprintStatus={sprintStatus}
+          sprintName={sprintColumns[0]?.title ?? null}
+          setSprintColumns={setSprintColumns}
+          setSprintStatus={setSprintStatus}
+          updateSprintStatus={updateSprintStatus}
+          createSprint={createSprint}
+          boardTitle="Sprints"
+        />
         <Backlog
           key={projectId}
           backlog={backlogColumns}
+          onAddToSprint={sprintId ? addTaskToSprint : null}
         />
       </div>
-  }
+    ),
+  };
 
   function openModal() {
     setShowCreateModal(true);
@@ -278,17 +351,13 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
   return (
     <div>
       <div className="bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg px-6 py-4 shadow-lg mb-6">
-        <h1 className="text-3xl font-bold text-white m-0">
+        <h1 className="text-3xl font-bold text-white m-0 mb-3">
           Project {projectId} {projectTab}
         </h1>
-        <button
-          type="button"
-          value="Board"
-          onClick={handleProjectTabSwitch}
-        >
-          Board
-        </button>
-        {selectedProjectType === "scrum" ? (
+        <div className="flex gap-2 justify-center">
+          <button type="button" value="Board" onClick={handleProjectTabSwitch}>
+            Board
+          </button>
           <button
             type="button"
             value="Backlog"
@@ -296,7 +365,14 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
           >
             Backlog
           </button>
-        ) : (null)}
+          <button
+            type="button"
+            value="Old Sprints"
+            onClick={handleProjectTabSwitch}
+          >
+            Old Sprints
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mb-6">
@@ -304,13 +380,10 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
           projects={projects}
           selectedProjectId={projectId}
           onSelectProject={handleProjectChange}
+          onProjectCreated={handleProjectCreated}
         />
 
-        {selectedProjectType === "scrum" && projectTab === "Board" ? (null) : (
-          <NewTaskButton 
-            openModal={openModal}
-          />
-        )}
+        <NewTaskButton openModal={openModal} />
 
         <div className="flex items-center gap-3 flex-1">
           <span className="font-semibold text-white text-sm whitespace-nowrap">
@@ -372,15 +445,18 @@ export default function Home({ projectId: initialProjectId, sprintId: initialSpr
             createdBy={1}
             modifiedBy={1}
             columnsForStatus={columns}
+            activeSprint={
+              sprints.find(
+                (s) => s.status === "in_progress" || s.status === "not_started",
+              ) ?? null
+            }
             onSuccess={handleCreated}
             onCancel={closeModal}
           />
         )}
       </div>
 
-      <div>
-        {projectTabs[projectTab] ?? <div>unknown tab</div>}
-      </div>
+      <div>{projectTabs[projectTab] ?? <div>unknown tab</div>}</div>
     </div>
   );
 }

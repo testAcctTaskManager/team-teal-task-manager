@@ -13,7 +13,7 @@ import { UsersContext } from "../../../src/contexts/UsersContext.jsx";
 import KanbanColumn from "../../../src/components/KanbanColumn";
 import ProjectSelector from "../../../src/components/ProjectSelector.jsx";
 import { DragDropContext } from "@hello-pangea/dnd";
-import Kanban from "../../../src/components/Kanban.jsx";
+import Board from "../../../src/components/Board.jsx";
 import Sprints from "../../../src/components/Sprints.jsx";
 
 import { getColumnsWithTasks } from "./mockData.js";
@@ -96,13 +96,13 @@ export function mountProjectSelector(projects = [], selectedProjectId = null, on
   );
 }
 
-// Helper to mount Kanban with test columns and tasks
+// Helper to mount Board with test columns and tasks
 export function mountKanban(projectId = 1) {
   const columns = getColumnsWithTasks(projectId);
   return mount(
     <MockUsersProvider>
       <MemoryRouter>
-        <Kanban columns={columns}/>
+        <Board columns={columns} boardTitle="Board" emptyColumnsText="No Columns" />
       </MemoryRouter>
     </MockUsersProvider>
   );
@@ -151,70 +151,19 @@ export function mountSprints() {
       ]
     }
   ]
-  const sprintStatus = 'not_started'
-  const sprintId = 2
-  const sprints = [
-    /*{
-      "id": 1,
-      "project_id": 1,
-      "name": "Sprint 1",
-      "start_date": "2026-01-01",
-      "end_date": "2026-01-15",
-      "created_by": 3,
-      "created_at": "2026-03-16 23:15:51",
-      "updated_at": "2026-03-16 23:15:51",
-      "status": "not_started"
-    },*/
-    {
-      "id": 2,
-      "project_id": 4,
-      "name": "Sprint 1",
-      "start_date": "2024-01-03",
-      "end_date": "2024-01-16",
-      "created_by": 2,
-      "created_at": "2026-03-16 23:15:52",
-      "updated_at": "2026-03-16 23:15:52",
-      "status": "complete"
-    },
-    {
-      "id": 3,
-      "project_id": 4,
-      "name": "Sprint 2",
-      "start_date": "2024-01-16",
-      "end_date": "2024-02-01",
-      "created_by": 1,
-      "created_at": "2026-03-16 23:15:52",
-      "updated_at": "2026-03-16 23:15:52",
-      "status": "in_progress"
-    },
-    {
-      "id": 4,
-      "project_id": 4,
-      "name": "Sprint 3",
-      "start_date": "2024-02-16",
-      "end_date": "2024-03-01",
-      "created_by": 2,
-      "created_at": "2026-03-16 23:15:52",
-      "updated_at": "2026-03-16 23:15:52",
-      "status": "not_started"
-    }
-  ]
   const setSprintColumns = () => {}
   const setSprintStatus = () => {}
   const updateSprintStatus = () => {}
-  const setSprintId = () => {}
   return mount(
     <MockUsersProvider>
       <MemoryRouter>
         <Sprints
         columns={sprintColumns}
-        sprintStatus={sprintStatus}
-        sprintId={sprintId}
-        sprints={sprints}
+        sprintStatus="not_started"
+        sprintName="Sprint 1"
         setSprintColumns={setSprintColumns}
         setSprintStatus={setSprintStatus}
         updateSprintStatus={updateSprintStatus}
-        setSprintId={setSprintId}
         boardTitle="Sprints"/>
       </MemoryRouter>
     </MockUsersProvider>

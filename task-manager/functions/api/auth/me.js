@@ -26,9 +26,11 @@ export async function onRequestGet({ request, env }) {
     });
 
     const db = env.cf_db;
-    const user = await queryOne(db, "SELECT * FROM Users WHERE email = ?", [
-      payload.email,
-    ]);
+    const user = await queryOne(
+      db,
+      "SELECT * FROM Users WHERE lower(email) = lower(?) AND is_active = 1",
+      [payload.email],
+    );
 
     if (!user) {
       return new Response(JSON.stringify({ error: "User not found" }), {

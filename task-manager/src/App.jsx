@@ -38,7 +38,7 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { isAuthenticated, authLoading } = useUsers();
+  const { isAuthenticated, authLoading, currentUser } = useUsers();
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center p-8 text-center bg-slate-900 scrollbar-none">
@@ -65,6 +65,15 @@ export default function App() {
             >
               Clinician
             </Link>
+            {currentUser?.role === USER_ROLES.ADMIN && (
+              <Link
+                to="/user-management"
+                className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white font-medium px-6 py-3 rounded-lg shadow-lg transition-all duration-200 border border-slate-300"
+                aria-label="User Management"
+              >
+                User Management
+              </Link>
+            )}
           </>
         )}
         <LoginButton />
@@ -83,7 +92,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Home projectId={1} sprintId={1} />
+              <Home projectId={1} />
             </ProtectedRoute>
           }
         />

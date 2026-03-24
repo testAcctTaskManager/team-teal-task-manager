@@ -5,14 +5,10 @@ const sprintHandlers = makeCrudHandlers({
   table: "sprints",
   primaryKey: "id",
   allowedColumns: [
-    "id",
     "project_id",
     "name",
     "start_date",
     "end_date",
-    "created_by",
-    "created_at",
-    "updated_at",
     "status"
   ],
   dbEnvVar: "cf_db",
@@ -42,7 +38,6 @@ const updateSprintTimestamps = async (context) => {
     const allowed = [
       "project_id",
       "name",
-      "created_by",
       "start_date",
       "end_date",
       "status"

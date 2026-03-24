@@ -1,8 +1,9 @@
 import { SignJWT } from "jose";
-import { queryOne, execute } from "../helpers.js";
+import { execute, queryOne } from "../helpers.js";
 
 const PAGES_DEV_SUFFIX = ".team-teal-task-manager.pages.dev";
 const COOKIE_DOMAIN = "team-teal-task-manager.pages.dev";
+const TEST_SUBDOMAIN = "test.team-teal-task-manager.pages.dev";
 
 function isAllowedOrigin(origin) {
   try {
@@ -58,6 +59,19 @@ function redirectWithClear(url, hostname) {
   return new Response(null, { status: 302, headers });
 }
 
+function loginErrorUrl(origin) {
+  return `${origin}/login?auth_error=login_failed`;
+}
+
+function isAuthDebugEnabled(env) {
+  return env.AUTH_DEBUG === "true";
+}
+
+function debugLog(env) {
+  if (!isAuthDebugEnabled(env)) return;
+  console.warn("[auth-debug] login attempt failed");
+}
+
 async function redirectWithSession(url, userId, email, jwtSecret, hostname) {
   const secret = new TextEncoder().encode(jwtSecret);
   const token = await new SignJWT({ sub: String(userId), email })
@@ -82,7 +96,8 @@ export async function onRequest({ request, env }) {
   const returnedState = url.searchParams.get("state");
 
   if (!oauthState || returnedState !== oauthState.s) {
-    return new Response("state mismatch – possible CSRF", { status: 403 });
+    debugLog(env);
+    return redirectWithClear(loginErrorUrl(fallbackOrigin), url.hostname);
   }
 
   let origin =
@@ -97,8 +112,8 @@ export async function onRequest({ request, env }) {
   const codeVerifier = oauthState.v;
 
   if (error) {
-    console.error("oauth error:", error);
-    return redirectWithClear(origin, url.hostname);
+    debugLog(env);
+    return redirectWithClear(loginErrorUrl(origin), url.hostname);
   }
 
   if (!code) {
@@ -114,7 +129,7 @@ export async function onRequest({ request, env }) {
 
   const callbackOrigin =
     url.hostname.endsWith(PAGES_DEV_SUFFIX) && url.hostname !== COOKIE_DOMAIN
-      ? `https://${COOKIE_DOMAIN}`
+      ? `https://${TEST_SUBDOMAIN}`
       : origin;
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${callbackOrigin}/api/auth/callback`;
   const db = env.cf_db;
@@ -135,8 +150,8 @@ export async function onRequest({ request, env }) {
 
     const tokenData = await tokenResponse.json().catch(() => null);
     if (!tokenResponse.ok) {
-      console.error("token exchange failed", tokenData);
-      return redirectWithClear(origin, url.hostname);
+      debugLog(env);
+      return redirectWithClear(loginErrorUrl(origin), url.hostname);
     }
 
     const userInfoRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -144,36 +159,36 @@ export async function onRequest({ request, env }) {
     });
     const userInfoData = await userInfoRes.json().catch(() => null);
     if (!userInfoRes.ok) {
-      console.error("could not fetch user info", userInfoData);
-      return redirectWithClear(origin, url.hostname);
+      debugLog(env);
+      return redirectWithClear(loginErrorUrl(origin), url.hostname);
     }
 
-    let userId = null;
+    const normalizedEmail = String(userInfoData.email || "")
+      .trim()
+      .toLowerCase();
+    const isEmailVerified =
+      userInfoData.email_verified === true ||
+      userInfoData.email_verified === "true" ||
+      userInfoData.verified_email === true ||
+      userInfoData.verified_email === "true";
+
+    if (!normalizedEmail || !isEmailVerified) {
+      debugLog(env);
+      return redirectWithClear(loginErrorUrl(origin), url.hostname);
+    }
 
     const existingUser = await queryOne(
       db,
-      "SELECT id FROM Users WHERE email = ?",
-      [userInfoData.email]
+      "SELECT id, is_active FROM Users WHERE lower(email) = lower(?)",
+      [normalizedEmail],
     );
 
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      await execute(
-        db,
-        "INSERT INTO Users (display_name, email) VALUES (?, ?)",
-        [userInfoData.name, userInfoData.email]
-      );
-      const newUser = await queryOne(
-        db,
-        "SELECT id FROM Users WHERE id = last_insert_rowid()"
-      );
-      if (!newUser) {
-        console.error("failed to create user");
-        return redirectWithClear(`${origin}/auth/error?reason=create_user_failed`, url.hostname);
-      }
-      userId = newUser.id;
+    if (!existingUser || Number(existingUser.is_active) !== 1) {
+      debugLog(env);
+      return redirectWithClear(loginErrorUrl(origin), url.hostname);
     }
+
+    const userId = existingUser.id;
 
     const existingProvider = await queryOne(
       db,
@@ -183,12 +198,8 @@ export async function onRequest({ request, env }) {
 
     if (existingProvider) {
       if (existingProvider.user_id !== userId) {
-        console.error("provider linked to another account", {
-          providerUserId: userInfoData.sub,
-          linkedTo: existingProvider.user_id,
-          email: userInfoData.email,
-        });
-        return redirectWithClear(`${origin}/auth/error?reason=provider_conflict`, url.hostname);
+        debugLog(env);
+        return redirectWithClear(loginErrorUrl(origin), url.hostname);
       }
     } else {
       const expiresAt = tokenData.expires_in
@@ -201,9 +212,15 @@ export async function onRequest({ request, env }) {
       );
     }
 
-    return await redirectWithSession(origin, userId, userInfoData.email, env.JWT_SECRET, url.hostname);
-  } catch (err) {
-    console.error("callback onRequest error", err);
-    return redirectWithClear(origin, url.hostname);
+    return await redirectWithSession(
+      origin,
+      userId,
+      normalizedEmail,
+      env.JWT_SECRET,
+      url.hostname,
+    );
+  } catch {
+    debugLog(env);
+    return redirectWithClear(loginErrorUrl(origin), url.hostname);
   }
 }

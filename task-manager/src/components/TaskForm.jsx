@@ -56,6 +56,8 @@ export default function TaskForm({
   columnId = null,
   // List of columns for the current project board, used to populate the Status dropdown
   columnsForStatus = [],
+  // The current active sprint for the project (not_started or in_progress), or null
+  activeSprint = null,
   onSuccess,
   onCancel,
 }) {
@@ -152,7 +154,11 @@ export default function TaskForm({
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "sprint_id" && !value ? { column_id: "" } : {}),
+    }));
   }
 
   function validate() {
@@ -196,12 +202,7 @@ export default function TaskForm({
       payload.project_id = projectId;
     }
 
-    // Status / column handling:
-    // - Backlog: no column_id sent (form.column_id is "" or falsy)
-    // - Specific column: include its id so the Tasks API can position it
-    if (form.column_id) {
-      payload.column_id = Number(form.column_id);
-    }
+    payload.column_id = form.column_id ? Number(form.column_id) : null;
 
     try {
       const isEdit = taskId != null;
@@ -325,14 +326,18 @@ export default function TaskForm({
               </label>
 
               <label className="flex flex-col">
-                <span className="text-white/80 text-sm mb-1.5">Sprint ID</span>
-                <input
-                  type="number"
+                <span className="text-white/80 text-sm mb-1.5">Sprint</span>
+                <select
                   name="sprint_id"
                   value={form.sprint_id}
                   onChange={handleChange}
-                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
-                />
+                  className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                >
+                  <option value="">Backlog</option>
+                  {activeSprint && (
+                    <option value={activeSprint.id}>{activeSprint.name}</option>
+                  )}
+                </select>
               </label>
 
               <label className="flex flex-col">
@@ -383,22 +388,24 @@ export default function TaskForm({
                 </select>
               </label>
 
-              <label className="flex flex-col">
-                <span className="text-white/80 text-sm mb-1.5">Status</span>
-                <select
-                  name="column_id"
-                  value={form.column_id}
-                  onChange={handleChange}
-                  className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
-                >
-                  <option value="">Backlog</option>
-                  {columnsForStatus.map((col) => (
-                    <option key={col.id} value={col.id}>
-                      {col.title || col.name || `Column ${col.id}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {form.sprint_id && (
+                <label className="flex flex-col">
+                  <span className="text-white/80 text-sm mb-1.5">Status</span>
+                  <select
+                    name="column_id"
+                    value={form.column_id}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10"
+                  >
+                    <option value="">No status</option>
+                    {columnsForStatus.map((col) => (
+                      <option key={col.id} value={col.id}>
+                        {col.title || col.name || `Column ${col.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <label className="flex flex-col">
                 <span className="text-white/80 text-sm mb-1.5">Start Date</span>
